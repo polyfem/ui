@@ -1,4 +1,4 @@
-let message: string = 'Hello, TypeScript!';
+let message: string = 'HAHAHAHAHHAH';
 
 let heading = document.createElement('h1');
 heading.textContent = message;
