@@ -1,7 +1,6 @@
 # Documentation
 
 ## Project setup
-
 ### Node
 ``npm init``r
 Prompts the project setup procedures, and creates package.json.
