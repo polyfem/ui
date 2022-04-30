@@ -87,3 +87,7 @@ Monitoring the changes made to the typescript programs in src directory and upda
 helpful in the process of debugging. Since only the transpiled javascript program organized in the dist folder can be run and tested in a browser, building them in real
 time streamlines the workflow. One gets to test changes made to the program without having to actively recompile by simply refreshing the browser, while the building
 process becomes largely invisible to programmers.
+
+## Server setup
+We use nodejs to support the launching and maintenance of the server. Nodejs provides support for local http-server
+through the http module.
