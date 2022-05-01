@@ -1,3 +1,4 @@
+import "./object"
 let message: string = 'HAHAHAHAHHAH';
 
 let heading = document.createElement('h1');

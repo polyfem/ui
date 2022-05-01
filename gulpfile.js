@@ -4,7 +4,6 @@ var source = require("vinyl-source-stream");
 var tsify = require("tsify");
 var sourcemaps = require("gulp-sourcemaps");
 var buffer = require("vinyl-buffer");
-var babelify = require("babelify");
 
 var paths = {
     pages: ["src/*.html"],
@@ -26,7 +25,7 @@ gulp.task(
         return browserify({
             basedir: ".",
             debug: true,
-            entries: ["src/js/pendulum.ts"],
+            entries: ["src/js/main.ts"],
             cache: {},
             packageCache: {},
         })
