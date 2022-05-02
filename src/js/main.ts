@@ -1,5 +1,4 @@
-import "./object"
-let message: string = 'HAHAHAHAHHAH';
+let message: string = 'Hello world';
 
 let heading = document.createElement('h1');
 heading.textContent = message;

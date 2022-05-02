@@ -31,7 +31,7 @@ gulp.task(
         })
             .plugin(tsify, {extensions:['js','ts']})
             .bundle()
-            .pipe(source("index.js"))
+            .pipe(source("main.js"))
             .pipe(buffer())
             .pipe(sourcemaps.init({ loadMaps: true }))
             .pipe(sourcemaps.write("./"))
