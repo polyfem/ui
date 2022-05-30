@@ -1,12 +1,28 @@
 var express = require('express');
 var app = express();
 var fs = require("fs");
+const path = require('path');
 
-app.get('/listUsers', function (req, res) {
-    fs.readFile( __dirname + "/" + "users.json", 'utf8', function (err, data) {
-        console.log( data );
-        res.end( data+"\nhelloworld" );
-    });
+app.get('/getMesh/:meshName', function (req, res) {
+    var options = {
+        root: path.join(__dirname, 'data'),
+        dotfiles: 'ignore',
+        headers: {
+            'x-timestamp': Date.now(),
+            'x-sent': true,
+            'Access-Control-Allow-Origin': '*'
+        }
+    }
+
+    let fileName = req.params.meshName;
+    console.log(fileName);
+    res.sendFile(fileName, options, function (err) {
+        if (err) {
+            console.error('Error code: '+ err);
+        } else {
+            console.log('Sent:', fileName)
+        }
+    })
 })
 
 var server = app.listen(8081, function () {
