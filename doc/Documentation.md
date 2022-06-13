@@ -87,6 +87,38 @@ helpful in the process of debugging. Since only the transpiled javascript progra
 time streamlines the workflow. One gets to test changes made to the program without having to actively recompile by simply refreshing the browser, while the building
 process becomes largely invisible to programmers.
 
-## Server setup
+
+
+## Client Side
+The development of PolyFEM-UI is split into two parallel parts. The client side takes care of the primary level of
+user interactions, inputs and outputs, the server side takes care of the direct communication with local PolyFem libraries.
+
+The client side architecture is as follows:
+
+![img.png](img.png)
+Main provides a centralized entry for all the functionalities of the client-side. It hosts the main thread
+of clientside, and from the main module one is able to issue all commands that control the client side. 
+
+Plugged into Main via composition are the three root level modules that oversee functions of the client side.
+### UI
+UI is the entry to anything visual on screen. Its entry point will be `ui.tsx`, the typescript supported version
+of `jsx`. It will be written mostly following react state conventions. There will also be helper methods added 
+to streamline and encapsulate the UI controls and feedbacks into a single object instance.
+
+### Graphics
+Graphics is the modular entry to all visualizations. It will provide a modularized interface to the Babylon supports.
+It's supposed to organize the general visualization tasks of PolyFEM-UI into a single instance.
+### Server
+The purpose of the Server module is to provide a communication channel to the server side. However, it will not directly provide
+methods for communication through the server, but rather act as an abstraction of the entire server side. The communication
+process, such as http I/O, synchronization, and Error handling, will be taken care of internally within the server module.
+To Main, the serverside, namely the entire PolyFEM library, should appear as if it is available locally on the client side.
+
+## Server Side
 We use nodejs to support the launching and maintenance of the server. Nodejs provides support for local http-server
-through the http module.
+through the express module. The communication between the client side and server side are maintained by rest protocols,
+which are immediately implemented by nodejs express. 
+
+The current functionalities of server side comprises a T2C pipeline, a client side listener, and a communication module 
+for exchanging commands with the local PolyFEM library. We will implement these functionalities directly as a single module.
+As the complexity of the tasks handled by Serverside grows, we may modify the design into a modular architecture.
