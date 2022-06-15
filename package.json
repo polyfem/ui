@@ -25,15 +25,22 @@
   "devDependencies": {
     "gulp": "^4.0.2",
     "lil-gui": "^0.16.1",
-    "typescript": "^4.6.4"
+    "typescript": "^4.7.3"
   },
   "dependencies": {
+    "@types/react": "^18.0.12",
+    "@types/react-dom": "^18.0.5",
     "babelify": "^10.0.0",
-    "babylonjs": "^5.8.1",
-    "babylonjs-loaders": "^5.8.1",
+    "babylonjs": "^5.10.0",
+    "babylonjs-loaders": "^5.10.0",
     "browserify": "^17.0.0",
     "express": "^4.18.1",
     "gulp-sourcemaps": "^3.0.0",
+    "jquery": "^3.6.0",
+    "prismjs": "^1.28.0",
+    "react": "^18.2.0-next-f7b44539c-20220610",
+    "react-dom": "^18.2.0-next-f7b44539c-20220610",
+    "react-filetree-electron": "^1.2.2",
     "tsify": "^5.0.4",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"

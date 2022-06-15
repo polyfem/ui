@@ -8,7 +8,8 @@ var buffer = require("vinyl-buffer");
 var paths = {
     pages: ["src/*.html"],
     stylesheets: ["src/css/**/*.*"],
-    assets: ["assets/*.png"]
+    assets: ["assets/*.png"],
+    prism: ["src/prism/*.*"]
 };
 gulp.task("copy-html", function () {
     return gulp.src(paths.pages).pipe(gulp.dest("dist"));
@@ -19,9 +20,12 @@ gulp.task("copy-css", function () {
 gulp.task("copy-assets", function () {
     return gulp.src(paths.assets).pipe(gulp.dest("dist/assets"));
 });
+gulp.task("copy-prism", function(){
+    return gulp.src(paths.prism).pipe(gulp.dest("dist/prism"));
+})
 gulp.task(
     "default",
-    gulp.series(gulp.parallel("copy-html", "copy-css", "copy-assets"), function () {
+    gulp.series(gulp.parallel("copy-html", "copy-css", "copy-assets", "copy-prism"), function () {
         return browserify({
             basedir: ".",
             debug: true,
