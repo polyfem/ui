@@ -2,6 +2,8 @@ let express = require('express');
 let app = express();
 let fs = require("fs");
 const path = require('path');
+const { exec, spawn } = require('child_process');
+const cors = require('cors');
 
 function mountFileSystem(rootURL){
     app.get('/ls/:dir', function (req, res) {
@@ -58,7 +60,26 @@ function mountFileSystem(rootURL){
             }
         });
     })
+    app.use(cors({
+        origin: '*'
+    }));
+    app.put('/execute', function (req, res) {
+        let command = path.join(rootURL, 'bin', 'PolyFEM.exe')
+        let child = spawn(command, ['--json', 'data\\beam.json', '--cmd']);
+        child.stdout.pipe(res);
+            // or use event handlers
+        child.stdout.on('data', function(data) {
+                res.write(data);
+            });
+        child.stdout.on('end', function() {
+                res.end();
+            });
+        child.stderr.on('data',data => {
+            console.error(`stderr: ${data}`);
+        });
+    })
 }
+
 mountFileSystem("./");
 let server = app.listen(8081, function () {
     let host = server.address().address;

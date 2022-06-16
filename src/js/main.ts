@@ -1,9 +1,10 @@
 import './graphics';
-import {UFile, UFileSystem} from './server';
-import {FilePanel} from './ui';
+import {PolyFEM, UFile, UFileSystem} from './server';
+import {FilePanel, OperationPanel} from './ui';
 import {createElement} from "react";
-import {createRoot} from "react-dom/client";
+import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
+import {CodePanel} from "./editor";
 
 /**
  * Central instance of PolyFEM UI
@@ -12,18 +13,33 @@ class Main{
     fs: UFileSystem;
     rootURL = ".";
     canvas: App;
-    container: HTMLElement;
+    codeContainer: HTMLElement;
+    codeRoot: Root;
+    responseContainer: HTMLElement;
+    responseRoot: Root;
+    polyFEM: PolyFEM;
     constructor(){
         this.fs = new UFileSystem(this.rootURL);
+        this.polyFEM = new PolyFEM();
+        this.executeCommand = this.executeCommand.bind(this);
         this.canvas = new App();
-        this.container = document.getElementById("container");
+
         this.loadUI();
     }
     loadUI(){
+        this.codeContainer = document.getElementById("container");
+        this.codeRoot = createRoot(this.codeContainer);
+
+        this.responseContainer = document.getElementById("responsePanel");
+        this.responseRoot = createRoot(this.responseContainer);
+
         let fp = createElement(FilePanel, {'main': this});
         let root = createRoot(document.getElementById("filePanel"));
         root.render(fp);
-        console.log(root);
+
+        let op = createElement(OperationPanel, {'main': this});
+        let operationRoot = createRoot(document.getElementById("rightPanel"));
+        operationRoot.render(op);
     }
     loadFile(file: UFile){
         let extension = file.name.split('.').pop();
@@ -31,79 +47,33 @@ class Main{
             case "glb":
                 this.canvas.loadObject(file.url);
                 this.canvas.dom.style.zIndex = "1";
-                this.container.style.zIndex = "0";
+                this.codeContainer.style.zIndex = "0";
+                this.responseContainer.style.zIndex="0";
                 break;
+            case "js":
             case "json":
                 this.canvas.dom.style.zIndex = "0";
-                this.container.style.zIndex = "1";
-                this.container.children[0].innerHTML = `{
-    "problem": "GenericTensor",
-    "tensor_formulation": "NeoHookean",
-    "solver_type": "Hypre",
-    "n_refs": 0,
-    "discr_order": 1,
-    "iso_parametric": false,
-    "vismesh_rel_area": 1,
-    "export": {
-\t\t"paraview": "sol.vtu",
-        "volume": true
-    },
-    "has_collision": false,
-    "problem_params": {
-        "dirichlet_boundary": 
-        [
-            {
-                "id": 10,
-                "value": [0, 0, 0]
-            }
-        ],
-        "neumann_boundary":
-        [
-            {
-                "id": 11,
-                "value": [0, 0, -2000]
-            },
-            {
-                "id": 12,
-                "value": [0, 0, -2000]
-            }
-        ],
-        "rhs": [0, 0, 0]
-    },
-    "params": {
-        "E": 3.5e9,
-        "nu": 0.36,
-        "rho": 1240
-    },
-    "boundary_sidesets": [{
-        "id": 10,
-        "axis": "-z",
-        "position": -0.009
-    }, {
-        "id": 11,
-        "axis": "-y",
-        "position": -0.11 
-    }, {
-        "id": 12,
-        "axis": "y",
-        "position": 0.11 
-    }],
-    "line_search": "bisection",
-    "meshes": [
-        {
-            "mesh": "./beam.msh",
-            "scale": 0.01,
-            "body_id": 1
-        } 
-    ],
-    "normalize_mesh": false
-}
-`.split('\n').join('<br>');
+                this.responseContainer.style.zIndex="0";
+                this.codeContainer.style.zIndex = "1";
+                file.asyncRead((text:string)=>{
+                    let cp = createElement(CodePanel, {'code': text, 'language':'javascript'});
+                    this.codeRoot.render(cp);
+                })
                 break;
         }
     }
     loadFileRoot():UFile{
         return this.fs.fileRoot;
+    }
+    executeCommand(command: string, callback: (newResponse, response)=>void){
+        this.polyFEM.execute(callback);
+    }
+    setResponse(response: string){
+        this.canvas.dom.style.zIndex = "0";
+        this.codeContainer.style.zIndex = "0";
+        this.responseContainer.style.zIndex="1";
+        let cp = createElement(CodePanel, {'code': response, 'language':'javascript'});
+        this.responseRoot.render(cp);
     }
 }
 

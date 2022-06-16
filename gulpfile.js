@@ -32,7 +32,12 @@ gulp.task(
             entries: ["src/js/main.ts"],
             cache: {},
             packageCache: {},
-        })
+        }).transform("babelify",
+            {"plugins":[["prismjs",{
+                    "languages":["json", "javascript", "c++"],
+                    "plugins": ["line-numbers", "show-language"],
+                    "theme": "tomorrow-night"
+                }]]})
             .plugin(tsify, {extensions:['js','ts']})
             .bundle()
             .pipe(source("main.js"))
