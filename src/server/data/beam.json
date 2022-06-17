@@ -10,7 +10,7 @@
 		"paraview": "sol.vtu",
         "volume": true
     },
-    "has_collision": false,
+    "has_collision": true,
     "problem_params": {
         "dirichlet_boundary": 
         [

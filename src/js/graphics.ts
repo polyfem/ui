@@ -5,6 +5,7 @@ import HemisphericLight = BABYLON.HemisphericLight;
 import MeshBuilder = BABYLON.MeshBuilder;
 import Vector3 = BABYLON.Vector3;
 import ArcRotateCamera = BABYLON.ArcRotateCamera;
+import {UFile} from "./server";
 
 class App {
     scene: Scene;
@@ -46,9 +47,12 @@ class App {
             this.scene.render();
         });
     }
-    loadObject(fileName:string){
-        fileName = fileName.replace("\\", "%2F");
-        fileName = fileName.replace("/", "%2F");
+    loadMSH(file: UFile){
+
+    }
+    loadObject(file:UFile){
+        let fileName = file.url.replace("\\", "%2F")
+            .replace("/", "%2F");
         while(this.scene.meshes.length!=0){
             this.scene.meshes.pop().dispose();
         }

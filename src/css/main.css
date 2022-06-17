@@ -13,6 +13,10 @@ body {
     padding: 0;
 }
 
+input:focus, div:focus, div:focus-within > * {
+    outline: none;
+}
+
 #root {
     --blue: #3abdff;
     --blueShadow: #007fbe;
@@ -94,6 +98,7 @@ code{
     grid-column: 5 / span 1;
     grid-row: 2 / span 2;
 }
+
 #operationPanel{
     overflow: hidden;
     width: 100%;

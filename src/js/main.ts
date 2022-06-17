@@ -13,6 +13,7 @@ class Main{
     fs: UFileSystem;
     rootURL = ".";
     canvas: App;
+    fileRoot: Root;
     codeContainer: HTMLElement;
     codeRoot: Root;
     responseContainer: HTMLElement;
@@ -34,18 +35,22 @@ class Main{
         this.responseRoot = createRoot(this.responseContainer);
 
         let fp = createElement(FilePanel, {'main': this});
-        let root = createRoot(document.getElementById("filePanel"));
-        root.render(fp);
+        this.fileRoot = createRoot(document.getElementById("filePanel"));
+        this.fileRoot.render(fp);
 
         let op = createElement(OperationPanel, {'main': this});
         let operationRoot = createRoot(document.getElementById("rightPanel"));
         operationRoot.render(op);
     }
+    refreshFilePanel(){
+        let fp = createElement(FilePanel, {'main': this});
+        this.fileRoot.render(fp);
+    }
     loadFile(file: UFile){
         let extension = file.name.split('.').pop();
         switch(extension){
             case "glb":
-                this.canvas.loadObject(file.url);
+                this.canvas.loadObject(file);
                 this.canvas.dom.style.zIndex = "1";
                 this.codeContainer.style.zIndex = "0";
                 this.responseContainer.style.zIndex="0";
@@ -56,10 +61,16 @@ class Main{
                 this.responseContainer.style.zIndex="0";
                 this.codeContainer.style.zIndex = "1";
                 file.asyncRead((text:string)=>{
-                    let cp = createElement(CodePanel, {'code': text, 'language':'javascript'});
+                    let cp = createElement(CodePanel, {'code': text, 'language':'javascript',
+                        'readonly':false});
                     this.codeRoot.render(cp);
                 })
                 break;
+            case "msh":
+                this.canvas.loadMSH(file);
+                this.canvas.dom.style.zIndex = "1";
+                this.codeContainer.style.zIndex = "0";
+                this.responseContainer.style.zIndex="0";
         }
     }
     loadFileRoot():UFile{
@@ -72,7 +83,8 @@ class Main{
         this.canvas.dom.style.zIndex = "0";
         this.codeContainer.style.zIndex = "0";
         this.responseContainer.style.zIndex="1";
-        let cp = createElement(CodePanel, {'code': response, 'language':'javascript'});
+        let cp = createElement(CodePanel, {'code': response, 'language':'javascript',
+                'readonly':true});
         this.responseRoot.render(cp);
     }
 }

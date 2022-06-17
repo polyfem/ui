@@ -32,9 +32,12 @@ class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
 class Directory extends React.Component<{ file: UFile, main: Main }, { expanded: boolean }> {
     constructor(props: { file: UFile, main: Main }) {
         super(props);
-        this.state = {expanded: props.file.name == "."};
-        if (this.state.expanded)
+        if(props.file.name == "."){
+            this.state = {expanded: true};
             props.file.ls();
+        }else{
+            this.state = {expanded: props.file.children.length!=0};
+        }
         this.toggleExpanded = this.toggleExpanded.bind(this);
     }
 

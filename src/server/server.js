@@ -67,16 +67,16 @@ function mountFileSystem(rootURL){
         let command = path.join(rootURL, 'bin', 'PolyFEM.exe')
         let child = spawn(command, ['--json', 'data\\beam.json', '--cmd']);
         child.stdout.pipe(res);
-            // or use event handlers
-        child.stdout.on('data', function(data) {
-                res.write(data);
-            });
-        child.stdout.on('end', function() {
-                res.end();
-            });
-        child.stderr.on('data',data => {
-            console.error(`stderr: ${data}`);
-        });
+        // Equivalently for pipe():
+        // child.stdout.on('data', function(data) {
+        //         res.write(data);
+        //     });
+        // child.stdout.on('end', function() {
+        //         res.end();
+        //     });
+        // child.stderr.on('data',data => {
+        //     console.error(`stderr: ${data}`);
+        // });
     })
 }
 
