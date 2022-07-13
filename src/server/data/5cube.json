@@ -10,42 +10,42 @@
     "margin": 1e-08
   },
   "geometry": [{
-    "mesh": "../../../meshes/3D/simple/cube.msh",
+    "mesh": "data/cube.msh",
     "transformation": {
       "translation": [0, 0, 0],
       "scale": 0.2
     },
     "volume_selection": 1
   }, {
-    "mesh": "../../../meshes/3D/simple/cube.msh",
+    "mesh": "data/cube.msh",
     "transformation": {
       "translation": [0, 0.205, 0],
       "scale": 0.2
     },
     "volume_selection": 1
   }, {
-    "mesh": "../../../meshes/3D/simple/cube.msh",
+    "mesh": "data/cube.msh",
     "transformation": {
       "translation": [0, 0.41, 0],
       "scale": 0.2
     },
     "volume_selection": 1
   }, {
-    "mesh": "../../../meshes/3D/simple/cube.msh",
+    "mesh": "data/cube.msh",
     "transformation": {
       "translation": [0, 0.615, 0],
       "scale": 0.2
     },
     "volume_selection": 1
   }, {
-    "mesh": "../../../meshes/3D/simple/cube.msh",
+    "mesh": "data/cube.msh",
     "transformation": {
       "translation": [0, 0.82, 0],
       "scale": 0.2
     },
     "volume_selection": 1
-  }, {
-    "mesh": "../../../meshes/3D/obstacles/plane.obj",
+  },{
+    "mesh": "data/plane.obj",
     "is_obstacle": true,
     "transformation": {
       "translation": [0, -0.315, 0],

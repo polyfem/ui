@@ -105,6 +105,13 @@ UI is the entry to anything visual on screen. Its entry point will be `ui.tsx`, 
 of `jsx`. It will be written mostly following react state conventions. There will also be helper methods added 
 to streamline and encapsulate the UI controls and feedbacks into a single object instance.
 
+#### Tab Panel
+Tab panel is located in the center of the UI, and allows users to switch between displays and files of 
+PolyFEM. It is by itself a React element, and it will contain non-React elements such as Babylon canvas that main
+will inject. To allow the containment of non-React elements, the component will be prevented from updating once rendered.
+See practiced standard: [integrating with other libraries](https://reactjs.org/docs/integrating-with-other-libraries.html). 
+Or if necessary, references to the underlying tabs will be separately kept, and injected with JQuery after each update using component did mount.
+
 ### Graphics
 Graphics is the modular entry to all visualizations. It will provide a modularized interface to the Babylon supports.
 It's supposed to organize the general visualization tasks of PolyFEM-UI into a single instance.

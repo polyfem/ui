@@ -1,10 +1,10 @@
 import './graphics';
 import {PolyFEM, UFile, UFileSystem} from './server';
-import {FilePanel, OperationPanel} from './ui';
+import {FilePanel, JSONPanel, OperationPanel} from './ui';
 import {createElement} from "react";
 import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
-import {CodePanel} from "./editor";
+import {BasicTabs, CodePanel} from "./editor";
 
 /**
  * Central instance of PolyFEM UI
@@ -12,27 +12,35 @@ import {CodePanel} from "./editor";
 class Main{
     fs: UFileSystem;
     rootURL = ".";
-    canvas: App;
     fileRoot: Root;
-    codeContainer: HTMLElement;
-    codeRoot: Root;
-    responseContainer: HTMLElement;
-    responseRoot: Root;
+    container: HTMLElement;
+    containerRoot: Root;
     polyFEM: PolyFEM;
+    responseContainer:HTMLElement;
+    responseRoot: Root;
+
+    fileDisplays: HTMLElement[]=[];
+    fileNames: string[]=[];
+    openedFiles: UFile[]=[];
     constructor(){
         this.fs = new UFileSystem(this.rootURL);
         this.polyFEM = new PolyFEM();
         this.executeCommand = this.executeCommand.bind(this);
-        this.canvas = new App();
-
         this.loadUI();
     }
     loadUI(){
-        this.codeContainer = document.getElementById("container");
-        this.codeRoot = createRoot(this.codeContainer);
-
-        this.responseContainer = document.getElementById("responsePanel");
+        this.responseContainer = document.createElement('div');
+        this.responseContainer.id = 'responsePanel';
         this.responseRoot = createRoot(this.responseContainer);
+        this.fileDisplays.push(this.responseContainer);
+        this.fileNames.push("console");
+        this.openedFiles.push(new UFile("std.out", "console", false));
+
+        this.container = document.getElementById("container");
+        this.containerRoot = createRoot(this.container);
+        this.container.style.zIndex = "1";
+        let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: 0};
+        this.containerRoot.render(createElement(BasicTabs, props));
 
         let fp = createElement(FilePanel, {'main': this});
         this.fileRoot = createRoot(document.getElementById("filePanel"));
@@ -47,42 +55,84 @@ class Main{
         this.fileRoot.render(fp);
     }
     loadFile(file: UFile){
+        let index = this.getFileIndex(file);
+        if(index!=-1){
+            let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: index};
+            this.containerRoot.render(createElement(BasicTabs, props));
+        }else{
+            let fileDisplay = this.getFileDisplay(file);
+            if(fileDisplay == undefined)
+                return;
+            this.fileNames.push(file.name);
+            this.openedFiles.push(file);
+            this.fileDisplays.push(fileDisplay);
+            let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: this.openedFiles.length-1};
+            this.containerRoot.render(createElement(BasicTabs, props));
+        }
+    }
+    getFileIndex(file: UFile):number{
+        return this.openedFiles.indexOf(file);
+    }
+    getFileDisplay(file: UFile):HTMLElement{
         let extension = file.name.split('.').pop();
         switch(extension){
+            case "obj":
             case "glb":
-                this.canvas.loadObject(file);
-                this.canvas.dom.style.zIndex = "1";
-                this.codeContainer.style.zIndex = "0";
-                this.responseContainer.style.zIndex="0";
-                break;
-            case "js":
+            case "vtu":
+            case "msh":
+                let canvas = new App();
+                switch(extension){
+                    case "obj":
+                        canvas.loadMesh(file.url);
+                        break
+                    case "glb":
+                        canvas.loadObject(file.url);
+                        break;
+                    case "vtu":
+                    case "msh":
+                        canvas.loadConvertObj(file.url);
+                }
+                return canvas.dom;
             case "json":
-                this.canvas.dom.style.zIndex = "0";
-                this.responseContainer.style.zIndex="0";
-                this.codeContainer.style.zIndex = "1";
+                // let container = document.createElement("div");
+                // container.className = "jsonPanel tabFrame";
+                // let root = createRoot(container);
+                // file.asyncRead((text:string)=>{
+                //     let json = JSON.parse(text);
+                //     root.render(createElement(JSONPanel, {'json':json, 'main': this}))
+                // })
+                // return container;
+                let canvasjson = new App();
+                let dir = file.url.split('/')[0];
+                file.asyncRead((text:string)=>{
+                    let json = JSON.parse(text);
+                    canvasjson.loadScene(dir, json);
+                })
+                return canvasjson.dom;
+            case "py":
+            case "js":
+                let container2 = document.createElement("div");
+                container2.className = "codePanel";
+                let root2 = createRoot(container2);
                 file.asyncRead((text:string)=>{
                     let cp = createElement(CodePanel, {'code': text, 'language':'javascript',
                         'readonly':false});
-                    this.codeRoot.render(cp);
+                    root2.render(cp);
                 })
-                break;
-            case "msh":
-                this.canvas.loadMSH(file);
-                this.canvas.dom.style.zIndex = "1";
-                this.codeContainer.style.zIndex = "0";
-                this.responseContainer.style.zIndex="0";
+                return container2;
         }
+        return undefined;
+    }
+    updateJSON(json:{}){
+        console.log(json);
     }
     loadFileRoot():UFile{
         return this.fs.fileRoot;
     }
     executeCommand(command: string, callback: (newResponse, response)=>void){
-        this.polyFEM.execute(callback);
+        this.polyFEM.execute(command, callback);
     }
     setResponse(response: string){
-        this.canvas.dom.style.zIndex = "0";
-        this.codeContainer.style.zIndex = "0";
-        this.responseContainer.style.zIndex="1";
         let cp = createElement(CodePanel, {'code': response, 'language':'javascript',
                 'readonly':true});
         this.responseRoot.render(cp);

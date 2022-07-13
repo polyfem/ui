@@ -1,7 +1,9 @@
 import * as React from "react";
 import {UFile} from "./server";
 import {Main} from "./main";
-import {query} from "express";
+// import {ConnectDragSource, useDrag} from 'react-dnd';
+
+import ReactJson from 'react-json-view'
 
 class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
     main: Main;
@@ -30,8 +32,20 @@ class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
 }
 
 class Directory extends React.Component<{ file: UFile, main: Main }, { expanded: boolean }> {
+    // dragRef: ConnectDragSource;
     constructor(props: { file: UFile, main: Main }) {
         super(props);
+        // const [{ opacity }, dragRef] = useDrag(
+        //     () => ({
+        //         type: 'File',
+        //         item: props.file.name,
+        //         collect: (monitor) => ({
+        //             opacity: monitor.isDragging() ? 0.5 : 1
+        //         })
+        //     }),
+        //     []
+        // )
+        // this.dragRef = dragRef;
         if(props.file.name == "."){
             this.state = {expanded: true};
             props.file.ls();
@@ -45,7 +59,7 @@ class Directory extends React.Component<{ file: UFile, main: Main }, { expanded:
         let file = this.props.file;
         let name = (file.name == ".") ? "./" : file.name;
         if (!file.isDir) {
-            return (<div className="dirItem">
+            return (<div className="dirItem" >
                 <div className="file-name" onClick={() => this.props.main.loadFile(file)}>{name}</div>
             </div>);
         } else {
@@ -69,26 +83,31 @@ class Directory extends React.Component<{ file: UFile, main: Main }, { expanded:
     }
 }
 
-class OperationPanel extends React.Component<{ main: Main }, {output: string}> {
+class OperationPanel extends React.Component<{ main: Main }, {value: string}> {
     constructor(props) {
         super(props);
-        this.state = {output:""};
+        this.state = {value:""};
         this.execute = this.execute.bind(this);
+        this.handleChange = this.handleChange.bind(this);
     }
     render() {
         return <div id='operationPanel'>
-            <button className='controlBtn' onClick={
-                (e)=>this.execute("default")}>execute command</button>
+            <form onSubmit={this.execute}>
+            <label>
+                <input type="text" value={this.state.value} onChange={this.handleChange} />
+            </label>
+                <input className='controlBtn' type='submit'  value='run' />
+        </form>
         </div>;
     }
-    execute(command: string){
-        this.props.main.executeCommand(command, (newResponse, response)=>{
+    execute(event){
+        event.preventDefault();
+        this.props.main.executeCommand(this.state.value, (newResponse, response)=>{
             this.props.main.setResponse(response);
         });
     }
-
-    updateText(output: string) {
-        this.setState({output: output});
+    handleChange(event){
+        this.setState({value: event.target.value});
     }
 
 }
@@ -102,5 +121,37 @@ class ControlPanel extends React.Component<{main: Main, execute: (command:string
         </div>;
     }
 }
+// Data
+const data = {
+    error: new Error('error'),
+    text: 'text',
+    int: 100,
+    boolean: true,
+    null: null,
+    object: {
+        text: 'text',
+        int: 100,
+        boolean: true,
+    },
+    array: [
+        1,
+        {
+            string: 'test',
+        },
+    ],
+}
 
-export {FilePanel, OperationPanel};
+class JSONPanel extends React.Component<{json: {}, main: Main}>{
+    constructor(props) {
+        super(props);
+        this.updateJSON = this.updateJSON.bind(this);
+    }
+    render(){
+        return <ReactJson src={this.props.json} onEdit={this.updateJSON} collapsed={1}/>
+    }
+    updateJSON(json){
+        this.props.main.updateJSON(json.updated_src);
+    }
+}
+
+export {FilePanel, OperationPanel, JSONPanel};

@@ -33,7 +33,9 @@ gulp.task(
             cache: {},
             packageCache: {},
         }).transform("babelify",
-            {"plugins":[["prismjs",{
+            {
+                presets: ["@babel/preset-env"],
+                plugins:[["prismjs",{
                     "languages":["json", "javascript", "c++"],
                     "plugins": ["line-numbers", "show-language"],
                     "theme": "tomorrow-night"

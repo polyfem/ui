@@ -7,6 +7,7 @@
     "doc": "doc"
   },
   "scripts": {
+    "install": "pip install meshio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,12 +25,16 @@
   ],
   "devDependencies": {
     "@babel/core": "^7.18.5",
+    "@babel/preset-env": "^7.18.6",
     "babelify": "^10.0.0",
     "gulp": "^4.0.2",
     "lil-gui": "^0.16.1",
     "typescript": "^4.7.3"
   },
   "dependencies": {
+    "@emotion/react": "^11.9.3",
+    "@emotion/styled": "^11.9.3",
+    "@mui/material": "^5.8.5",
     "@types/react": "^18.0.12",
     "@types/react-dom": "^18.0.5",
     "babel-plugin-prismjs": "^2.1.0",
@@ -42,8 +47,12 @@
     "jquery": "^3.6.0",
     "prismjs": "^1.28.0",
     "react": "^18.2.0-next-f7b44539c-20220610",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0-next-f7b44539c-20220610",
+    "react-editable-json-tree": "^2.2.1",
     "react-filetree-electron": "^1.2.2",
+    "react-json-view": "^1.21.3",
     "tsify": "^5.0.4",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"

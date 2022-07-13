@@ -2,7 +2,7 @@ let express = require('express');
 let app = express();
 let fs = require("fs");
 const path = require('path');
-const { exec, spawn } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const cors = require('cors');
 
 function mountFileSystem(rootURL){
@@ -63,9 +63,37 @@ function mountFileSystem(rootURL){
     app.use(cors({
         origin: '*'
     }));
-    app.put('/execute', function (req, res) {
+    app.get('/mesh-convert/:orgFileURL/:targetFileName', function (req, res) {
+        let orgURL = req.params['orgFileURL'];
+        let targetName = req.params['targetFileName'];
+        let dir = path.dirname(orgURL);
+        let joinedName = path.join(dir,`$`+targetName);
+        let fullName = joinedName.replace("\\", "%2F")
+            .replace("/", "%2F");
+        let targetURL = path.join('temp', fullName);
+        let options = {
+            root: rootURL,
+            dotfiles: 'ignore',
+            headers: {
+                'x-timestamp': Date.now(),
+                'x-sent': true,
+                'Access-Control-Allow-Origin': '*'
+            }
+        }
+        let command = `python mesh-convert.py ${orgURL} ${targetURL}`
+        execSync(command);
+        res.sendFile(targetURL, options, function (err) {
+            if (err) {
+                console.error('Error code: '+ err);
+            } else {
+                console.log('Sent:', targetURL)
+            }
+        });
+    })
+    app.put('/execute/:target', function (req, res) {
+        let target = req.params['target'];
         let command = path.join(rootURL, 'bin', 'PolyFEM.exe')
-        let child = spawn(command, ['--json', 'data\\beam.json', '--cmd']);
+        let child = spawn(command, ['--json', decodeURI(target), '--cmd']);
         child.stdout.pipe(res);
         // Equivalently for pipe():
         // child.stdout.on('data', function(data) {
@@ -78,6 +106,7 @@ function mountFileSystem(rootURL){
         //     console.error(`stderr: ${data}`);
         // });
     })
+    // app.loadMesh()
 }
 
 mountFileSystem("./");
