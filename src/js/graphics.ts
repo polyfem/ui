@@ -6,12 +6,19 @@ import MeshBuilder = BABYLON.MeshBuilder;
 import Vector3 = BABYLON.Vector3;
 import ArcRotateCamera = BABYLON.ArcRotateCamera;
 import {UFile} from "./server";
+import UtilityLayerRenderer = BABYLON.UtilityLayerRenderer;
 
 class App {
     scene: Scene;
-    meshes:Scene[] = [];
+    meshes:{[key: string]:BABYLON.AbstractMesh[]} = {};
+    meshToKey = new Map();
+    gizmoManager: BABYLON.GizmoManager;
     camera: ArcRotateCamera;
     dom: HTMLElement;
+    json: {};
+    //The mesh that is under active control
+    activeMesh: BABYLON.AbstractMesh;
+    activeMeshKey: string;
     constructor() {
         this.dom = document.createElement("div");
         this.dom.className = "canvasZone";
@@ -37,7 +44,8 @@ class App {
         camera.attachControl(canvas, true);
         camera.wheelDeltaPercentage = 0.07;
         // camera.heightOffset
-        var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
+        let light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0.5), scene);
+        light1.diffuse = new BABYLON.Color3(0.8, 0.8, 0.8);
         // hide/show the Inspector
         window.addEventListener("keydown", (ev) => {
             // Shift+Ctrl+Alt+I
@@ -52,6 +60,24 @@ class App {
             }
         });
         this.updateCameraView = this.updateCameraView.bind(this);
+
+        this.gizmoManager = new BABYLON.GizmoManager(this.scene, 1.5, new UtilityLayerRenderer(this.scene));
+
+        document.onkeydown = (e)=>{
+            if(e.key == 't'){
+                this.gizmoManager.positionGizmoEnabled = !this.gizmoManager.positionGizmoEnabled;
+                this.gizmoManager.scaleGizmoEnabled = !this.gizmoManager.scaleGizmoEnabled;
+            }
+            if(e.key=='Escape'){
+                this.gizmoManager.attachToMesh(undefined);
+            }
+        }
+        this.gizmoManager.attachableMeshes = [];
+        this.gizmoManager.scaleGizmoEnabled=true;
+        // this.gizmoManager.boundingBoxGizmoEnabled=true;
+        this.gizmoManager.positionGizmoEnabled = true;
+        this.gizmoManager.gizmos.scaleGizmo.sensitivity=6;
+        this.gizmoManager.scaleGizmoEnabled= false;
         // run the main render loop
         engine.runRenderLoop(() => {
             this.scene.render();
@@ -82,7 +108,6 @@ class App {
     }
     updateCameraView(){
         let minmax = this.scene.getWorldExtends();
-        console.log(minmax);
         this.camera.radius = minmax.max.subtract(minmax.min).length();
         this.camera.minZ = this.camera.radius*0.001;
     }
@@ -117,25 +142,70 @@ class App {
                 this.updateCameraView();
         });
     }
-    async loadScene(dir: string, json: any) {
+    async loadScene(dir: string, json: any, jsonUpdateCallback:()=>void) {
+        this.json = json;
         let geometries = json['geometry'];
         console.log(geometries);
-        for (let geometry of geometries) {
+        for (let key in geometries) {
+            let geometry = geometries[key];
             let meshes = await this.loadConvertObj(geometry['mesh']);
-            let transformation = geometry['transformation'];
-
-            let translation = transformation['translation'];
-            let translateVec = new Vector3(...translation);
-            let translateDis = translateVec.length();
-            let translateNormal = translateVec.normalizeToNew();
-            let scale = transformation['scale'];
-            for (let mesh of meshes) {
-                mesh.translate(translateNormal, translateDis);
-                if(scale!=undefined)
-                    mesh.scaling.set(scale, scale, scale);
-            }
+            this.meshes[key] = meshes;
+            let gizmoManager = this.gizmoManager;
+            // Restrict gizmos to only spheres
+            gizmoManager.attachableMeshes.push(...meshes);
+            this.gizmoManager.scaleRatio=1;
+            meshes.map((mesh)=>{
+                this.meshToKey.set(mesh, key);
+            });
+            this.loadTransformation(geometry, meshes);
         }
+        this.gizmoManager.positionGizmoEnabled = true;
+        this.gizmoManager.onAttachedToMeshObservable.add((mesh)=>{
+            this.activeMesh = mesh;
+            this.activeMeshKey = this.meshToKey.get(mesh);
+        });
+        this.gizmoManager.gizmos.scaleGizmo.onDragEndObservable.add(()=>{
+            let geometry = this.json['geometry'][this.activeMeshKey];
+            let scaling = this.activeMesh.scaling;
+            geometry.transformation.scale = [scaling.x,scaling.y, scaling.z];
+            jsonUpdateCallback();
+        })
+        this.gizmoManager.gizmos.positionGizmo.onDragEndObservable.add(()=>{
+            let geometry = this.json['geometry'][this.activeMeshKey];
+            let position = this.activeMesh.position;
+            geometry.transformation.translation = [position.x,position.y, position.z];
+            jsonUpdateCallback();
+        })
+    }
+    loadTransformation(geometry:{}, meshes: BABYLON.AbstractMesh[]){
+        if(geometry==undefined){
+            return;
+        }
+        let transformation = geometry['transformation'];
+        let translation = transformation['translation'];
+        let scale = transformation['scale'];
+        if(translation!=undefined&&!(translation instanceof Array)){
+            translation = [translation, translation, translation];
+        }
+        if(scale!=undefined&&!(scale instanceof Array)){
+            scale = [scale, scale, scale];
+        }
+        for (let mesh of meshes) {
+            if(translation!=undefined)
+                mesh.position.set(translation[0], translation[1], translation[2]);
+            if(scale!=undefined)
+                mesh.scaling.set(scale[0], scale[1], scale[2]);
+        }
+    }
 
+    updateJSON(updatedJSON: {}){
+        this.json = updatedJSON;
+        let geometries = updatedJSON['geometry'];
+        for (let key in geometries) {
+            let geometry = geometries[key];
+            let meshes = this.meshes[key];
+            this.loadTransformation(geometry, meshes);
+        }
     }
 }
 export {App};

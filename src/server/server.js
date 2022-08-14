@@ -89,7 +89,7 @@ function mountFileSystem(rootURL){
                 console.log('Sent:', targetURL)
             }
         });
-    })
+    });
     app.put('/execute/:target', function (req, res) {
         let target = req.params['target'];
         let command = path.join(rootURL, 'bin', 'PolyFEM.exe')
@@ -105,7 +105,13 @@ function mountFileSystem(rootURL){
         // child.stderr.on('data',data => {
         //     console.error(`stderr: ${data}`);
         // });
-    })
+    });
+    app.post('/writeFile/:fileName', (req) => {
+        console.log(req.params.fileName);
+        const fileName = path.join(rootURL, req.params.fileName);
+        const stream = fs.createWriteStream(fileName);
+        stream.on('open', () => req.pipe(stream));
+    });
     // app.loadMesh()
 }
 

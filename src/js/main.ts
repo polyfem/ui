@@ -5,6 +5,8 @@ import {createElement} from "react";
 import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
 import {BasicTabs, CodePanel} from "./editor";
+import {FileControl, JSONFileControl} from "./FileControl";
+import SettingsForm from "./settingsForm";
 
 /**
  * Central instance of PolyFEM UI
@@ -18,10 +20,9 @@ class Main{
     polyFEM: PolyFEM;
     responseContainer:HTMLElement;
     responseRoot: Root;
+    fileNames: string[] = [];
+    fileControls: FileControl[]=[];
 
-    fileDisplays: HTMLElement[]=[];
-    fileNames: string[]=[];
-    openedFiles: UFile[]=[];
     constructor(){
         this.fs = new UFileSystem(this.rootURL);
         this.polyFEM = new PolyFEM();
@@ -32,14 +33,16 @@ class Main{
         this.responseContainer = document.createElement('div');
         this.responseContainer.id = 'responsePanel';
         this.responseRoot = createRoot(this.responseContainer);
-        this.fileDisplays.push(this.responseContainer);
+        //The UFile parameter for console here is purely informational, for now, it is not used by any entities
+        let console = new FileControl("console", new UFile("std.out", "console", false),
+            this.responseContainer)
         this.fileNames.push("console");
-        this.openedFiles.push(new UFile("std.out", "console", false));
+        this.fileControls.push(console);
 
         this.container = document.getElementById("container");
         this.containerRoot = createRoot(this.container);
         this.container.style.zIndex = "1";
-        let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: 0};
+        let props = {tabNames: this.fileNames, tabControls:this.fileControls, initialValue: 0};
         this.containerRoot.render(createElement(BasicTabs, props));
 
         let fp = createElement(FilePanel, {'main': this});
@@ -57,23 +60,27 @@ class Main{
     loadFile(file: UFile){
         let index = this.getFileIndex(file);
         if(index!=-1){
-            let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: index};
+            let props = {tabNames: this.fileNames, tabControls: this.fileControls, initialValue: index};
             this.containerRoot.render(createElement(BasicTabs, props));
         }else{
-            let fileDisplay = this.getFileDisplay(file);
-            if(fileDisplay == undefined)
+            let fileControl = this.getFileDisplay(file);
+            if(fileControl == undefined)
                 return;
             this.fileNames.push(file.name);
-            this.openedFiles.push(file);
-            this.fileDisplays.push(fileDisplay);
-            let props = {tabTitles:this.fileNames, tabContents:this.fileDisplays, initialValue: this.openedFiles.length-1};
+            this.fileControls.push(fileControl);
+            let props = {tabNames: this.fileNames, tabControls: this.fileControls, initialValue: this.fileControls.length-1};
             this.containerRoot.render(createElement(BasicTabs, props));
         }
     }
     getFileIndex(file: UFile):number{
-        return this.openedFiles.indexOf(file);
+        for(let i = 0; i < this.fileControls.length; i++){
+            if(this.fileControls[i].fileReference === file){
+                return i;
+            }
+        }
+        return -1;
     }
-    getFileDisplay(file: UFile):HTMLElement{
+    getFileDisplay(file: UFile):FileControl{
         let extension = file.name.split('.').pop();
         switch(extension){
             case "obj":
@@ -92,23 +99,11 @@ class Main{
                     case "msh":
                         canvas.loadConvertObj(file.url);
                 }
-                return canvas.dom;
+                return new FileControl(file.name, file, canvas.dom);
             case "json":
-                // let container = document.createElement("div");
-                // container.className = "jsonPanel tabFrame";
-                // let root = createRoot(container);
-                // file.asyncRead((text:string)=>{
-                //     let json = JSON.parse(text);
-                //     root.render(createElement(JSONPanel, {'json':json, 'main': this}))
-                // })
-                // return container;
-                let canvasjson = new App();
-                let dir = file.url.split('/')[0];
-                file.asyncRead((text:string)=>{
-                    let json = JSON.parse(text);
-                    canvasjson.loadScene(dir, json);
-                })
-                return canvasjson.dom;
+                let control = new JSONFileControl(file.name, file);
+                control.togglePane = true;
+                return control;
             case "py":
             case "js":
                 let container2 = document.createElement("div");
@@ -119,7 +114,7 @@ class Main{
                         'readonly':false});
                     root2.render(cp);
                 })
-                return container2;
+                return new FileControl(file.name, file, container2);
         }
         return undefined;
     }

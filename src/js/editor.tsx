@@ -1,17 +1,19 @@
 import * as React from "react";
 import "prismjs";
 import Tabs from '@mui/material/Tabs';
+import CodeIcon from '@mui/icons-material/Code';
 import Tab from '@mui/material/Tab';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import * as $ from "jquery";
-import {useEffect} from "react";
+import {FileControl} from "./FileControl";
+import {Fab, IconButton} from "@mui/material";
 
 interface TabPanelProps {
     children?: React.ReactNode;
     index: number;
     value: number;
-    content: HTMLElement;
+    title: string;
+    control: FileControl;
 }
 
 class TabPanel extends React.Component<TabPanelProps, any> {
@@ -19,8 +21,8 @@ class TabPanel extends React.Component<TabPanelProps, any> {
     $el:any;
     componentDidMount(){
         this.$el = $(this.el);
-        this.$el.append(this.props.content);
-        this.el.style.backgroundColor = getComputedStyle(this.props.content).backgroundColor;
+        this.$el.append(this.props.control.fileDisplay);
+        this.el.style.backgroundColor = getComputedStyle(this.props.control.fileDisplay).backgroundColor;
     }
     render(){
         const { children, value, index, ...other } = this.props;
@@ -34,8 +36,44 @@ class TabPanel extends React.Component<TabPanelProps, any> {
                 aria-labelledby={`simple-tab-${index}`}
                 ref = {(el)=>this.el = el}
                 {...other}
-            />
+            >
+            </div>
         );
+    }
+}
+
+class ToggleTabPanel extends TabPanel{
+    toggled = false;
+    render(){
+        const { children, value, index, ...other } = this.props;
+        return (
+            <div
+                role="tabpanel"
+                className="tabFrame"
+                hidden={value !== index}
+                id={`simple-tabpanel-${index}`}
+                aria-labelledby={`simple-tab-${index}`}
+                ref = {(el)=>this.el = el}
+                {...other}
+            >
+                <div className = 'toggleIcon'>
+                    <Fab variant='extended' color='primary' onClick={this.togglePanel.bind(this)} className="toggleIcon" aria-label="code" size="large">
+                        <CodeIcon fontSize="medium"/>
+                    </Fab>
+                </div>
+            </div>
+        );
+    }
+    togglePanel(){
+        if(!this.toggled){
+            this.el.removeChild(this.props.control.fileDisplay);
+            this.$el.append(this.props.control.alternativeDisplay);
+            this.toggled = true;
+        }else{
+            this.el.removeChild(this.props.control.alternativeDisplay);
+            this.$el.append(this.props.control.fileDisplay);
+            this.toggled = false;
+        }
     }
 }
 
@@ -46,18 +84,19 @@ function a11yProps(index: number) {
     };
 }
 
-class BasicTabs extends React.Component<{tabTitles: string[], initialValue: number, tabContents: HTMLElement[]}, {value: number}> {
+class BasicTabs extends React.Component<{tabNames: string[], tabControls: FileControl[], initialValue: number}, {value: number}> {
     moved  = false;
     constructor(props) {
         super(props);
         this.state = {value: props.initialValue};
     }
-    componentDidUpdate(prevProps: Readonly<{ tabTitles: string[]; initialValue: number; tabContents: HTMLElement[] }>, prevState: Readonly<{ value: number }>, snapshot?: any) {
+    componentDidUpdate(prevProps: Readonly<{ tabControls: FileControl[], initialValue: number}>,
+                       prevState: Readonly<{ value: number }>, snapshot?: any) {
         this.moved = false;
     }
 
     render(){
-        const {tabTitles, tabContents, initialValue} = this.props;
+        const {tabNames, tabControls, initialValue} = this.props;
         const handleChange = (event: React.SyntheticEvent, newValue: number) => {
             this.setState({value: newValue});
             this.moved = true;
@@ -69,14 +108,17 @@ class BasicTabs extends React.Component<{tabTitles: string[], initialValue: numb
                     <Tabs value={value} onChange={handleChange} aria-label="basic tabs example"
                           variant="scrollable"
                           scrollButtons="auto">
-                        {tabTitles.map((title, index)=>{
+                        {tabNames.map((title, index)=>{
                             return <Tab className="tab" key={index} label={title} {...a11yProps(index)} />;
                         })};
                     </Tabs>
                 </Box>
-                {this.props.tabTitles.map((title, index)=>
-                    <TabPanel value={value} key ={index} index={index} content = {tabContents[index]}>
-                    </TabPanel>
+                {this.props.tabNames.map((title, index)=>{
+                    if(!tabControls[index].togglePane){
+                        return <TabPanel value={value} title={title} key ={index} index={index} control ={tabControls[index]}/>;
+                    }
+                    else return <ToggleTabPanel value={value} title={title} key ={index} index={index} control ={tabControls[index]}/>;
+                }
                 )}
             </Box>
         );

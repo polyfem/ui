@@ -4,6 +4,8 @@ import {Main} from "./main";
 // import {ConnectDragSource, useDrag} from 'react-dnd';
 
 import ReactJson from 'react-json-view'
+import {JSONFileControl} from "./FileControl";
+import SettingsForm from "./settingsForm";
 
 class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
     main: Main;
@@ -98,6 +100,7 @@ class OperationPanel extends React.Component<{ main: Main }, {value: string}> {
             </label>
                 <input className='controlBtn' type='submit'  value='run' />
         </form>
+        <SettingsForm/>
         </div>;
     }
     execute(event){
@@ -141,16 +144,16 @@ const data = {
     ],
 }
 
-class JSONPanel extends React.Component<{json: {}, main: Main}>{
+class JSONPanel extends React.Component<{json: {}, control: JSONFileControl}>{
     constructor(props) {
         super(props);
         this.updateJSON = this.updateJSON.bind(this);
     }
     render(){
-        return <ReactJson src={this.props.json} onEdit={this.updateJSON} collapsed={1}/>
+        return <ReactJson src={this.props.json} onEdit={this.updateJSON} onAdd={this.updateJSON} onDelete={this.updateJSON} collapsed={1}/>
     }
     updateJSON(json){
-        this.props.main.updateJSON(json.updated_src);
+        this.props.control.jsonUpdated(json.updated_src);
     }
 }
 

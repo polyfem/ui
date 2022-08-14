@@ -85,11 +85,22 @@ class UFile{
     }
 
     asyncRead(param: (data) => void) {
-        let  fileName = this.url.replace("\\", "%2F")
-        .replace("/", "%2F");
+        let  fileName = encodeURIComponent(this.url);
         $.get('http://localhost:8081/getFile/'+fileName, function(data) {
             param(data);
         }, 'text');
+    }
+
+    saveFile(data: string){
+
+        let req = $.ajax({
+            url: 'http://localhost:8081/writeFile/'+encodeURIComponent(this.url),
+            method: 'POST',
+            data: data, // sends fields with filename mimetype etc
+            // data: aFiles[0], // optional just sends the binary
+            processData: false, // don't let jquery process the data
+            contentType: false // let xhr set the content type
+        });
     }
 }
 
