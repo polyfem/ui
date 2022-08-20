@@ -8,7 +8,7 @@
     // Process & infer types from .js files.
     "allowJs": true,
     // Don't emit; allow Babel to transform files.
-    "noEmit": true,
+    "noEmit": false,
     "types": ["react/next", "react-dom/next"],
     "typeRoots": ["node_modules/@types"],
     "noImplicitThis": true,
