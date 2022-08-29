@@ -6,6 +6,7 @@ import {Main} from "./main";
 import ReactJson from 'react-json-view'
 import {JSONFileControl} from "./FileControl";
 import SettingsForm from "./settingsForm";
+import Menu from "@mui/material/Menu";
 
 class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
     main: Main;
@@ -33,7 +34,8 @@ class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
     }
 }
 
-class Directory extends React.Component<{ file: UFile, main: Main }, { expanded: boolean }> {
+class Directory extends React.Component<{ file: UFile, main: Main }, { expanded: boolean, anchorEl: HTMLElement, open: boolean}> {
+    fileDiv: HTMLElement;
     // dragRef: ConnectDragSource;
     constructor(props: { file: UFile, main: Main }) {
         super(props);
@@ -49,12 +51,39 @@ class Directory extends React.Component<{ file: UFile, main: Main }, { expanded:
         // )
         // this.dragRef = dragRef;
         if(props.file.name == "."){
-            this.state = {expanded: true};
+            this.state = {expanded: true, anchorEl: undefined, open: false};
             props.file.ls();
         }else{
-            this.state = {expanded: props.file.children.length!=0};
+            this.state = {expanded: props.file.children.length!=0, anchorEl: undefined, open: false};
         }
         this.toggleExpanded = this.toggleExpanded.bind(this);
+        this.handleFileRightClick = this.handleFileRightClick.bind(this);
+        this.handleClose = this.handleClose.bind(this);
+        this.handleInsert = this.handleInsert.bind(this);
+    }
+
+    handleFileRightClick(e){
+        console.log(e);
+        e.preventDefault();
+        this.setState((prevState)=>{
+            return {expanded: prevState.expanded, anchorEl: this.fileDiv, open: true};
+        })
+    }
+
+    handleClose(e){
+        this.setState((prevState)=>{
+            return {expanded: prevState.expanded, anchorEl: undefined, open: false};
+        });
+    }
+
+    handleInsert(e){
+        console.log(this.props.main.activeFileControl);
+        if(this.props.main.activeFileControl instanceof JSONFileControl){
+            this.props.main.activeFileControl.insertGeometry(this.props.file);
+        }
+        this.setState((prevState)=>{
+            return {expanded: prevState.expanded, anchorEl: undefined, open: false};
+        });
     }
 
     render() {
@@ -62,7 +91,41 @@ class Directory extends React.Component<{ file: UFile, main: Main }, { expanded:
         let name = (file.name == ".") ? "./" : file.name;
         if (!file.isDir) {
             return (<div className="dirItem" >
-                <div className="file-name" onClick={() => this.props.main.loadFile(file)}>{name}</div>
+                <div className="file-name" onClick={()=> this.props.main.loadFile(file)}
+                     onContextMenu={this.handleFileRightClick}
+                     ref={(el)=>{
+                         this.fileDiv = el;
+                     }}>{name}</div>
+                <Menu
+                    id="basic-menu"
+                    anchorEl={this.state.anchorEl}
+                    open={this.state.open}
+                    onClose={this.handleClose}
+                    MenuListProps={{
+                        'aria-labelledby': 'basic-button',
+                    }}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}
+                >
+                    <MenuItem onClick={this.handleInsert}>
+                        <ListItemIcon>
+                            <DoubleArrow fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Insert</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={this.handleClose}>
+                        <ListItemIcon>
+                            <ContentCopy fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Duplicate</ListItemText>
+                    </MenuItem>
+                </Menu>
             </div>);
         } else {
             return (<div className="dirItem">
@@ -83,36 +146,6 @@ class Directory extends React.Component<{ file: UFile, main: Main }, { expanded:
             return {expanded: !state.expanded};
         })
     }
-}
-
-class OperationPanel extends React.Component<{ main: Main }, {value: string}> {
-    constructor(props) {
-        super(props);
-        this.state = {value:""};
-        this.execute = this.execute.bind(this);
-        this.handleChange = this.handleChange.bind(this);
-    }
-    render() {
-        return <div id='operationPanel'>
-            <form onSubmit={this.execute}>
-            <label>
-                <input type="text" value={this.state.value} onChange={this.handleChange} />
-            </label>
-                <input className='controlBtn' type='submit'  value='run' />
-        </form>
-        <SettingsForm/>
-        </div>;
-    }
-    execute(event){
-        event.preventDefault();
-        this.props.main.executeCommand(this.state.value, (newResponse, response)=>{
-            this.props.main.setResponse(response);
-        });
-    }
-    handleChange(event){
-        this.setState({value: event.target.value});
-    }
-
 }
 
 class ControlPanel extends React.Component<{main: Main, execute: (command:string)=>void}>{
@@ -157,4 +190,10 @@ class JSONPanel extends React.Component<{json: {}, control: JSONFileControl}>{
     }
 }
 
-export {FilePanel, OperationPanel, JSONPanel};
+import MenuItem from '@mui/material/MenuItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ContentCopy from '@mui/icons-material/ContentCopy';
+import DoubleArrow from "@mui/icons-material/DoubleArrow";
+
+export {FilePanel, JSONPanel};

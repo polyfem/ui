@@ -92,7 +92,6 @@ class UFile{
     }
 
     saveFile(data: string){
-
         let req = $.ajax({
             url: 'http://localhost:8081/writeFile/'+encodeURIComponent(this.url),
             method: 'POST',

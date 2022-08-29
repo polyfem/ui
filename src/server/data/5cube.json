@@ -1,119 +1,159 @@
 {
-    "common": "../../common.json",
-    "authen_t1": {
-        "err_h1": 0.0012262500000000008,
-        "err_h1_semi": 2.55450797252342e-18,
-        "err_l2": 0.0012262500000000008,
-        "err_linf": 0.006131250000000003,
-        "err_linf_grad": 0.006131250000000003,
-        "err_lp": 0.004100213994886689,
-        "margin": 1e-8
-    },
-    "geometry": [
-        {
-            "mesh": "data/cube.msh",
-            "transformation": {
-                "translation": [
-                    -0.6754913330078125,
-                    0,
-                    0
-                ],
-                "scale": 0.2
-            },
-            "volume_selection": 1
-        },
-        {
-            "mesh": "data/cube.msh",
-            "transformation": {
-                "translation": [
-                    0,
-                    0.20499999821186066,
-                    0.5410344004631042
-                ],
-                "scale": 0.2
-            },
-            "volume_selection": 1
-        },
-        {
-            "mesh": "data/cube.msh",
-            "transformation": {
-                "translation": [
-                    0,
-                    0.41,
-                    0
-                ],
-                "scale": 0.2
-            },
-            "volume_selection": 1
-        },
-        {
-            "mesh": "data/cube.msh",
-            "transformation": {
-                "translation": [
-                    0,
-                    0.615,
-                    0
-                ],
-                "scale": 0.2
-            },
-            "volume_selection": 1
-        },
-        {
-            "mesh": "data/cube.msh",
-            "transformation": {
-                "translation": [
-                    0,
-                    0.82,
-                    0
-                ],
-                "scale": 0.2
-            },
-            "volume_selection": 1
-        },
-        {
-            "mesh": "data/plane.obj",
-            "is_obstacle": true,
-            "transformation": {
-                "translation": [
-                    0,
-                    -0.315,
-                    0
-                ],
-                "dimensions": [
-                    2,
-                    0,
-                    2
-                ]
-            }
-        }
-    ],
-    "time": {
-        "tend": 5,
-        "time_steps": 200
-    },
-    "boundary_conditions": {
-        "rhs": [
-            0,
-            9.81,
-            0
-        ]
-    },
-    "materials": [
-        {
-            "id": 1,
-            "E": 100000,
-            "nu": 0.4,
-            "rho": 1000,
-            "type": "NeoHookean"
-        }
-    ],
-    "output": {
-        "paraview": {
-            "file_name": "5-cubes.pvd",
-            "options": {
-                "velocity": true,
-                "acceleration": true
-            }
-        }
-    }
+	"common": "../../common.json",
+	"authen_t1": {
+		"err_h1": 0.0012262500000000008,
+		"err_h1_semi": 2.55450797252342e-18,
+		"err_l2": 0.0012262500000000008,
+		"err_linf": 0.006131250000000003,
+		"err_linf_grad": 0.006131250000000003,
+		"err_lp": 0.004100213994886689,
+		"margin": 1e-8
+	},
+	"geometry": [
+		{
+			"mesh": "data/cube.msh",
+			"transformation": {
+				"translation": [
+					-0.9432305693626404,
+					0,
+					0
+				],
+				"scale": [
+					0.20000000298023224,
+					2.632462978363037,
+					0.20000000298023224
+				]
+			},
+			"volume_selection": 1
+		},
+		{
+			"mesh": "data/cube.msh",
+			"transformation": {
+				"translation": [
+					0,
+					0.20499999821186066,
+					0.3763817846775055
+				],
+				"scale": [
+					0.6962533593177795,
+					0.6962533593177795,
+					0.2747654318809509
+				]
+			},
+			"volume_selection": 1
+		},
+		{
+			"mesh": "data/cube.msh",
+			"transformation": {
+				"translation": [
+					1.0681440830230713,
+					0.4099999964237213,
+					-0.9728732705116272
+				],
+				"scale": [
+					0.4813764691352844,
+					0.9809361100196838,
+					0.03181519731879234
+				]
+			},
+			"volume_selection": 1
+		},
+		{
+			"mesh": "data/cube.msh",
+			"transformation": {
+				"translation": [
+					-5.478258728981018,
+					0.6150000095367432,
+					-1.1431621313095093
+				],
+				"scale": [
+					1.2524027824401855,
+					0.740979790687561,
+					1.2524027824401855
+				]
+			},
+			"volume_selection": 1
+		},
+		{
+			"mesh": "data/cube.msh",
+			"transformation": {
+				"translation": [
+					1.4052726030349731,
+					-0.058282844722270966,
+					0.0555717870593071
+				],
+				"scale": [
+					1.6716394424438477,
+					0.20000000298023224,
+					1.2571494579315186
+				]
+			},
+			"volume_selection": 1
+		},
+		{
+			"mesh": "data/plane.obj",
+			"is_obstacle": true,
+			"transformation": {
+				"translation": [
+					0,
+					-0.1867651641368866,
+					0
+				],
+				"dimensions": [
+					2,
+					0,
+					2
+				],
+				"scale": [
+					0.46925586462020874,
+					0.46925586462020874,
+					0.46925586462020874
+				]
+			}
+		},
+		{
+			"mesh": "sol.vtu",
+			"transformation": {
+				"translation": [
+					0.3709389865398407,
+					0.6925218105316162,
+					0.971096396446228
+				],
+				"scale": [
+					40.98335647583008,
+					10.08761978149414,
+					58.664093017578125
+				]
+			}
+		}
+	],
+	"time": {
+		"tend": 5,
+		"time_steps": 200
+	},
+	"boundary_conditions": {
+		"rhs": [
+			0,
+			9.81,
+			0
+		]
+	},
+	"materials": [
+		{
+			"id": 1,
+			"E": 100000,
+			"nu": 0.4,
+			"rho": 1000,
+			"type": "NeoHookean"
+		}
+	],
+	"output": {
+		"paraview": {
+			"file_name": "5-cubes.pvd",
+			"options": {
+				"velocity": true,
+				"acceleration": true
+			}
+		}
+	}
 }

@@ -7,6 +7,7 @@ import Vector3 = BABYLON.Vector3;
 import ArcRotateCamera = BABYLON.ArcRotateCamera;
 import {UFile} from "./server";
 import UtilityLayerRenderer = BABYLON.UtilityLayerRenderer;
+import {GeometricOperation} from "./fileControl";
 
 class App {
     scene: Scene;
@@ -16,6 +17,8 @@ class App {
     camera: ArcRotateCamera;
     dom: HTMLElement;
     json: {};
+    revertOperation: ()=>void;
+    redoOperation: ()=>void;
     //The mesh that is under active control
     activeMesh: BABYLON.AbstractMesh;
     activeMeshKey: string;
@@ -71,6 +74,14 @@ class App {
             if(e.key=='Escape'){
                 this.gizmoManager.attachToMesh(undefined);
             }
+            if (e.ctrlKey && e.key === "z") {
+                if(this.revertOperation!=undefined)
+                    this.revertOperation();
+            }
+            if (e.ctrlKey && e.key === "y") {
+                if(this.redoOperation!=undefined)
+                    this.redoOperation();
+            }
         }
         this.gizmoManager.attachableMeshes = [];
         this.gizmoManager.scaleGizmoEnabled=true;
@@ -89,10 +100,17 @@ class App {
         console.log(fileName);
         let fileURL = url.replace("\\", "%2F")
             .replace("/", "%2F");
-        const model = await BABYLON.SceneLoader.ImportMeshAsync(
+        let fileType = fileName.substring(fileName.lastIndexOf("."), fileName.length);
+
+        const model = (fileType!='.glb')?await BABYLON.SceneLoader.ImportMeshAsync(
             '',
             "http://127.0.0.1:8081/mesh-convert/"+fileURL+"/",
             fileName.substring(0, fileName.lastIndexOf("."))+'.obj',
+            this.scene,
+        ):await BABYLON.SceneLoader.ImportMeshAsync(
+            '',
+            "http://127.0.0.1:8081/getFile/",
+            fileName,
             this.scene,
         );
         console.log(model);
@@ -142,7 +160,8 @@ class App {
                 this.updateCameraView();
         });
     }
-    async loadScene(dir: string, json: any, jsonUpdateCallback:()=>void) {
+    async loadScene(dir: string, json: any, editCallback:(operation: GeometricOperation)=>void,
+                    revertCallback:()=>void, redoCallback:()=>void) {
         this.json = json;
         let geometries = json['geometry'];
         console.log(geometries);
@@ -167,15 +186,31 @@ class App {
         this.gizmoManager.gizmos.scaleGizmo.onDragEndObservable.add(()=>{
             let geometry = this.json['geometry'][this.activeMeshKey];
             let scaling = this.activeMesh.scaling;
+
+            let operation = new GeometricOperation(this.activeMeshKey);
+            operation.operation = 'scale';
+            let orgScale = geometry.transformation.scale;
+            orgScale = (orgScale instanceof Array)?orgScale:[orgScale, orgScale, orgScale];
+            operation.parameters = [scaling.x-orgScale[0], scaling.y-orgScale[1], scaling.z-orgScale[2]];
+
             geometry.transformation.scale = [scaling.x,scaling.y, scaling.z];
-            jsonUpdateCallback();
+            editCallback(operation);
         })
         this.gizmoManager.gizmos.positionGizmo.onDragEndObservable.add(()=>{
             let geometry = this.json['geometry'][this.activeMeshKey];
             let position = this.activeMesh.position;
+
+            let operation = new GeometricOperation(this.activeMeshKey);
+            operation.operation = 'position';
+            let orgPos = geometry.transformation.translation;
+            orgPos = (orgPos instanceof Array)?orgPos:[orgPos, orgPos, orgPos];
+            operation.parameters = [position.x-orgPos[0], position.y-orgPos[1], position.z-orgPos[2]];
+
             geometry.transformation.translation = [position.x,position.y, position.z];
-            jsonUpdateCallback();
+            editCallback(operation);
         })
+        this.revertOperation = revertCallback;
+        this.redoOperation = redoCallback;
     }
     loadTransformation(geometry:{}, meshes: BABYLON.AbstractMesh[]){
         if(geometry==undefined){
@@ -206,6 +241,28 @@ class App {
             let meshes = this.meshes[key];
             this.loadTransformation(geometry, meshes);
         }
+    }
+
+    async insertJSONGeometry(file: UFile, callback:(json: {})=>void) {
+        let geometry = {
+            "mesh": file.url.replace("\\", "/"),
+            "transformation": {
+                "translation": 0,
+                "scale": 1
+            }
+        }
+        this.json["geometry"].push(geometry);
+        let meshes = await this.loadConvertObj(geometry['mesh']);
+        console.log(meshes);
+        let key = this.json["geometry"].length-1;
+        this.meshes[key] = meshes;
+        let gizmoManager = this.gizmoManager;
+        gizmoManager.attachableMeshes.push(...meshes);
+        meshes.map((mesh) => {
+            this.meshToKey.set(mesh, key);
+        });
+        this.loadTransformation(geometry, meshes);
+        callback(this.json);
     }
 }
 export {App};

@@ -1,6 +1,7 @@
 import './graphics';
 import {PolyFEM, UFile, UFileSystem} from './server';
-import {FilePanel, JSONPanel, OperationPanel} from './ui';
+import {FilePanel, JSONPanel} from './ui';
+import OperationPanel from './OperationPanel';
 import {createElement} from "react";
 import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
@@ -17,11 +18,18 @@ class Main{
     fileRoot: Root;
     container: HTMLElement;
     containerRoot: Root;
+    operationRoot: Root;
     polyFEM: PolyFEM;
     responseContainer:HTMLElement;
     responseRoot: Root;
     fileNames: string[] = [];
     fileControls: FileControl[]=[];
+    /**
+     * This is the active file control that is being displayed,
+     * using this reference one can insert contents into the active
+     * instance
+     */
+    activeFileControl: FileControl;
 
     constructor(){
         this.fs = new UFileSystem(this.rootURL);
@@ -38,11 +46,11 @@ class Main{
             this.responseContainer)
         this.fileNames.push("console");
         this.fileControls.push(console);
+        this.activeFileControl = console;
 
         this.container = document.getElementById("container");
         this.containerRoot = createRoot(this.container);
-        this.container.style.zIndex = "1";
-        let props = {tabNames: this.fileNames, tabControls:this.fileControls, initialValue: 0};
+        let props = {tabNames: this.fileNames, tabControls:this.fileControls, initialValue: 0, main: this};
         this.containerRoot.render(createElement(BasicTabs, props));
 
         let fp = createElement(FilePanel, {'main': this});
@@ -50,8 +58,21 @@ class Main{
         this.fileRoot.render(fp);
 
         let op = createElement(OperationPanel, {'main': this});
-        let operationRoot = createRoot(document.getElementById("rightPanel"));
-        operationRoot.render(op);
+        this.operationRoot = createRoot(document.getElementById("rightPanel"));
+        this.operationRoot.render(op);
+    }
+
+    /**
+     * Inform the instance of file control corresponding to the
+     * opened file currently displayed
+     * @param index
+     */
+    setActive(index: number){
+        this.activeFileControl = this.fileControls[index];
+        if(this.activeFileControl instanceof JSONFileControl){
+            let op = createElement(OperationPanel, {'main': this});
+            this.operationRoot.render(op);
+        }
     }
     refreshFilePanel(){
         let fp = createElement(FilePanel, {'main': this});
@@ -60,7 +81,7 @@ class Main{
     loadFile(file: UFile){
         let index = this.getFileIndex(file);
         if(index!=-1){
-            let props = {tabNames: this.fileNames, tabControls: this.fileControls, initialValue: index};
+            let props = {tabNames: this.fileNames, tabControls: this.fileControls, initialValue: index, main: this};
             this.containerRoot.render(createElement(BasicTabs, props));
         }else{
             let fileControl = this.getFileDisplay(file);
@@ -68,7 +89,8 @@ class Main{
                 return;
             this.fileNames.push(file.name);
             this.fileControls.push(fileControl);
-            let props = {tabNames: this.fileNames, tabControls: this.fileControls, initialValue: this.fileControls.length-1};
+            let props = {tabNames: this.fileNames, tabControls: this.fileControls,
+                initialValue: this.fileControls.length-1, main: this};
             this.containerRoot.render(createElement(BasicTabs, props));
         }
     }

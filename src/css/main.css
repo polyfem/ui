@@ -67,9 +67,6 @@ input:focus, div:focus, div:focus-within > *, pre:focus-within > * {
 #container{
     grid-column: 3 / span 1;
     grid-row: 2 / span 2;
-}
-
-#container{
     overflow: hidden;
     /*background: #2d2d2d;*/
     background: white;

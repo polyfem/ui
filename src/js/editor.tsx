@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import * as $ from "jquery";
 import {FileControl} from "./FileControl";
 import {Fab, IconButton} from "@mui/material";
+import {Main} from "./main";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -84,7 +85,7 @@ function a11yProps(index: number) {
     };
 }
 
-class BasicTabs extends React.Component<{tabNames: string[], tabControls: FileControl[], initialValue: number}, {value: number}> {
+class BasicTabs extends React.Component<{tabNames: string[], tabControls: FileControl[], initialValue: number, main: Main}, {value: number}> {
     moved  = false;
     constructor(props) {
         super(props);
@@ -102,6 +103,7 @@ class BasicTabs extends React.Component<{tabNames: string[], tabControls: FileCo
             this.moved = true;
         };
         let value = (this.moved)?this.state.value:this.props.initialValue;
+        this.props.main.setActive(value);
         return (
             <Box id="tabBox" sx={{ width: '100%', height: '100%'}}>
                 <Box className="tabBox" sx={{ borderBottom: 1, borderColor: 'divider'}}>
