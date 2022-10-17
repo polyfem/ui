@@ -32,17 +32,20 @@ input:focus, div:focus, div:focus-within > *, pre:focus-within > * {
     height: 100%;
     display: grid;
     grid-template-columns: minmax(10%, max-content) 1.5pt 1fr 1.5pt 25%;
-    grid-template-rows: 30pt 1fr 1fr;
+    grid-template-rows: 35pt 1fr 1fr;
 }
 
 #ui-name{
     grid-column: 1 / span 5;
     grid-row: 1 / span 1;
-    color: #f3f3f3;
+    color: #2b579a;
+    font-size: 18pt;
     font-family: "Roboto", sans-serif;
-    background: #595d5e;
-    text-align: center;
-    justify-items: center;
+    border-bottom: 1pt solid #999999;
+    display: flex;
+    align-items: center;
+    margin-left: 30pt;
+    padding-left: 20pt;
 }
 
 .divider{
@@ -167,3 +170,18 @@ code{
     margin: 20pt;
 }
 
+legend {
+    background-color: #fff;
+    color: #2b579a;
+    padding: 3px 6px;
+}
+
+input {
+    margin: .4rem;
+}
+
+fieldset{
+    border-style: wave;
+    border-color: gray;
+    border-radius: 3pt;
+}

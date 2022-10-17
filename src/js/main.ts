@@ -34,19 +34,20 @@ class Main{
     constructor(){
         this.fs = new UFileSystem(this.rootURL);
         this.polyFEM = new PolyFEM();
-        this.executeCommand = this.executeCommand.bind(this);
+        console.log(this.fs.fileRoot.url);
         this.loadUI();
+        this.executeCommand = this.executeCommand.bind(this);
     }
     loadUI(){
         this.responseContainer = document.createElement('div');
         this.responseContainer.id = 'responsePanel';
         this.responseRoot = createRoot(this.responseContainer);
         //The UFile parameter for console here is purely informational, for now, it is not used by any entities
-        let console = new FileControl("console", new UFile("std.out", "console", false),
+        let c = new FileControl("console", new UFile("std.out", "console", false),
             this.responseContainer)
         this.fileNames.push("console");
-        this.fileControls.push(console);
-        this.activeFileControl = console;
+        this.fileControls.push(c);
+        this.activeFileControl = c;
 
         this.container = document.getElementById("container");
         this.containerRoot = createRoot(this.container);
@@ -57,9 +58,13 @@ class Main{
         this.fileRoot = createRoot(document.getElementById("filePanel"));
         this.fileRoot.render(fp);
 
-        let op = createElement(OperationPanel, {'main': this});
-        this.operationRoot = createRoot(document.getElementById("rightPanel"));
-        this.operationRoot.render(op);
+
+        let configFile = new UFile('./binConfigs.json','binConfigs.json',false);
+        configFile.asyncRead((data)=>{
+            let op = createElement(OperationPanel, {'main': this, 'configs':JSON.parse(data)});
+            this.operationRoot = createRoot(document.getElementById("rightPanel"));
+            this.operationRoot.render(op);
+        });
     }
 
     /**
@@ -146,8 +151,8 @@ class Main{
     loadFileRoot():UFile{
         return this.fs.fileRoot;
     }
-    executeCommand(command: string, callback: (newResponse, response)=>void){
-        this.polyFEM.execute(command, callback);
+    executeCommand(bin: string, command: string, params: string[], callback: (newResponse, response)=>void){
+        this.polyFEM.execute(bin, command, params, callback);
     }
     setResponse(response: string){
         let cp = createElement(CodePanel, {'code': response, 'language':'javascript',

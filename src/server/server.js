@@ -90,10 +90,14 @@ function mountFileSystem(rootURL){
             }
         });
     });
-    app.put('/execute/:target', function (req, res) {
+    app.put('/execute/:bin/:target/:params', function (req, res) {
         let target = req.params['target'];
-        let command = path.join(rootURL, 'bin', 'PolyFEM.exe')
-        let child = spawn(command, ['--json', decodeURI(target), '--cmd']);
+        let params = JSON.parse(req.params['params']);
+        console.log(params);
+        let bin = req.params['bin'];
+        // let command = path.join(rootURL, 'bin', 'polyfem.exe');
+        params.push(decodeURI(target));
+        let child = spawn(bin, params);
         child.stdout.pipe(res);
         // Equivalently for pipe():
         // child.stdout.on('data', function(data) {
@@ -112,7 +116,6 @@ function mountFileSystem(rootURL){
         const stream = fs.createWriteStream(fileName);
         stream.on('open', () => req.pipe(stream));
     });
-    // app.loadMesh()
 }
 
 mountFileSystem("./");

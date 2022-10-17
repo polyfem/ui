@@ -24,10 +24,11 @@ class PolyFEM{
      * Executes the command by passing the server the json,
      * opens a stream for service updates
      */
-    execute(command: string, callback:(newResponse, response)=>void): void{
+    execute(bin: string, command: string, params: string[], callback:(newResponse, response)=>void): void{
         let last_response_len = -1;
         $.ajax({
-            url: 'http://localhost:8081/execute/'+encodeURIComponent(command),
+            url: 'http://localhost:8081/execute/'+encodeURIComponent(bin)+'/'+encodeURIComponent(command)+
+            '/'+encodeURIComponent(JSON.stringify(params)),
             type: 'PUT',
             xhrFields:{
                 onprogress: function(e)
