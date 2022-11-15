@@ -176,6 +176,28 @@ legend {
     padding: 3px 6px;
 }
 
+.paramPanel{
+    background: rgba(218, 218, 218, 0.27);
+    white-space: pre;
+    min-width: 30%;
+    min-height: 20%;
+    position: absolute;
+    left:0;
+    bottom:0;
+    padding: 5pt;
+    font-size: 11pt;
+}
+
+.iconPanel{
+    min-width: 40%;
+    height: 30pt;
+    position: absolute;
+    left:30%;
+    top:0;
+    padding: 5pt;
+    font-size: 11pt;
+}
+
 input {
     margin: .4rem;
 }

@@ -10,6 +10,7 @@ class UFileSystem{
             rootURL.substring(rootURL.lastIndexOf('/')+1), true);
         this.fileRoot.ls();
     }
+    //Unimplemented
     getFile(dir:UFile, filename: string):UFile{
         return undefined;
     }
