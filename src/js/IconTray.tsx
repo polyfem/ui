@@ -1,6 +1,7 @@
 import OpenWithIcon from '@mui/icons-material/OpenWith';
 import HighlightAltIcon from '@mui/icons-material/HighlightAlt';
 import Grid3x3Icon from '@mui/icons-material/Grid3x3';
+import IconButton from '@mui/material/IconButton';
 import * as React from "react";
 import {App} from "./graphics";
 import {Paper} from "@mui/material";
@@ -19,7 +20,9 @@ class IconTray extends React.Component<{ main: App}, { target: string }> {
         }}>
             <OpenWithIcon fontSize="small"/>
             <HighlightAltIcon fontSize="small"/>
-            <Grid3x3Icon fontSize="small"/>
+            <IconButton>
+                <Grid3x3Icon fontSize="small"/>
+            </IconButton>
         </Paper>;
     }
 }

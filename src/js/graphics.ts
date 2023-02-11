@@ -27,11 +27,14 @@ class App {
     json: {};
     revertOperation: ()=>void;
     redoOperation: ()=>void;
-    //The mesh that is under active control
+    //The mesh that is under active transformation
     activeMesh: BABYLON.AbstractMesh;
     activeMeshKey: string;
+
+    selectedBoundary: Mesh=undefined;
+
     paramPanel: ParamPanel;
-    iconPanel: IconPanel
+    iconPanel: IconPanel;
     canvas: HTMLCanvasElement;
     hl: BABYLON.HighlightLayer;
     oc: OrientationCube;
@@ -120,7 +123,7 @@ class App {
         this.gizmoManager.positionGizmoEnabled = true;
         this.gizmoManager.gizmos.scaleGizmo.sensitivity=6;
         this.gizmoManager.scaleGizmoEnabled= false;
-        this.addHighlight();
+        this.addHighlightLayer();
         // run the main render loop
         engine.runRenderLoop(() => {
             this.scene.render();
@@ -129,23 +132,43 @@ class App {
         });
     }
 
-    addHighlight(){
+    addHighlightLayer(){
         // Add the highlight layer.
         let hl = new BABYLON.HighlightLayer("h1", this.scene);
         hl.outerGlow = false;
         this.hl = hl;
         let scene = this.scene;
-        let onPointerMove = function(e) {
+        let highlightedObject: BABYLON.AbstractMesh;
+        let onPointerMove = (e)=> {
             let result = scene.pick(scene.pointerX, scene.pointerY);
             if (result.hit) {
                 /*if(pickedMesh != result.pickedMesh)
                     hl.removeMesh(pickedMesh);
                 */
                 let pickedMesh = result.pickedMesh;
+                if(highlightedObject!=undefined){
+                    highlightedObject.disableEdgesRendering();
+                }
+                highlightedObject = pickedMesh;
+                pickedMesh.enableEdgesRendering();
+                pickedMesh.edgesWidth = 2.0;
+                pickedMesh.edgesColor = new BABYLON.Color4(0, 1, 1, 1);
+            }
+        };
+        let onPointerClick = (e)=> {
+            let result = scene.pick(scene.pointerX, scene.pointerY);
+            hl.removeAllMeshes();
+            if(this.selectedBoundary!=undefined)
+                this.hl.addMesh(this.selectedBoundary, BABYLON.Color3.FromInts(0, 255, 255), false);
+            if (result.hit) {
+                /*if(pickedMesh != result.pickedMesh)
+                    hl.removeMesh(pickedMesh);
+                */
+                let pickedMesh = result.pickedMesh;
                 console.log(pickedMesh);
-                hl.removeAllMeshes();
                 if (result.pickedMesh instanceof Mesh) {
-                    hl.addMesh(result.pickedMesh, BABYLON.Color3.FromInts(255, 150, 0), false);
+                    this.selectBoundaries(0,Math.PI/4, result.pickedMesh);
+                    this.hl.addMesh(result.pickedMesh, BABYLON.Color3.FromInts(255, 150, 0), false);
                 }
             }
         };
@@ -153,8 +176,57 @@ class App {
         //     hl.blurHorizontalSize = 1;
         //     hl.blurVerticalSize = 1;
         // });
-        this.canvas.addEventListener("pointermove", onPointerMove, false);
+        this.canvas.addEventListener("pointermove", onPointerClick.bind(this), false);
+        // this.canvas.addEventListener("click", onPointerClick.bind(this));
     }
+
+    /**
+     * Selected all surfaces that have normals between alpha0 and alpha1 and add them to
+     * the highlight layer
+     * @param alpha0 the alpha angles between which surface with normals are selected
+     * @param alpha1 the alpha angles between which surface with normals are selected
+     * @param mesh
+     */
+    selectBoundaries(alpha0:number, alpha1:number, mesh: Mesh){
+        let positions = mesh.getPositionData();
+        let indices = mesh.getIndices();
+        if(indices == null||this.selectedBoundary!=undefined)
+            return;
+        let newIndices = [];
+        //Create a new mesh with all the sub-meshes satisfying the normal conditions
+        for(let i = 0; i<indices.length; i+=3){
+            let index1 = indices[i];
+            let vec1 = new Vector3(positions[index1*3], positions[index1*3+1], positions[index1*3+2]);
+            let index2 = indices[i+1];
+            let vec2 = new Vector3(positions[index2*3], positions[index2*3+1], positions[index2*3+2]);
+            let index3 = indices[i+2];
+            let vec3 = new Vector3(positions[index3*3], positions[index3*3+1], positions[index3*3+2]);
+            let normal = vec3.subtractInPlace(vec1).cross(vec2.subtractInPlace(vec1));
+            let alpha = Math.acos(normal.normalize().y);
+            if(alpha>=alpha0&&alpha<=alpha1){
+                newIndices.push(index1, index2, index3);
+            }
+        }
+        let newMesh = new BABYLON.Mesh(mesh.name+"-selection", this.scene);
+        let normals = [];
+
+        BABYLON.VertexData.ComputeNormals(positions, newIndices, normals);
+
+        let vertexData = new BABYLON.VertexData();
+        vertexData.positions = positions;
+        vertexData.indices = newIndices;
+        // vertexData.normals = normals;
+        vertexData.applyToMesh(newMesh);
+        newMesh.position = mesh.position;
+        newMesh.scaling = mesh.scaling;
+        //Make the boundary only show its highlight layer
+        // const matc = new BABYLON.StandardMaterial("matc", this.scene);
+        // matc.depthFunction = BABYLON.Constants.ALWAYS;
+        // newMesh.material = matc;
+        //Add new mesh to the highlight layer
+        this.selectedBoundary = newMesh;
+    }
+
     async loadConvertObj(url: string){
         //Standard call: http://127.0.0.1:8081/mesh-convert/data%2Fsol.vtu/sol.obj
         let fileName = url.split('/').pop().split('\\').pop();
