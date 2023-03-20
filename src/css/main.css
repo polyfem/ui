@@ -17,7 +17,7 @@ input:focus, div:focus, div:focus-within > *, pre:focus-within > * {
     outline: none;
 }
 
-#root {
+#root-div {
     --blue: #3abdff;
     --blueShadow: #007fbe;
     --mainHighlight: #2b579a;
@@ -30,9 +30,6 @@ input:focus, div:focus, div:focus-within > *, pre:focus-within > * {
     --active-faded: rgb(255, 140, 0);
     --light-gray: #c6c6c6;
     height: 100%;
-    display: grid;
-    grid-template-columns: minmax(10%, max-content) 1.5pt 1fr 1.5pt 25%;
-    grid-template-rows: 35pt 1fr 1fr;
 }
 
 #ui-name{
