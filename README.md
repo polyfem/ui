@@ -14,8 +14,8 @@ in a way that is logically straightforward and organized.
 
 ## Entry Points
 **_For sake of convenience, all related modules should hold reference to the main UI instance. 
-All individual visual/logical components should hold references to the files that they are 
-managing when available._**
+All individual visual/logical components should hold references to the file that they are 
+managing by referencing a FileHandle and its unique fileId (if applicable)._**
 
 _src/js/main.ts:_
 
@@ -120,6 +120,9 @@ class GeometricOperation{
     }
 }
 ```
+### server/*
+The local REST server is built in Node.js and technically is independent from the structural hierarchy of the entire Front End
+(which is everything above). So its folder should be separated from the 'src/' source folder.
 
 ## Debugging
 * `npm` commands now needs to be run with `--force` due to unknown versioning issues in React.
