@@ -29,7 +29,7 @@ gulp.task(
         return browserify({
             basedir: ".",
             debug: true,
-            entries: ["src/js/main.ts"],
+            entries: ["src/ts/main.ts"],
             cache: {},
             packageCache: {},
         }).transform("babelify",

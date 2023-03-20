@@ -16,7 +16,5 @@
     "skipLibCheck": true,
     "jsx": "react"
   },
-  "include": [
-    "src/js-"
-  ]
+  "exclude": ["src/obsolete"]
 }
