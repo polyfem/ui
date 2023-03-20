@@ -42,6 +42,7 @@
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.2.5",
     "@mui/joy": "^5.0.0-alpha.71",
+    "@mui/lab": "^5.0.0-alpha.123",
     "@mui/material": "^5.8.5",
     "@types/react": "^18.0.12",
     "@types/react-dom": "^18.0.5",

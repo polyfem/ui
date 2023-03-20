@@ -44,7 +44,7 @@ class TabPane extends React.Component<{ui:UI, rootId: string}, any>{
                     <Tab color='primary' variant='soft'>Second tab</Tab>
                     <Tab color='primary' variant='soft'>Third tab</Tab>
                 </TabList>
-                <div  style={{height:'100%', overflow: 'auto' }}>
+                <div style={{height:`${window.innerHeight*0.75}px`, overflow: 'auto' }}>
                 <TabPanel value={0} sx={{ p: 2 }}>
                         <Typography paragraph>
                             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
