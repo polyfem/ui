@@ -1,5 +1,5 @@
 import {UFileSystem} from "./server";
-import {Visual} from "./components/visual";
+import {Visual} from "./visual";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import $ from 'jquery';
@@ -13,9 +13,6 @@ class UI{
     }
     mountFileSystem(url: string){
         this.fs = new UFileSystem(url);
-        //Export file system for testing
-        //@ts-ignore
-        window.fs = this.fs;
     }
     loadVisual(rootId: string){
         let component = React.createElement(Visual, {ui:this, rootId});

@@ -125,4 +125,4 @@ The local REST server is built in Node.js and technically is independent from th
 (which is everything above). So its folder should be separated from the 'src/' source folder.
 
 ## Debugging
-* `npm` commands now needs to be run with `--force` due to unknown versioning issues in React.
+~~* `npm` commands now needs to be run with `--force` due to unknown versioning issues in React.~~
