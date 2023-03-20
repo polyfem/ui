@@ -1,4 +1,4 @@
-import UI from "../main";
+import {UI} from "../main";
 import * as React from "react";
 import Tabs from '@mui/joy/Tabs';
 import TabList from '@mui/joy/TabList';
@@ -9,6 +9,7 @@ import { styled } from '@mui/material/styles';
 import MuiGrid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import SpecPane from "./SpecPane";
 
 const Grid = styled(MuiGrid)(({ theme }) => ({
     width: '100%',
@@ -23,7 +24,7 @@ class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
     render(){
         return <Grid container>
             <Grid item xs={3}>
-                ...
+                <SpecPane {...{...this.props, specRoot:this.props.ui.spec}}/>
             </Grid>
             <Divider orientation="vertical" flexItem>
                 <KeyboardDoubleArrowRightIcon/>

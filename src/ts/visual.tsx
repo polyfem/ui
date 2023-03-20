@@ -1,4 +1,4 @@
-import UI from "./main";
+import {UI} from "./main";
 import * as React from "react";
 import {ToolKit} from "./components/ToolKit";
 import NavBar from "./components/NavBar";

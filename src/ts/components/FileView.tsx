@@ -4,7 +4,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import TreeItem from '@mui/lab/TreeItem';
 import {Box} from "@mui/material";
-import UI from "../main";
+import {UI} from "../main";
 
 export default function FileView(props: {ui: UI, rootId: string}) {
     return (

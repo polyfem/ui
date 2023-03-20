@@ -7,6 +7,15 @@ import $ from 'jquery';
 class UI{
     fs: UFileSystem;
     vs: Visual;
+    spec: Spec ={
+        name:'Spec root',
+        isLeaf:true,
+        subNodes:[],
+        //Currently selected field
+        field: "as",
+        type: "number",
+        selection: []
+    }
     constructor(){
         this.mountFileSystem('../server-root');
         this.loadVisual('root-div');
@@ -24,4 +33,15 @@ $(()=>{
     new UI();
 })
 
-export default UI;
+//Recursive structure of a JSON Specification tree
+interface Spec{
+    name: string;
+    isLeaf: boolean;
+    subNodes: Spec[];
+    //Currently selected field
+    field: string;
+    type: string;
+    selection: string[];
+}
+
+export {UI, Spec};

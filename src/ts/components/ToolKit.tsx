@@ -1,4 +1,4 @@
-import UI from "../main";
+import {UI} from "../main";
 import * as React from "react";
 import List from "@mui/material/List";
 import ListSubheader from "@mui/material/ListSubheader";
