@@ -8,8 +8,7 @@ var buffer = require("vinyl-buffer");
 var paths = {
     pages: ["src/*.html"],
     stylesheets: ["src/css/**/*.*"],
-    assets: ["assets/*.png"],
-    prism: ["src/prism/*.*"]
+    assets: ["assets/*.png"]
 };
 gulp.task("copy-html", function () {
     return gulp.src(paths.pages).pipe(gulp.dest("dist"));
@@ -20,32 +19,23 @@ gulp.task("copy-css", function () {
 gulp.task("copy-assets", function () {
     return gulp.src(paths.assets).pipe(gulp.dest("dist/assets"));
 });
-gulp.task("copy-prism", function(){
-    return gulp.src(paths.prism).pipe(gulp.dest("dist/prism"));
-})
+
 gulp.task(
     "default",
-    gulp.series(gulp.parallel("copy-html", "copy-css", "copy-assets", "copy-prism"), function () {
+    gulp.series(gulp.parallel("copy-html", "copy-css", "copy-assets"), function () {
         return browserify({
             basedir: ".",
             debug: true,
             entries: ["src/ts/main.ts"],
             cache: {},
             packageCache: {},
-        }).transform("babelify",
-            {
-                presets: ["@babel/preset-env"],
-                plugins:[["prismjs",{
-                    "languages":["json", "javascript", "c++"],
-                    "plugins": ["line-numbers", "show-language"],
-                    "theme": "tomorrow-night"
-                }]]})
+        })
             .plugin(tsify, {extensions:['js','ts']})
             .bundle()
             .pipe(source("main.js"))
             .pipe(buffer())
             .pipe(sourcemaps.init({ loadMaps: true }))
-            .pipe(sourcemaps.write("./"))
+            // .pipe(sourcemaps.write("./"))
             .pipe(gulp.dest("dist/js"));
     })
 );

@@ -7,7 +7,8 @@ const cors = require('cors');
 
 function mountFileSystem(rootURL){
     app.get('/ls/:dir', function (req, res) {
-        let root = req.params.dir.substring(1);
+        let root = req.params.dir;
+        console.log(root);
         let options = {
             headers: {
                 'x-timestamp': Date.now(),

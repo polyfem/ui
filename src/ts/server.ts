@@ -1,5 +1,4 @@
-import * as $ from "jquery";
-import "path";
+import $ from "jquery";
 
 class UFileSystem{
     fileRoot: UFile;
@@ -10,7 +9,6 @@ class UFileSystem{
             rootURL.substring(rootURL.lastIndexOf('/')+1), true);
         this.fileRoot.ls();
     }
-    //Unimplemented
     getFile(dir:UFile, filename: string):UFile{
         return undefined;
     }
@@ -25,14 +23,15 @@ class PolyFEM{
      * Executes the command by passing the server the json,
      * opens a stream for service updates
      */
-    execute(bin: string, command: string, params: string[], callback:(newResponse, response)=>void): void{
+    execute(bin: string, command: string, params: string[], callback:(newResponse: string, response: string)=>void): void{
         let last_response_len = -1;
+        //@ts-ignore
         $.ajax({
             url: 'http://localhost:8081/execute/'+encodeURIComponent(bin)+'/'+encodeURIComponent(command)+
             '/'+encodeURIComponent(JSON.stringify(params)),
             type: 'PUT',
             xhrFields:{
-                onprogress: function(e)
+                onprogress: function(e:any)
                 {
                     let this_response, response = e.currentTarget.response;
                     if(last_response_len === -1)
@@ -48,11 +47,18 @@ class PolyFEM{
                     callback(this_response, response);
                 }
             },
-            success: function(result) {
+            success: function(result:string) {
                 console.log(result);
             }
         });
     }
+}
+
+interface UInf{
+    url: string;
+    name: string;
+    isDir:boolean;
+    isSymbolicLink: boolean;
 }
 
 class UFile{
@@ -60,7 +66,7 @@ class UFile{
     name: string;
     isDir: boolean = false;
     children: UFile[] = [];
-    constructor(url: string, name: string, isDir){
+    constructor(url: string, name: string, isDir: boolean){
         this.url = url;
         this.name = name;
         this.isDir = isDir;
@@ -68,17 +74,13 @@ class UFile{
     ls(){
         if(!this.isDir)
             return;
+        //@ts-ignore
         $.getJSON({
             type: "GET",
-            url: "http://localhost:8081/ls/%22"+this.url,
+            url: `http://localhost:8081/ls/${encodeURIComponent(this.url)}`,
             async: false
-        }, (data)=>{
-            let dirList:[{
-                "url": string,
-                "name": string,
-                "isDir": boolean,
-                "isSymbolicLink": boolean
-            }] = data;
+        }, (data: UInf[])=>{
+            let dirList:UInf[] = data;
             this.children = [];
             for(let dir of dirList){
                 this.children.push(new UFile(dir.url, dir.name, dir.isDir))
@@ -86,7 +88,7 @@ class UFile{
         });
     }
 
-    asyncRead(param: (data) => void) {
+    asyncRead(param: (data:string) => void) {
         let  fileName = encodeURIComponent(this.url);
         $.get('http://localhost:8081/getFile/'+fileName, function(data) {
             param(data);

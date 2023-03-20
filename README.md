@@ -13,7 +13,7 @@ geometrical and logical flexibility of the UI design, and build its modularity
 in a way that is logically straightforward and organized.
 
 ## Entry Points
-**_For sake of convenience, all related modules should hold reference to the main UI instance. 
+**_For the sake of convenience, all related modules should hold reference to the main UI instance. 
 All individual visual/logical components should hold references to the file that they are 
 managing by referencing a FileHandle and its unique fileId (if applicable)._**
 

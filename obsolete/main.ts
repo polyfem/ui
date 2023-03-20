@@ -7,7 +7,6 @@ import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
 import {BasicTabs, CodePanel} from "./editor";
 import {FileControl, JSONFileControl} from "./FileControl";
-import SettingsForm from "./settingsForm";
 
 /**
  * Central instance of PolyFEM UI
