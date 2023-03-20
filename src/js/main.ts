@@ -1,13 +1,12 @@
 import './graphics';
 import {PolyFEM, UFile, UFileSystem} from './server';
-import {FilePanel, JSONPanel} from './ui';
+import {FilePanel, JSONPanel} from './components';
 import OperationPanel from './OperationPanel';
 import {createElement} from "react";
 import {createRoot, Root} from "react-dom/client";
 import {App} from "./graphics";
 import {BasicTabs, CodePanel} from "./editor";
 import {FileControl, JSONFileControl} from "./FileControl";
-import SettingsForm from "./settingsForm";
 
 /**
  * Central instance of PolyFEM UI
@@ -42,6 +41,7 @@ class Main{
         this.responseContainer = document.createElement('div');
         this.responseContainer.id = 'responsePanel';
         this.responseRoot = createRoot(this.responseContainer);
+
         //The UFile parameter for console here is purely informational, for now, it is not used by any entities
         let c = new FileControl("console", new UFile("std.out", "console", false),
             this.responseContainer)

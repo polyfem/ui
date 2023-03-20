@@ -19,7 +19,7 @@ class OperationPanel extends React.Component<{ main: Main, configs:[]}, {target:
                 <input type="text" value={
                     this.props.main.activeFileControl.fileReference.url
                 } onChange={this.handleChange} />
-                {this.configs.map((config,index)=>
+                {this.configs.map((config,index)=>//Map multiple configs into UIs
                     <FieldSet config={config} key={index} main={this.props.main}
                            target={this.props.main.activeFileControl.fileReference.url}/>)
                 }
@@ -59,9 +59,6 @@ class FieldSet extends React.Component<{ main: Main, config: {}, target: string 
                                checked={this.state.paramSelections[index]} onChange={this.checked}/>
                         <label htmlFor={id}>{option['description']}</label>
                         <br/></React.Fragment>})}
-                {/*<input type="checkbox" id='json' name="json" checked={true}/>*/}
-                {/*<label htmlFor="json">--json</label>*/}
-                {/*<br/>*/}
             </fieldset>
         </form>;
     }

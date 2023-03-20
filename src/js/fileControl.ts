@@ -1,7 +1,7 @@
 import {UFile} from "./server";
 import {createRoot, Root} from "react-dom/client";
 import {createElement} from "react";
-import {JSONPanel} from "./ui";
+import {JSONPanel} from "./components";
 import {App} from "./graphics";
 
 class FileControl{
@@ -17,7 +17,6 @@ class FileControl{
     }
 }
 
-
 /**
  * Provides the basic structure of a geometric operation
  * for storage purpose
@@ -32,6 +31,9 @@ class GeometricOperation{
     }
 }
 
+/**
+ * Basic control unit of .json geometric specification files
+ */
 class JSONFileControl extends FileControl{
     json: {};
     jsonRoot: Root;

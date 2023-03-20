@@ -36,20 +36,8 @@ class FilePanel extends React.Component<{ main: Main }, { root: UFile }> {
 
 class Directory extends React.Component<{ file: UFile, main: Main }, { expanded: boolean, anchorEl: HTMLElement, open: boolean}> {
     fileDiv: HTMLElement;
-    // dragRef: ConnectDragSource;
     constructor(props: { file: UFile, main: Main }) {
         super(props);
-        // const [{ opacity }, dragRef] = useDrag(
-        //     () => ({
-        //         type: 'File',
-        //         item: props.file.name,
-        //         collect: (monitor) => ({
-        //             opacity: monitor.isDragging() ? 0.5 : 1
-        //         })
-        //     }),
-        //     []
-        // )
-        // this.dragRef = dragRef;
         if(props.file.name == "."){
             this.state = {expanded: true, anchorEl: undefined, open: false};
             props.file.ls();

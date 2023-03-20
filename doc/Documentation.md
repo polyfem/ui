@@ -112,6 +112,8 @@ will inject. To allow the containment of non-React elements, the component will 
 See practiced standard: [integrating with other libraries](https://reactjs.org/docs/integrating-with-other-libraries.html). 
 Or if necessary, references to the underlying tabs will be separately kept, and injected with JQuery after each update using component did mount.
 
+#### Operation Panel
+
 ### Graphics
 Graphics is the modular entry to all visualizations. It will provide a modularized interface to the Babylon supports.
 It's supposed to organize the general visualization tasks of PolyFEM-UI into a single instance.
