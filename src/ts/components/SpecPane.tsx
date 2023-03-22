@@ -1,5 +1,6 @@
 import * as React from "react";
-import {UI, Spec} from "../main";
+import {UI} from "../main";
+import {Spec} from "../spec";
 import TreeView from "@mui/lab/TreeView";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";

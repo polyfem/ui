@@ -1,5 +1,6 @@
 import {UFileSystem} from "./server";
 import {Visual} from "./visual";
+import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import $ from 'jquery';
@@ -9,16 +10,8 @@ class UI{
     vs: Visual;
     spec: Spec;
     constructor(){
-        this.spec= {
-                name:'Spec 4',
-                isLeaf:true,
-                subNodes:[],
-                //Currently selected field
-                field: "as",
-                type: "number",
-                selection: []
-            };
         this.mountFileSystem('../server-root');
+        this.spec=new SpecEngine(this).getSpecRoot();
         this.loadVisual('root-div');
     }
     mountFileSystem(url: string){
@@ -34,18 +27,7 @@ $(()=>{
     new UI();
 })
 
-//Recursive structure of a JSON Specification tree
-interface Spec{
-    name: string;
-    isLeaf: boolean;
-    subNodes: Spec[];
-    //Currently selected field
-    field: string;
-    type: string;
-    selection: string[];
-}
-
-export {UI, Spec};
+export {UI};
 
 // ={ Fake Spec
 //     name:'Spec root',

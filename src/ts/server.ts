@@ -98,6 +98,18 @@ class UFile{
         }, 'text');
     }
 
+    syncRead(param: (data:string) => void) {
+        let  fileName = encodeURIComponent(this.url);
+        //@ts-ignore
+        $.get({
+            type: 'GET',
+            url: 'http://localhost:8081/getFile/'+fileName,
+            async: false
+        }, function(data: string) {
+            param(data);
+        }, 'text');
+    }
+
     saveFile(data: string){
         let req = $.ajax({
             url: 'http://localhost:8081/writeFile/'+encodeURIComponent(this.url),
