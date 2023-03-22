@@ -7,72 +7,17 @@ import $ from 'jquery';
 class UI{
     fs: UFileSystem;
     vs: Visual;
-    spec: Spec ={
-        name:'Spec root',
-        isLeaf:false,
-        subNodes:[{
-            name:'Spec 0',
-            isLeaf:false,
-            subNodes:[],
-            //Currently selected field
-            field: "as",
-            type: "number",
-            selection: []
-        }, {
-            name:'Spec 1',
-            isLeaf:true,
-            subNodes:[],
-            //Currently selected field
-            field: "as",
-            type: "number",
-            selection: []
-        }, {
-            name:'Spec 2',
-            isLeaf:false,
-            subNodes:[{
-                name:'Spec root',
-                isLeaf:false,
-                subNodes:[{
-                    name:'Spec 3',
-                    isLeaf:false,
-                    subNodes:[],
-                    //Currently selected field
-                    field: "as",
-                    type: "number",
-                    selection: []
-                }, {
-                    name:'Spec 4',
-                    isLeaf:true,
-                    subNodes:[],
-                    //Currently selected field
-                    field: "as",
-                    type: "number",
-                    selection: []
-                }, {
-                    name:'Spec 5',
-                    isLeaf:true,
-                    subNodes:[],
-                    //Currently selected field
-                    field: "as",
-                    type: "number",
-                    selection: []
-                }],
+    spec: Spec;
+    constructor(){
+        this.spec= {
+                name:'Spec 4',
+                isLeaf:true,
+                subNodes:[],
                 //Currently selected field
                 field: "as",
                 type: "number",
                 selection: []
-            }],
-            //Currently selected field
-            field: "as",
-            type: "number",
-            selection: []
-        }],
-        //Currently selected field
-        field: "as",
-        type: "number",
-        selection: []
-    }
-    constructor(){
+            };
         this.mountFileSystem('../server-root');
         this.loadVisual('root-div');
     }
@@ -101,3 +46,69 @@ interface Spec{
 }
 
 export {UI, Spec};
+
+// ={ Fake Spec
+//     name:'Spec root',
+//     isLeaf:false,
+//     subNodes:[{
+//         name:'Spec 0',
+//         isLeaf:false,
+//         subNodes:[],
+//         //Currently selected field
+//         field: "as",
+//         type: "number",
+//         selection: []
+//     }, {
+//         name:'Spec 1',
+//         isLeaf:true,
+//         subNodes:[],
+//         //Currently selected field
+//         field: "as",
+//         type: "number",
+//         selection: []
+//     }, {
+//         name:'Spec 2',
+//         isLeaf:false,
+//         subNodes:[{
+//             name:'Spec root',
+//             isLeaf:false,
+//             subNodes:[{
+//                 name:'Spec 3',
+//                 isLeaf:false,
+//                 subNodes:[],
+//                 //Currently selected field
+//                 field: "as",
+//                 type: "number",
+//                 selection: []
+//             }, {
+//                 name:'Spec 4',
+//                 isLeaf:true,
+//                 subNodes:[],
+//                 //Currently selected field
+//                 field: "as",
+//                 type: "number",
+//                 selection: []
+//             }, {
+//                 name:'Spec 5',
+//                 isLeaf:true,
+//                 subNodes:[],
+//                 //Currently selected field
+//                 field: "as",
+//                 type: "number",
+//                 selection: []
+//             }],
+//             //Currently selected field
+//             field: "as",
+//             type: "number",
+//             selection: []
+//         }],
+//         //Currently selected field
+//         field: "as",
+//         type: "number",
+//         selection: []
+//     }],
+//     //Currently selected field
+//     field: "as",
+//     type: "number",
+//     selection: []
+// }

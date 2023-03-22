@@ -73,7 +73,8 @@ class UFile{
     }
     ls(){
         if(!this.isDir)
-            return;
+            return false;
+        let success = false;
         //@ts-ignore
         $.getJSON({
             type: "GET",
@@ -85,7 +86,9 @@ class UFile{
             for(let dir of dirList){
                 this.children.push(new UFile(dir.url, dir.name, dir.isDir))
             }
+            success = true;
         });
+        return success;
     }
 
     asyncRead(param: (data:string) => void) {
