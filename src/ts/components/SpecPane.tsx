@@ -14,22 +14,29 @@ import StarBorder from "@mui/icons-material/StarBorder";
 import ListItemText from "@mui/material/ListItemText";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import Collapse from "@mui/material/Collapse";
+import FunctionsIcon from "@mui/icons-material/Functions";
+import {ListItem} from "@mui/material";
 
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
         let {ui, rootId, specRoot} = this.props;
-        return <Box style={{marginLeft: '5pt', marginTop:'5pt'}}>
-            <SpecFieldV ui={ui} rootId={rootId} specNode={specRoot}/>
+        return <Box style={{marginLeft: '15pt', marginTop:'15pt'}}>
+            <List>
+                <SpecFieldV ui={ui} rootId={rootId} specNode={specRoot} level={0}/>
+            </List>
         </Box>;
     }
 }
 
 //Spec field view
-const SpecFieldV = function({ui, rootId, specNode}: {ui: UI, rootId: string, specNode: Spec}){
+const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: string, specNode: Spec, level: number}){
     let [expanded, setExpanded] = useState(true);
+    const handleClick = ()=>{
+       setExpanded(!expanded);
+    };
     if(specNode.isLeaf){
-        return <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
-            <label style={{verticalAlign: 'baseline', marginRight: '6pt'}}>
+        return <ListItem sx={{ pl: level, alignItems:'baseline'}}>
+            <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt'}}>
                 {specNode.name}:
             </label>
             <TextField
@@ -38,18 +45,25 @@ const SpecFieldV = function({ui, rootId, specNode}: {ui: UI, rootId: string, spe
                 variant="standard"
                 helperText={specNode.type}
                 style={{verticalAlign: 'baseline'}}/>
-        </span>
+        </ListItem>;
+        // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
+        // </span>;
     }else{
-        return <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
-            <label style={{verticalAlign: 'baseline', marginRight: '6pt'}}>
-                {(!expanded)? <ChevronRightIcon/>:
-                    <ExpandMoreIcon/>}
-                    {specNode.name}:
-                </label>
+        return <React.Fragment>
+            <ListItemButton onClick={handleClick} sx={{ pl: level}}>
+                { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                <ListItemText primary={specNode.name} primaryTypographyProps={{fontSize: '11pt'}}  />
+            </ListItemButton>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
-                {specNode.subNodes.map((value, index, array)=>(<SpecFieldV ui={ui} rootId={rootId} specNode={value}/>))}
+                <List component="div" disablePadding>
+                    {specNode.subNodes.map((node)=>
+                        (<SpecFieldV ui={ui} rootId={rootId} specNode={node} level={level+1}/>))}
+                </List>
             </Collapse>
-        </span>;
+            {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}
+            {/*    {specNode.subNodes.map((value, index, array)=>(<SpecFieldV ui={ui} rootId={rootId} specNode={value}/>))}*/}
+            {/*</Collapse>*/}
+        </React.Fragment>
     }
 }
 

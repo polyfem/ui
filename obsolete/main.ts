@@ -150,7 +150,7 @@ class Main{
     loadFileRoot():UFile{
         return this.fs.fileRoot;
     }
-    executeCommand(bin: string, command: string, params: string[], callback: (newResponse, response)=>void){
+    executeCommand(bin: string, command: string, params: string[], callback: (newResponse: any, response: any)=>void){
         this.polyFEM.execute(bin, command, params, callback);
     }
     setResponse(response: string){

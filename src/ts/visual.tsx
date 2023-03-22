@@ -26,7 +26,7 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean}>{
             <CssBaseline />
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
                     style={{gridColumn: '1 / span 2',
-                        gridRow: '1 / span 1'}}>
+                        gridRow: '1 / span 1', boxShadow: 'none'}}>
                 <NavBar/>
             </AppBar>
             <Drawer
@@ -48,7 +48,7 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean}>{
             </Drawer>
             <Box sx={{ flexGrow: 1, p: 3 }}
                  style={{gridColumn: '2 / span 1',
-                     gridRow: '2 / span 1'}}>
+                     gridRow: '2 / span 1', padding:'0'}}>
                 <EditorPane {...this.props}/>
             </Box>
         </Box>;
