@@ -41,7 +41,6 @@ function mountFileSystem(rootURL){
     });
     app.get('/getFile/:fileName', function (req, res) {
         let options = {
-            root: rootURL,
             dotfiles: 'ignore',
             headers: {
                 'x-timestamp': Date.now(),
@@ -50,10 +49,9 @@ function mountFileSystem(rootURL){
             }
         }
         let fileName = req.params.fileName;
-        console.log(options.root);
-        console.log(fileName);
+        console.log(path.resolve(path.join(rootURL, fileName)));
         res.append('Access-Control-Allow-Origin', ['*'])
-            .sendFile(fileName, options, function (err) {
+            .sendFile(path.resolve(fileName), options, function (err) {
             if (err) {
                 console.error('Error code: '+ err);
             } else {

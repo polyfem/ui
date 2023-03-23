@@ -2,6 +2,7 @@
 
 //Recursive structure of a JSON Specification tree
 import {UI} from "./main";
+import {UFile} from "./server";
 
 class Spec{
     name: string;
@@ -19,19 +20,27 @@ class Spec{
 class SpecEngine {
     ui: UI;
     jsonText: string;
-    rawPointers: string[];
-    rawSpecs : RawSpec[];
+    rawPointers: string[]=[];
+    rawSpecs : RawSpec[]=[];
     specTree: RawSpecTree;
+    specFile: UFile;
     //Preliminary load, puts everything into a rawJSON map
     //and generate raw pointer list
     constructor(ui: UI) {
         this.ui = ui;
-        this.ui.fs.fileRoot.syncRead((text)=> {this.jsonText=text});
+        for(let file of this.ui.fs.fileRoot.children){//Locate the spec file
+            if(file.name=='default_rules.json'){
+                this.specFile = file;
+                break;
+            }
+        }
+        this.specFile.syncRead((text)=> {this.jsonText=text});
         this.rawSpecs= JSON.parse(this.jsonText);
         for(let raw of this.rawSpecs){
             this.rawPointers.push(raw.pointer);
         }
         this.buildTree();
+        console.log(this.specTree);
     }
 
     /**
@@ -47,18 +56,12 @@ class SpecEngine {
     }
 
     /**
-     * Queries for specs in the rawJSON specs
-     * @param queries matchable through regular expressions,
-     * for example /geometry/object1 -> /geometry/*
+     * Builds a minimal spec from the location given in the query
+     * @param query a query matchable to a pointer, for example:
+     *               /geometry/object1 -> /geometry/*
      */
-    query(queries: string[]): RawSpec[]{
-        let specs = [];
-        for(let j = 0; j<queries.length; j++){
-            specs[j] = undefined;
-            for(let i = 0; i<this.rawPointers.length; i++){
+    query(query: string): Spec{
 
-            }
-        }
         return undefined;
     }
     getSpecRoot(): Spec{
@@ -104,6 +107,8 @@ class RawSpecTree{
             return child.traverse(keys);
         }
     }
+
+
 }
 
 export {Spec, SpecEngine};
