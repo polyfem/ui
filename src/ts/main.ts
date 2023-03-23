@@ -9,9 +9,16 @@ class UI{
     fs: UFileSystem;
     vs: Visual;
     spec: Spec;
+    specEngine: SpecEngine;
     constructor(){
         this.mountFileSystem('../server-root');
-        this.spec=new SpecEngine(this).getSpecRoot();
+        this.specEngine = new SpecEngine(this);
+        this.spec= this.specEngine.getSpecRoot();
+        let geometry1 = new Spec();
+        geometry1.name = 'geometry1';
+        this.spec.subNodes[0].subNodes.push(geometry1);
+        this.spec = this.specEngine.validate('',this.spec);
+        console.log(this.spec);
         this.loadVisual('root-div');
     }
     mountFileSystem(url: string){
