@@ -21,7 +21,7 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean}>{
     render(){
         return <Box sx={{ display: 'grid' }}
                     style={{gridTemplateColumns: `${drawerWidth}px 1fr`,
-                            gridTemplateRows: `64px 1fr`,
+                            gridTemplateRows: `64px minmax(0,1fr)`,
                             height: '100%'}}>
             <CssBaseline />
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}

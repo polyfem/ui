@@ -21,7 +21,7 @@ import {ListItem} from "@mui/material";
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
         let {ui, rootId, specRoot} = this.props;
-        return <Box style={{marginLeft: '15pt', marginTop:'15pt'}}>
+        return <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
             <List>
                 <SpecFieldV ui={ui} rootId={rootId} specNode={specRoot} level={0}/>
             </List>

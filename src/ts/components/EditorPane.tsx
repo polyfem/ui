@@ -52,7 +52,7 @@ function TabPanel(props: TabPanelProps) {
             id={`simple-tabpanel-${index}`}
             aria-labelledby={`simple-tab-${index}`}
             {...other}
-            style={{height:`${window.innerHeight*0.8}px`, overflow:'auto'}}
+            style={{height:'100%', overflow:'auto'}}
         >
             {value === index && (
                 <Box sx={{ p: 3 }}>

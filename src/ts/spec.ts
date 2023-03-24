@@ -164,8 +164,16 @@ class SpecEngine {
                 //Escape the subfields that are already included
                 if(included.indexOf(required)<0){
                     let newQuery = `${query}/${required}`;
-                    console.log(newQuery);
-                    console.log(this.query(newQuery))
+                    spec.subNodes.push(this.query(newQuery));
+                    spec.isLeaf = false;
+                }
+            }
+        }
+        if(raw.optional){//If required is not undefined
+            for(let required of raw.optional){
+                //Escape the subfields that are already included
+                if(included.indexOf(required)<0){
+                    let newQuery = `${query}/${required}`;
                     spec.subNodes.push(this.query(newQuery));
                     spec.isLeaf = false;
                 }
