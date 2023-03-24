@@ -8,6 +8,8 @@ import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArro
 import SpecPane from "./SpecPane";
 import {Box, IconButton, Tabs, Tab} from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
+import ThreePane from "./ThreePane";
+import {GFileControl} from "../fileControl";
 
 const Grid = styled(MuiGrid)(({ theme }) => ({
     width: '100%',
@@ -22,7 +24,7 @@ const Grid = styled(MuiGrid)(({ theme }) => ({
 class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
     render(){
         return <Grid container>
-            <Grid item xs={3}>
+            <Grid item wrap="nowrap" xs={3}>
                 <SpecPane {...{...this.props, specRoot:this.props.ui.spec}}/>
             </Grid>
             <Divider orientation="vertical" flexItem>
@@ -43,7 +45,6 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props;
-
     return (
         // <div style={{height:`${window.innerHeight*0.75}px`, overflow: 'auto' }}>
         <div
@@ -52,11 +53,11 @@ function TabPanel(props: TabPanelProps) {
             id={`simple-tabpanel-${index}`}
             aria-labelledby={`simple-tab-${index}`}
             {...other}
-            style={{height:'100%', overflow:'auto'}}
+            style={{height:'100%', width:'100%', overflow:'auto'}}
         >
             {value === index && (
-                <Box sx={{ p: 3 }}>
-                    <Typography>{children}</Typography>
+                <Box sx={{ p: 1, height:'100%', width:'100%'}}>
+                    {children}
                 </Box>
             )}
         </div>
@@ -71,6 +72,7 @@ function a11yProps(index: number) {
 }
 
 class TabPane extends React.Component<{ui:UI, rootId: string}, {value: number}>{
+    control = new GFileControl('testfile.json', undefined);
     constructor(props: { ui: UI, rootId: string}) {
         super(props);
         this.handleChange = this.handleChange.bind(this);
@@ -83,7 +85,7 @@ class TabPane extends React.Component<{ui:UI, rootId: string}, {value: number}>{
     render(){
         let value = this.state.value;
         return (
-            <Box sx={{ width: '100%'}}>
+            <Box sx={{ width: '100%', height:'100%'}}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs value={value} onChange={this.handleChange}
                           sx={{height: '17pt', padding: '0pt'}} aria-label="basic tabs example">
@@ -125,7 +127,9 @@ class TabPane extends React.Component<{ui:UI, rootId: string}, {value: number}>{
                     </Typography>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
-                    Item Two
+                    <ThreePane
+                        ui={this.props.ui} rootId={this.props.rootId}
+                        fileControl={this.control}/>
                 </TabPanel>
                 <TabPanel value={value} index={2}>
                     Item Three

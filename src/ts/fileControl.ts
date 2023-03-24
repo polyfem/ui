@@ -1,14 +1,21 @@
 import {UFile} from "./server";
-import {createRoot, Root} from "react-dom/client";
-import {createElement} from "react";
+import {Canvas} from "./graphics";
 
 class FileControl{
+    //Generated uniquely and incrementally
+    id: number;
+    static idGenerator: number = 0;
+    //Opened instances of file control
+    static instances:{[key:number]:FileControl} = {};
     fileName: string;
     fileReference: UFile;
     fileDisplay: HTMLElement;
     alternativeDisplay: HTMLElement;
     togglePane = false;
     constructor(fileName: string, fileReference: UFile, fileDisplay: HTMLElement = undefined){
+        this.id = FileControl.idGenerator;
+        FileControl.instances[this.id] = this;
+        FileControl.idGenerator++;
         this.fileName = fileName;
         this.fileReference = fileReference;
         this.fileDisplay = fileDisplay;
@@ -24,9 +31,18 @@ class GeometricOperation{
     geometryID: string;
     operation: string;
     parameters: number[];
-
     constructor(geometryID: string) {
         this.geometryID = geometryID
+    }
+}
+
+/**
+ * A file that is contains geometries being visualized
+ */
+class GFileControl extends FileControl{
+    canvas: Canvas;
+    constructor(fileName: string, fileReference: UFile){
+        super(fileName, fileReference);
     }
 }
 
@@ -131,4 +147,4 @@ class GeometricOperation{
 //     }
 // }
 
-export {FileControl, GeometricOperation};
+export {FileControl, GeometricOperation, GFileControl};

@@ -46,6 +46,7 @@
     "@mui/material": "^5.8.5",
     "@types/react": "^18.0.12",
     "@types/react-dom": "^18.0.5",
+    "@types/three": "^0.149.0",
     "babel-plugin-prismjs": "^2.1.0",
     "browserify": "^17.0.0",
     "cors": "^2.8.5",
@@ -53,6 +54,7 @@
     "gulp-sourcemaps": "^3.0.0",
     "jquery": "^3.6.0",
     "react": "^18.2.0",
+    "three": "^0.150.1",
     "tsify": "^5.0.4",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"

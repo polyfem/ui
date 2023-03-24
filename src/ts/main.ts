@@ -18,7 +18,6 @@ class UI{
         geometry1.name = 'geometry1';
         this.spec.subNodes[0].subNodes.push(geometry1);
         this.spec = this.specEngine.validate('',this.spec);
-        console.log(this.spec);
         this.loadVisual('root-div');
     }
     mountFileSystem(url: string){
