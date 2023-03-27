@@ -9,14 +9,15 @@ class UI{
     fs: UFileSystem;
     vs: Visual;
     spec: Spec;
+    //The root of the spec being edited
+    activeSpec: Spec;
     specEngine: SpecEngine;
     constructor(){
         this.mountFileSystem('../server-root');
         this.specEngine = new SpecEngine(this);
         this.spec= this.specEngine.getSpecRoot();
-        let geometry1 = new Spec();
-        geometry1.name = 'geometry1';
-        this.spec.subNodes[0].subNodes.push(geometry1);
+        let geometry1 = new Spec("geometry1");
+        this.spec.subNodes['geometry'].pushChild(geometry1);
         this.spec = this.specEngine.validate('',this.spec);
         this.loadVisual('root-div');
     }

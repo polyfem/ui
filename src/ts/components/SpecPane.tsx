@@ -57,8 +57,8 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
             </ListItemButton>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                    {specNode.subNodes.map((node)=>
-                        (<SpecFieldV ui={ui} rootId={rootId} specNode={node} level={level+1}/>))}
+                    {Object.keys(specNode.subNodes).map((key)=>
+                        (<SpecFieldV ui={ui} rootId={rootId} specNode={specNode.subNodes[key]} level={level+1}/>))}
                 </List>
             </Collapse>
             {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}

@@ -12,7 +12,9 @@ class Spec{
     name: string;
     isLeaf: boolean;
     //Automatically populated by required
-    subNodes: Spec[] = [];
+    subNodes: {[key: string]:Spec} = {};
+    //Records the size of the subNodes, immutable
+    private subNodesCount = 0;
     //Remaining fields are only informational
     doc: string;
     //Optional subfields
@@ -23,12 +25,26 @@ class Spec{
     selection: string[];
 
     /**
-     * Validates self by traversing self and
-     * loading all the missing elements to form
-     * a minimal tree that includes this
+     * Specs must have a non-empty name
+     * @param name
      */
-    validate(){
-
+    constructor(name: string){
+        this.name = name;
+    }
+    /**
+     * Smart pushes a child to subNodes, uses
+     * index as key if type of this is array, otherwise
+     * uses the name of the child as key.
+     */
+    pushChild(child: Spec){
+        if(child==undefined) // Ignore undefined requests
+            return;
+        if(this.type == 'list'){
+            this.subNodes[this.subNodesCount] = child;
+        }else if(this.type=='object'){
+            this.subNodes[child.name] = child;
+        }else return; // Only list or object accepts child
+        this.subNodesCount++;
     }
 }
 
@@ -88,31 +104,26 @@ class SpecEngine {
         if(loc==undefined)//Terminate if invalid query
             return undefined;
         let raw = loc.rawSpec;
-        let spec = new Spec();
+        let spec = new Spec(keys.pop());
         //Fill out the fields of the spec
         spec.query = query;
-        spec.name = keys.pop();
         spec.pointer = raw.pointer;
         spec.type = raw.type;
         spec.doc = raw.doc;
         //Object type correspond to tree structures
-        spec.isLeaf = raw.type!='object';
+        spec.isLeaf = ['object', 'list'].indexOf(raw.type)<0;
         //Load default value
         spec.value = raw.default;
         spec.optional = raw.optional;
         //Fill out the subNodes that have to be included
         for(let included of include){
-            spec.subNodes.push(this.query(`${query}/${included}`));
+            spec.pushChild(this.query(`${query}/${included}`));
         }
         //Fill out all the subNodes by recursively populating
         //the minimal trees of required fields
         if(raw.required){//If required is not undefined
             for(let required of raw.required){
-                //Escape the subfields that are already included
-                if(include.indexOf(required)<0){
-                    let newQuery = `${query}/${required}`;
-                    spec.subNodes.push(this.query(newQuery));
-                }
+                spec.pushChild(this.query(`${query}/${required}`));
             }
         }
         return spec;
@@ -134,10 +145,9 @@ class SpecEngine {
         if(loc==undefined)//Terminate if invalid query
             return undefined;
         let raw = loc.rawSpec;
-        let spec = new Spec();
+        let spec = new Spec(original.name);
         //Fill out the fields of the spec
         spec.query = query;
-        spec.name = original.name;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
         spec.doc = raw.doc;
@@ -148,14 +158,17 @@ class SpecEngine {
         spec.value = original.value;
         //Make a list to record which subNodes have been included
         let included:string[] = [];
-        //Validate recursively
-        for(let i = 0; i<original.subNodes.length; i++){
-            let subNodeName = original.subNodes[i].name;
-            //Fill out the subNodes that have to be included
+        //Validate recursively,
+        // must deal with the possibility of misused indexing depending on
+        // the type of spec
+        for(let key in original.subNodes){
+            let subNodeName = original.subNodes[key].name;
+            // Record which nodes have already been included
             included.push(subNodeName);
+            console.log(original.subNodes[key]);
+            console.log(this.validate(`${query}/${subNodeName}`, original.subNodes[key]));
             //Populate the validated subNode
-            spec.subNodes[i] = this.validate(
-                `${query}/${subNodeName}`, original.subNodes[i]);
+            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.subNodes[key]));
         }
         console.log(raw);
         //Fill out all the required fields that haven't been included
@@ -164,21 +177,21 @@ class SpecEngine {
                 //Escape the subfields that are already included
                 if(included.indexOf(required)<0){
                     let newQuery = `${query}/${required}`;
-                    spec.subNodes.push(this.query(newQuery));
+                    spec.pushChild(this.query(newQuery));
                     spec.isLeaf = false;
                 }
             }
         }
-        if(raw.optional){//If required is not undefined
-            for(let required of raw.optional){
-                //Escape the subfields that are already included
-                if(included.indexOf(required)<0){
-                    let newQuery = `${query}/${required}`;
-                    spec.subNodes.push(this.query(newQuery));
-                    spec.isLeaf = false;
-                }
-            }
-        }
+        // if(raw.optional){//If required is not undefined
+        //     for(let required of raw.optional){
+        //         //Escape the subfields that are already included
+        //         if(included.indexOf(required)<0){
+        //             let newQuery = `${query}/${required}`;
+        //             spec.pushChild(this.query(newQuery));
+        //             spec.isLeaf = false;
+        //         }
+        //     }
+        // }
         return spec;
     }
     getSpecRoot(): Spec{
