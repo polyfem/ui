@@ -4,6 +4,8 @@ import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import $ from 'jquery';
+import {FileHandle} from "fs/promises";
+import {FileControl} from "./fileControl";
 
 class UI{
     fs: UFileSystem;
@@ -13,6 +15,7 @@ class UI{
     activeSpec: Spec;
     emptySpec = new Spec('none');
     specEngine: SpecEngine;
+    activeFile: FileControl;
     constructor(){
         this.mountFileSystem('../server-root');
         this.specEngine = new SpecEngine(this);

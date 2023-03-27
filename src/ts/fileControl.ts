@@ -1,5 +1,6 @@
 import {UFile} from "./server";
 import {Canvas} from "./graphics";
+import {Spec} from "./spec";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -12,6 +13,8 @@ class FileControl{
     fileDisplay: HTMLElement;
     alternativeDisplay: HTMLElement;
     togglePane = false;
+    //Root of the spec, defaults to undefined for non-JSON files
+    specRoot: Spec=new Spec('undefined');
     constructor(fileName: string, fileReference: UFile, fileDisplay: HTMLElement = undefined){
         this.id = FileControl.idGenerator;
         FileControl.instances[this.id] = this;

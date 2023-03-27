@@ -1,21 +1,14 @@
 import * as React from "react";
 import {UI} from "../main";
 import {Spec} from "../spec";
-import TreeView from "@mui/lab/TreeView";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import TreeItem from "@mui/lab/TreeItem";
 import {Box, TextField, Typography} from "@mui/material";
-import MuiGrid from "@mui/material/Grid";
 import {useState} from "react";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import StarBorder from "@mui/icons-material/StarBorder";
 import ListItemText from "@mui/material/ListItemText";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import Collapse from "@mui/material/Collapse";
-import FunctionsIcon from "@mui/icons-material/Functions";
 import {ListItem} from "@mui/material";
 
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
@@ -24,6 +17,10 @@ class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec},
         return (specRoot.name=='none')?
             <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
                 No [Computation Library] Options Selected
+            </Box>:
+            (specRoot.name=='undefined')?
+            <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
+                File Does Not Contain Specification
             </Box>
             :<Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
             <List>
