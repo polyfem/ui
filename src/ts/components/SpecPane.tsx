@@ -3,7 +3,7 @@ import {UI} from "../main";
 import {Spec} from "../spec";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import {Box, TextField, Typography} from "@mui/material";
+import {Box, TextField, Tooltip, Typography} from "@mui/material";
 import {useState} from "react";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -38,9 +38,11 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
     };
     if(specNode.isLeaf){
         return <ListItem sx={{ pl: level, alignItems:'baseline'}}>
-            <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt'}}>
-                {specNode.name}:
-            </label>
+            <Tooltip title={specNode.doc}>
+                <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt'}}>
+                    {specNode.name}:
+                </label>
+            </Tooltip>
             <TextField
                 FormHelperTextProps={{style:{textAlign: 'right', color: '#037746'}}}
                 size="small"
@@ -52,10 +54,12 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
         // </span>;
     }else{
         return <React.Fragment>
-            <ListItemButton onClick={handleClick} sx={{ pl: level}}>
-                <ListItemText primary={specNode.name} primaryTypographyProps={{fontSize: '11pt'}}  />
-                { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
+            <Tooltip title={specNode.doc}>
+                <ListItemButton onClick={handleClick} sx={{ pl: level}}>
+                    <ListItemText primary={specNode.name} primaryTypographyProps={{fontSize: '11pt'}}  />
+                    { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                </ListItemButton>
+            </Tooltip>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                     {Object.keys(specNode.children).map((key)=>
