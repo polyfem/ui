@@ -26,7 +26,7 @@ class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
         return <div style={{display: 'grid',
             width: '100%',
             height: '100%',
-            gridTemplateColumns: '25% 36px 1fr',
+            gridTemplateColumns: '25% 36px minmax(0,1fr)',
             gridTemplateRows: '100%'}}>
             <div style={{gridColumn:'1 / span 1'}}>
                 <SpecPane {...{...this.props, specRoot:this.props.ui.spec}}/>
