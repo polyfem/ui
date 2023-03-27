@@ -10,6 +10,7 @@ import {Box, IconButton, Tabs, Tab} from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import ThreePane from "./ThreePane";
 import {GFileControl} from "../fileControl";
+import {Spec} from "../spec";
 
 const Grid = styled(MuiGrid)(({ theme }) => ({
     width: '100%',
@@ -21,7 +22,7 @@ const Grid = styled(MuiGrid)(({ theme }) => ({
 }));
 
 
-class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
+class EditorPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
         return <div style={{display: 'grid',
             width: '100%',
@@ -29,7 +30,7 @@ class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
             gridTemplateColumns: '25% 36px minmax(0,1fr)',
             gridTemplateRows: '100%'}}>
             <div style={{gridColumn:'1 / span 1'}}>
-                <SpecPane {...{...this.props, specRoot:this.props.ui.spec}}/>
+                <SpecPane {...this.props} specRoot={this.props.specRoot}/>
             </div>
             <Divider orientation="vertical" style={{gridColumn:'2 / span 1'}}>
                 <KeyboardDoubleArrowRightIcon/>

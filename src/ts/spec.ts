@@ -12,7 +12,7 @@ class Spec{
     name: string;
     isLeaf: boolean;
     //Automatically populated by required
-    subNodes: {[key: string]:Spec} = {};
+    children: {[key: string]:Spec} = {};
     //Records the size of the subNodes, immutable
     private subNodesCount = 0;
     //Remaining fields are only informational
@@ -40,9 +40,9 @@ class Spec{
         if(child==undefined) // Ignore undefined requests
             return;
         if(this.type == 'list'){
-            this.subNodes[this.subNodesCount] = child;
+            this.children[this.subNodesCount] = child;
         }else if(this.type=='object'){
-            this.subNodes[child.name] = child;
+            this.children[child.name] = child;
         }else return; // Only list or object accepts child
         this.subNodesCount++;
     }
@@ -161,14 +161,14 @@ class SpecEngine {
         //Validate recursively,
         // must deal with the possibility of misused indexing depending on
         // the type of spec
-        for(let key in original.subNodes){
-            let subNodeName = original.subNodes[key].name;
+        for(let key in original.children){
+            let subNodeName = original.children[key].name;
             // Record which nodes have already been included
             included.push(subNodeName);
-            console.log(original.subNodes[key]);
-            console.log(this.validate(`${query}/${subNodeName}`, original.subNodes[key]));
+            console.log(original.children[key]);
+            console.log(this.validate(`${query}/${subNodeName}`, original.children[key]));
             //Populate the validated subNode
-            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.subNodes[key]));
+            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key]));
         }
         console.log(raw);
         //Fill out all the required fields that haven't been included

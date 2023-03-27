@@ -15,19 +15,27 @@ import StarBorder from "@mui/icons-material/StarBorder";
 import BorderStyleIcon from "@mui/icons-material/BorderStyle";
 import WebhookTwoToneIcon from "@mui/icons-material/WebhookTwoTone";
 import OutputIcon from "@mui/icons-material/Output";
+import {Visual} from "../visual";
+import {SvgIcon} from "@mui/material";
 
-class ToolKit extends React.Component<{ui: UI, rootId: string}, {open: boolean}>{
-    constructor(props:{ui: UI, rootId: string}){
+class ToolKit extends React.Component<{ui: UI, visual: Visual, open: string}>{
+    visual: Visual;
+    ui: UI;
+    expanded = false;
+    constructor(props:{ui: UI, visual: Visual, open: string}){
         super(props);
-        this.state = {open:false};
+        this.visual = props.visual;
+        this.ui = props.ui;
         this.handleClick = this.handleClick.bind(this);
     }
-    handleClick () {
-        console.log("handling");
-        this.setState((state)=>({open:!state.open}));
-        console.log(this.state);
+    handleClick (target: string) {
+        if(target == this.props.open)
+            this.visual.closeSpec();
+        else
+            this.visual.openSpec(target);
     };
     render(){
+        let opened = this.props.open;
         return (<List
             sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}
             component="nav"
@@ -38,61 +46,60 @@ class ToolKit extends React.Component<{ui: UI, rootId: string}, {open: boolean}>
                 </ListSubheader>
             }
         >
-            <ListItemButton>
-                <ListItemIcon>
-                    <HexagonIcon />
-                </ListItemIcon>
-                <ListItemText primary="Geometry" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
-            <ListItemButton>
-                <ListItemIcon>
-                    <BlurOnIcon />
-                </ListItemIcon>
-                <ListItemText primary="Space" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
-            <ListItemButton onClick={this.handleClick}>
-                <ListItemIcon>
-                    <FunctionsIcon />
-                </ListItemIcon>
-                <ListItemText primary="Solver" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
-            <Collapse in={ this.state.open} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
-                    <ListItemButton sx={{ pl: 4 }}>
-                        <ListItemIcon>
-                            <StarBorder />
-                        </ListItemIcon>
-                        <ListItemText primary="" />
-                        { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-                    </ListItemButton>
-                </List>
-            </Collapse>
-            <ListItemButton onClick={this.handleClick}>
-                <ListItemIcon>
-                    <BorderStyleIcon />
-                </ListItemIcon>
-                <ListItemText primary="Boundary Conditions" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
-            <ListItemButton onClick={this.handleClick}>
-                <ListItemIcon>
-                    <WebhookTwoToneIcon />
-                </ListItemIcon>
-                <ListItemText primary="Materials" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
-            <ListItemButton onClick={this.handleClick}>
-                <ListItemIcon>
-                    <OutputIcon />
-                </ListItemIcon>
-                <ListItemText primary="Output" />
-                { this.state.open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </ListItemButton>
+            <ToolKitItem {...this.props} target='geometry'/>
+            <ToolKitItem {...this.props} target='space'/>
+            <ToolKitItem {...this.props} target='solver'/>
+            <ToolKitItem {...this.props} target='boundary_conditions'/>
+            <ToolKitItem {...this.props} target='materials'/>
+            <ToolKitItem {...this.props} target='output'/>
         </List>
     );
+    }
+}
+
+const iconMap:{[key: string]:any} = {
+    'geometry': <HexagonIcon />,
+    'space': <BlurOnIcon />,
+    'solver': <FunctionsIcon />,
+    'boundary_conditions': <BorderStyleIcon />,
+    'materials':  <WebhookTwoToneIcon />,
+    'output': <OutputIcon />,
+};
+
+class ToolKitItem extends React.Component<{ui: UI, visual: Visual, target: string, open: string}>{
+    visual: Visual;
+    ui: UI;
+    constructor(props:{ui: UI, visual: Visual, target: string, open: string}){
+        super(props);
+        this.visual = props.visual;
+        this.ui = props.ui;
+        this.handleClick = this.handleClick.bind(this);
+    }
+    handleClick () {
+        if(this.props.target == this.props.open)
+            this.visual.closeSpec();
+        else
+            this.visual.openSpec(this.props.target);
+    };
+    toRenderedText(original:string) {
+         let stringArray:string[]=original.split('_');
+         for(let i =0;i<stringArray.length; i++){
+             stringArray[i]= stringArray[i].charAt(0).toUpperCase() + stringArray[i].slice(1);
+         }
+         return stringArray.join(' ');
+    }
+    render(){
+        let opened = this.props.open;
+        let selfTarget = this.props.target;
+        let renderedText = this.toRenderedText(selfTarget);
+        let selected = opened==selfTarget;
+        return  <ListItemButton onClick={()=>this.handleClick()}  style={{color:(selected?'#3f50b5':undefined)}}>
+            <ListItemIcon style={{color:(selected?'#3f50b5':undefined)}}>
+                {iconMap[selfTarget]}
+            </ListItemIcon>
+            <ListItemText primary={renderedText} sx={{'& *':{fontWeight: selected? 'bold':'normal'}}}/>
+            { selected? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </ListItemButton>
     }
 }
 

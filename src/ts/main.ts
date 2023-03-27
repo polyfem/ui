@@ -8,17 +8,19 @@ import $ from 'jquery';
 class UI{
     fs: UFileSystem;
     vs: Visual;
-    spec: Spec;
+    specRoot: Spec;
     //The root of the spec being edited
     activeSpec: Spec;
+    emptySpec = new Spec('none');
     specEngine: SpecEngine;
     constructor(){
         this.mountFileSystem('../server-root');
         this.specEngine = new SpecEngine(this);
-        this.spec= this.specEngine.getSpecRoot();
-        let geometry1 = new Spec("geometry1");
-        this.spec.subNodes['geometry'].pushChild(geometry1);
-        this.spec = this.specEngine.validate('',this.spec);
+        this.specRoot= this.specEngine.getSpecRoot();
+        this.activeSpec = this.emptySpec;
+        // let geometry1 = new Spec("geometry1");
+        // this.spec.subNodes['geometry'].pushChild(geometry1);
+        // this.spec = this.specEngine.validate('',this.spec);
         this.loadVisual('root-div');
     }
     mountFileSystem(url: string){

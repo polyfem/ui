@@ -21,7 +21,11 @@ import {ListItem} from "@mui/material";
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
         let {ui, rootId, specRoot} = this.props;
-        return <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
+        return (specRoot.name=='none')?
+            <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
+                No [Computation Library] Options Selected
+            </Box>
+            :<Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
             <List>
                 <SpecFieldV ui={ui} rootId={rootId} specNode={specRoot} level={0}/>
             </List>
@@ -57,8 +61,8 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
             </ListItemButton>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                    {Object.keys(specNode.subNodes).map((key)=>
-                        (<SpecFieldV ui={ui} rootId={rootId} specNode={specNode.subNodes[key]} level={level+1}/>))}
+                    {Object.keys(specNode.children).map((key)=>
+                        (<SpecFieldV ui={ui} rootId={rootId} specNode={specNode.children[key]} level={level+1}/>))}
                 </List>
             </Collapse>
             {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}
