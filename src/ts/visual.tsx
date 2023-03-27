@@ -40,7 +40,7 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean}>{
                 gridRow: '2 / span 1'}}
             >
                 <Toolbar />
-                <Box>
+                <Box sx={{height: '100%', overflow: 'hidden'}}>
                     <ToolKit{...this.props}/>
                     <Divider />
                     <FileView{...this.props}/>

@@ -17,12 +17,12 @@ function FolderView({ui, rootId, file}: {ui: UI, rootId: string, file: UFile}){
 
 export default function FileView({ui, rootId}: {ui: UI, rootId: string}) {
     return (
-        <Box style={{marginLeft: '5pt', marginTop:'5pt'}}>
+        <Box style={{marginLeft: '5pt', marginTop:'5pt', marginBottom:'0', height: '45%', overflowY: 'auto' }}>
             <TreeView
                 aria-label="file system navigator"
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}
-                sx={{ height: '40%', flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+                sx={{ flexGrow: 1, maxWidth: 400, height: '40%'}}
             >
                 <FolderView ui={ui} rootId={rootId} file={ui.fs.fileRoot}/>
             </TreeView>

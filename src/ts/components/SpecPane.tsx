@@ -52,8 +52,8 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
     }else{
         return <React.Fragment>
             <ListItemButton onClick={handleClick} sx={{ pl: level}}>
-                { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
                 <ListItemText primary={specNode.name} primaryTypographyProps={{fontSize: '11pt'}}  />
+                { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
             </ListItemButton>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>

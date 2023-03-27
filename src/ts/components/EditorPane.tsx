@@ -23,17 +23,21 @@ const Grid = styled(MuiGrid)(({ theme }) => ({
 
 class EditorPane extends React.Component<{ui: UI, rootId: string}, any>{
     render(){
-        return <Grid container>
-            <Grid item wrap="nowrap" xs={3}>
+        return <div style={{display: 'grid',
+            width: '100%',
+            height: '100%',
+            gridTemplateColumns: '25% 36px 1fr',
+            gridTemplateRows: '100%'}}>
+            <div style={{gridColumn:'1 / span 1'}}>
                 <SpecPane {...{...this.props, specRoot:this.props.ui.spec}}/>
-            </Grid>
-            <Divider orientation="vertical" flexItem>
+            </div>
+            <Divider orientation="vertical" style={{gridColumn:'2 / span 1'}}>
                 <KeyboardDoubleArrowRightIcon/>
             </Divider>
-            <Grid item xs>
+            <div style={{gridColumn:'3 / span 1'}}>
                 <TabPane {...this.props}/>
-            </Grid>
-        </Grid>;
+            </div>
+        </div>;
     }
 }
 
