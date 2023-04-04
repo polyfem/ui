@@ -31,6 +31,7 @@
     "@types/jquery": "^3.5.16",
     "@types/node": "^18.13.0",
     "babelify": "^10.0.0",
+    "esm": "^3.2.25",
     "gulp": "^4.0.2",
     "http-server": "^14.1.1",
     "lil-gui": "^0.16.1",

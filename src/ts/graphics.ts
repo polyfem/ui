@@ -1,9 +1,23 @@
 import * as THREE from 'three';
 import {FileControl} from "./fileControl";
 import { OrbitControls } from './external/OrbitControls';
+import { GLTFLoader } from './external/GLTFLoader.js';
 
 import {AxesHelper, GridHelper, WebGLRenderer} from "three";
 
+class CanvasController{
+    canvas: Canvas;
+    loadFile(){
+        const loader = new GLTFLoader();
+        loader.load( 'path/to/model.glb',  ( gltf:any )=>{
+            this.canvas.scene.add( gltf.scene );
+        }, undefined, function ( error:Error ) {
+
+            console.error( error );
+
+        } );
+    }
+}
 
 /**
  * Canvas
@@ -101,7 +115,6 @@ class Canvas {
         }
     }
 }
-
 
 function instantiate(hostId:string) {
 
