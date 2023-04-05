@@ -1,11 +1,11 @@
-import {UFileSystem} from "./server";
+import {UFile, UFileSystem} from "./server";
 import {Visual} from "./visual";
 import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import $ from 'jquery';
 import {FileHandle} from "fs/promises";
-import {FileControl} from "./fileControl";
+import {FileControl, GFileControl} from "./fileControl";
 
 class UI{
     fs: UFileSystem;
@@ -16,6 +16,15 @@ class UI{
     emptySpec = new Spec('none');
     specEngine: SpecEngine;
     activeFile: FileControl;
+    /**
+     * Callback supplied by visual
+     */
+    setActiveFile: (activeFile: FileControl)=>void;
+    openedFiles: FileControl[];
+    /**
+     * Callback supplied by visual
+     */
+    setOpenedFiles: (files: FileControl[])=>void;
     constructor(){
         this.mountFileSystem('../server-root');
         this.specEngine = new SpecEngine(this);
@@ -32,6 +41,15 @@ class UI{
     loadVisual(rootId: string){
         let component = React.createElement(Visual, {ui:this, rootId});
         ReactDOM.render(component, document.getElementById(rootId));
+    }
+    openFile(file: UFile){
+        switch(file.url.split('.').pop()){
+            case 'glb':
+                let fileControl = new GFileControl(file.name, file);
+                this.activeFile = fileControl;
+                return fileControl;
+        }
+        return undefined;
     }
 }
 

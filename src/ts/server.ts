@@ -120,6 +120,13 @@ class UFile{
             contentType: false // let xhr set the content type
         });
     }
+
+    /**
+     * Creates a URL from which contents of this file can be accessed through
+     */
+    accessURL(){
+        return 'http://localhost:8081/getFile/'+encodeURIComponent(this.url);
+    }
 }
 
 class Operator{

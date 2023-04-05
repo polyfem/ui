@@ -1,5 +1,5 @@
 import {UFile} from "./server";
-import {Canvas} from "./graphics";
+import {Canvas, CanvasController} from "./graphics";
 import {Spec} from "./spec";
 
 class FileControl{
@@ -10,6 +10,7 @@ class FileControl{
     static instances:{[key:number]:FileControl} = {};
     fileName: string;
     fileReference: UFile;
+    fileExtension: string;
     fileDisplay: HTMLElement;
     alternativeDisplay: HTMLElement;
     togglePane = false;
@@ -22,6 +23,7 @@ class FileControl{
         this.fileName = fileName;
         this.fileReference = fileReference;
         this.fileDisplay = fileDisplay;
+        this.fileExtension = fileName.split('.').pop();
     }
 }
 
@@ -43,7 +45,7 @@ class GeometricOperation{
  * A file that is contains geometries being visualized
  */
 class GFileControl extends FileControl{
-    canvas: Canvas;
+    canvasController: CanvasController;
     constructor(fileName: string, fileReference: UFile){
         super(fileName, fileReference);
     }

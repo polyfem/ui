@@ -4,18 +4,60 @@ import { OrbitControls } from './external/OrbitControls';
 import { GLTFLoader } from './external/GLTFLoader.js';
 
 import {AxesHelper, GridHelper, WebGLRenderer} from "three";
+import {UFile} from "./server";
 
 class CanvasController{
     canvas: Canvas;
-    loadFile(){
+    constructor(hostId: string) {
+        this.canvas = this.initiate(hostId);
+    }
+    initiate(hostId:string) {
+
+        let camera: THREE.Camera, scene: THREE.Scene, renderer: WebGLRenderer;
+        let htmlElement = document.getElementById(hostId);
+        camera = new THREE.PerspectiveCamera(75, htmlElement.offsetWidth/ htmlElement.offsetHeight, 0.01, 1000);
+        let dpp = 30;
+        // let width = htmlElement.offsetWidth;
+        // let height = htmlElement.offsetHeight;
+        // camera = new THREE.OrthographicCamera(-width/2/dpp, width/2/dpp,
+        //     height/2/dpp, -height/2/dpp, -2000, 2000);
+        camera.position.y = -12;
+        //camera.position.z = 10;
+        camera.lookAt(0, 0, 0);
+        camera.up.set(0, 0, 1);
+        //camera.up.set(0, 1, 0);
+
+        scene = new THREE.Scene();
+        // const near = 7;
+        // const far = 19;
+        // const color = 'lightblue';
+        // scene.fog = new THREE.Fog(color, near, far);
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor( 0x000000, 0.0 );
+        renderer.localClippingEnabled = true;
+
+        let canvas = new Canvas(camera, scene, renderer, {perspective: true, dpp: dpp},
+            htmlElement);
+
+        canvas.animate();
+        return canvas;
+    }
+    loadFile(file:UFile){
         const loader = new GLTFLoader();
-        loader.load( 'path/to/model.glb',  ( gltf:any )=>{
+        loader.load( file.accessURL(),  (gltf: any)=>{
             this.canvas.scene.add( gltf.scene );
         }, undefined, function ( error:Error ) {
-
             console.error( error );
-
         } );
+    }
+
+    setNewHost(element: HTMLElement) {
+        this.canvas.setNewHost(element);
     }
 }
 
@@ -28,25 +70,27 @@ class Canvas {
     public scene: THREE.Scene;
     public renderer: THREE.WebGLRenderer;
     public htmlElement: HTMLElement;
-    public width:number;
+    public width: number;
     public height: number;
     public time: number = 0;
-    public config: {perspective: boolean,
-        dpp: number};
+    public config: {
+        perspective: boolean,
+        dpp: number
+    };
     public gridHelper: GridHelper[] = [];
     public axesHelper: AxesHelper;
 
     constructor(camera: THREE.Camera, scene: THREE.Scene,
-                renderer: THREE.WebGLRenderer, config: {perspective: boolean, dpp:number}, htmlElement: HTMLElement) {
+                renderer: THREE.WebGLRenderer, config: { perspective: boolean, dpp: number }, htmlElement: HTMLElement) {
         this.htmlElement = htmlElement;
         this.camera = camera;
         this.scene = scene;
         this.renderer = renderer;
         this.config = config;
-        htmlElement.appendChild( renderer.domElement );
+        htmlElement.appendChild(renderer.domElement);
         window.addEventListener("resize", this.onResize.bind(this));
 
-        let control = new OrbitControls(camera, renderer.domElement);
+        new OrbitControls(camera, renderer.domElement);
 
         // new OrbitalControlUpdater(tr, canvas);
         let light1 = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -60,12 +104,12 @@ class Canvas {
         scene.add(light3);
 
         let gridHelper = new THREE.GridHelper(12, 12);
-        gridHelper.rotateX(Math.PI/2);
+        gridHelper.rotateX(Math.PI / 2);
         this.scene.add(gridHelper);
         this.gridHelper.push(gridHelper);
 
         let gridHelper2 = new THREE.GridHelper(12, 12);
-        gridHelper2.rotateZ(Math.PI/2);
+        gridHelper2.rotateZ(Math.PI / 2);
         this.scene.add(gridHelper2);
         this.gridHelper.push(gridHelper2);
 
@@ -80,20 +124,20 @@ class Canvas {
         this.onResize();
     }
 
-    setNewHost(element:HTMLElement){
+    setNewHost(element: HTMLElement) {
         this.htmlElement.removeChild(this.renderer.domElement);
         element.appendChild(this.renderer.domElement);
         this.htmlElement = element;
         this.onResize();
     }
 
-    animate(){
-        this.renderer.setAnimationLoop( this.animation.bind(this) );
+    animate() {
+        this.renderer.setAnimationLoop(this.animation.bind(this));
     }
 
-    animation(time: number ) {
-        this.time = time/1000;
-        this.renderer.render( this.scene, this.camera );
+    animation(time: number) {
+        this.time = time / 1000;
+        this.renderer.render(this.scene, this.camera);
     }
 
     onResize() {
@@ -107,50 +151,13 @@ class Canvas {
             this.camera.updateProjectionMatrix();
         }
         if (this.camera instanceof THREE.OrthographicCamera) {
-            this.camera.left = -this.width/2/this.config.dpp;
-            this.camera.right = this.width/2/this.config.dpp;
-            this.camera.bottom = -this.height/2/this.config.dpp;
-            this.camera.top = this.height/2/this.config.dpp;
+            this.camera.left = -this.width / 2 / this.config.dpp;
+            this.camera.right = this.width / 2 / this.config.dpp;
+            this.camera.bottom = -this.height / 2 / this.config.dpp;
+            this.camera.top = this.height / 2 / this.config.dpp;
             this.camera.updateProjectionMatrix();
         }
     }
 }
 
-function instantiate(hostId:string) {
-
-    let camera: THREE.Camera, scene: THREE.Scene, renderer: WebGLRenderer;
-    let htmlElement = document.getElementById(hostId);
-    camera = new THREE.PerspectiveCamera(75, htmlElement.offsetWidth/ htmlElement.offsetHeight, 0.01, 1000);
-    let dpp = 30;
-    // let width = htmlElement.offsetWidth;
-    // let height = htmlElement.offsetHeight;
-    // camera = new THREE.OrthographicCamera(-width/2/dpp, width/2/dpp,
-    //     height/2/dpp, -height/2/dpp, -2000, 2000);
-    camera.position.y = -12;
-    //camera.position.z = 10;
-    camera.lookAt(0, 0, 0);
-    camera.up.set(0, 0, 1);
-    //camera.up.set(0, 1, 0);
-
-    scene = new THREE.Scene();
-    // const near = 7;
-    // const far = 19;
-    // const color = 'lightblue';
-    // scene.fog = new THREE.Fog(color, near, far);
-
-    renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-    });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor( 0x000000, 0.0 );
-    renderer.localClippingEnabled = true;
-
-    let canvas = new Canvas(camera, scene, renderer, {perspective: true, dpp: dpp},
-        htmlElement);
-
-    canvas.animate();
-    return canvas;
-}
-
-export{Canvas, instantiate};
+export{Canvas, CanvasController};

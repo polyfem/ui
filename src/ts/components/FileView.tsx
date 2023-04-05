@@ -6,9 +6,16 @@ import TreeItem from '@mui/lab/TreeItem';
 import {Box} from "@mui/material";
 import {UI} from "../main";
 import {UFile} from "../server";
+import {SyntheticEvent} from "react";
 
 function FolderView({ui, rootId, file}: {ui: UI, rootId: string, file: UFile}){
-    return <TreeItem nodeId={file.url} label={file.name}>
+    const handleClick=(e: SyntheticEvent)=>{
+        if(!file.isDir){
+            ui.openFile(file);
+        }
+    }
+    // const onChange
+    return <TreeItem nodeId={file.url} label={file.name} onSelect={handleClick}>
             {(file.isDir&&file.ls())?
                 file.children.map((ch)=>(<FolderView ui={ui} rootId={rootId} file={ch}/>))
                 :undefined}

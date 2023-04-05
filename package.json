@@ -9,7 +9,7 @@
   "scripts": {
     "start": "http-server ./dist && node ./src/server/server.js",
     "install": "pip install meshio",
-    "build": "webpack --config prod.config.js",
+    "build": "gulp --gulpfile gulpfile.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
