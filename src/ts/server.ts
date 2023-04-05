@@ -125,7 +125,7 @@ class UFile{
      * Creates a URL from which contents of this file can be accessed through
      */
     accessURL(){
-        return 'http://localhost:8081/getFile/'+encodeURIComponent(this.url);
+        return 'http://localhost:8081/queryFile/?address=./'+this.url;
     }
 }
 

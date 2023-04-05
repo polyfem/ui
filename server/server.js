@@ -49,7 +49,6 @@ function mountFileSystem(rootURL){
             }
         }
         let fileName = req.params.fileName;
-        console.log(path.resolve(path.join(rootURL, fileName)));
         res.append('Access-Control-Allow-Origin', ['*'])
             .sendFile(path.resolve(fileName), options, function (err) {
             if (err) {
@@ -58,7 +57,26 @@ function mountFileSystem(rootURL){
                 console.log('Sent:', fileName)
             }
         });
-    })
+    });
+    app.get('/queryFile', function(req, res){
+        let options = {
+            dotfiles: 'ignore',
+            headers: {
+                'x-timestamp': Date.now(),
+                'x-sent': true,
+                'Access-Control-Allow-Origin': '*'
+            }
+        }
+        let fileName = req.query.address;
+        res.append('Access-Control-Allow-Origin', ['*'])
+            .sendFile(path.resolve(fileName), options, function (err) {
+                if (err) {
+                    console.error('Error code: '+ err);
+                } else {
+                    console.log('Sent:', fileName)
+                }
+            });
+    });
     app.use(cors({
         origin: '*'
     }));

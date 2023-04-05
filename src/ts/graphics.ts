@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {FileControl} from "./fileControl";
 import { OrbitControls } from './external/OrbitControls';
+import {OrbitControlsGizmo} from './external/OrbitControlsGizmo.js';
 import { GLTFLoader } from './external/GLTFLoader.js';
 
 import {AxesHelper, GridHelper, WebGLRenderer} from "three";
@@ -15,16 +16,16 @@ class CanvasController{
 
         let camera: THREE.Camera, scene: THREE.Scene, renderer: WebGLRenderer;
         let htmlElement = document.getElementById(hostId);
-        camera = new THREE.PerspectiveCamera(75, htmlElement.offsetWidth/ htmlElement.offsetHeight, 0.01, 1000);
+        camera = new THREE.PerspectiveCamera(75, htmlElement.offsetWidth/ htmlElement.offsetHeight, 0.01, 10000);
         let dpp = 30;
         // let width = htmlElement.offsetWidth;
         // let height = htmlElement.offsetHeight;
         // camera = new THREE.OrthographicCamera(-width/2/dpp, width/2/dpp,
         //     height/2/dpp, -height/2/dpp, -2000, 2000);
-        camera.position.y = -12;
+        camera.position.z = 12;
         //camera.position.z = 10;
         camera.lookAt(0, 0, 0);
-        camera.up.set(0, 0, 1);
+        // camera.up.set(0, 0, 1);
         //camera.up.set(0, 1, 0);
 
         scene = new THREE.Scene();
@@ -47,9 +48,11 @@ class CanvasController{
         canvas.animate();
         return canvas;
     }
+
     loadFile(file:UFile){
         const loader = new GLTFLoader();
         loader.load( file.accessURL(),  (gltf: any)=>{
+            console.log(gltf);
             this.canvas.scene.add( gltf.scene );
         }, undefined, function ( error:Error ) {
             console.error( error );
@@ -70,6 +73,7 @@ class Canvas {
     public scene: THREE.Scene;
     public renderer: THREE.WebGLRenderer;
     public htmlElement: HTMLElement;
+    public controlsGizmo: OrbitControlsGizmo;
     public width: number;
     public height: number;
     public time: number = 0;
@@ -90,7 +94,17 @@ class Canvas {
         htmlElement.appendChild(renderer.domElement);
         window.addEventListener("resize", this.onResize.bind(this));
 
-        new OrbitControls(camera, renderer.domElement);
+        let orbitControl = new OrbitControls(camera, renderer.domElement);
+        this.controlsGizmo = new  OrbitControlsGizmo(orbitControl, { size:  100, padding:  8 });
+        let controlEl = (<HTMLElement>this.controlsGizmo.domElement);
+        controlEl.style.position='absolute';
+        controlEl.style.right='7pt';
+        controlEl.style.top='7pt';
+        controlEl.style.borderStyle='solid';
+        controlEl.style.borderRadius='20%';
+        controlEl.style.boxShadow='5px 5px 5px 0px rgba(0,0,0,0.3)';
+        controlEl.style.background='rgba(255,255,255,0.2)';
+        htmlElement.appendChild(this.controlsGizmo.domElement);
 
         // new OrbitalControlUpdater(tr, canvas);
         let light1 = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -103,30 +117,32 @@ class Canvas {
         light3.position.set(0, -5, 0);
         scene.add(light3);
 
-        let gridHelper = new THREE.GridHelper(12, 12);
-        gridHelper.rotateX(Math.PI / 2);
-        this.scene.add(gridHelper);
-        this.gridHelper.push(gridHelper);
-
-        let gridHelper2 = new THREE.GridHelper(12, 12);
-        gridHelper2.rotateZ(Math.PI / 2);
-        this.scene.add(gridHelper2);
-        this.gridHelper.push(gridHelper2);
-
-        let gridHelper3 = new THREE.GridHelper(12, 12);
-        this.scene.add(gridHelper3);
-        this.gridHelper.push(gridHelper3);
-
-        let axesHelper = new THREE.AxesHelper(7);
-        this.scene.add(axesHelper);
-        this.axesHelper = axesHelper;
+        // let gridHelper = new THREE.GridHelper(12, 12);
+        // gridHelper.rotateX(Math.PI / 2);
+        // this.scene.add(gridHelper);
+        // this.gridHelper.push(gridHelper);
+        //
+        // let gridHelper2 = new THREE.GridHelper(12, 12);
+        // gridHelper2.rotateZ(Math.PI / 2);
+        // this.scene.add(gridHelper2);
+        // this.gridHelper.push(gridHelper2);
+        //
+        // let gridHelper3 = new THREE.GridHelper(12, 12);
+        // this.scene.add(gridHelper3);
+        // this.gridHelper.push(gridHelper3);
+        //
+        // let axesHelper = new THREE.AxesHelper(7);
+        // this.scene.add(axesHelper);
+        // this.axesHelper = axesHelper;
 
         this.onResize();
     }
 
     setNewHost(element: HTMLElement) {
         this.htmlElement.removeChild(this.renderer.domElement);
+        this.htmlElement.removeChild(this.controlsGizmo.domElement);
         element.appendChild(this.renderer.domElement);
+        element.appendChild(this.controlsGizmo.domElement);
         this.htmlElement = element;
         this.onResize();
     }

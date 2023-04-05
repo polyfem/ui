@@ -11,13 +11,14 @@ import {SyntheticEvent} from "react";
 function FolderView({ui, rootId, file}: {ui: UI, rootId: string, file: UFile}){
     const handleClick=(e: SyntheticEvent)=>{
         if(!file.isDir){
+            console.log("clicked!");
             ui.openFile(file);
         }
     }
     // const onChange
-    return <TreeItem nodeId={file.url} label={file.name} onSelect={handleClick}>
+    return <TreeItem nodeId={file.url} label={file.name} onClick={handleClick}>
             {(file.isDir&&file.ls())?
-                file.children.map((ch)=>(<FolderView ui={ui} rootId={rootId} file={ch}/>))
+                file.children.map((ch)=>(<FolderView ui={ui} key={ch.url} rootId={rootId} file={ch}/>))
                 :undefined}
         </TreeItem>;
 }

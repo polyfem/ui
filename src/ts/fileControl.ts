@@ -1,6 +1,7 @@
 import {UFile} from "./server";
 import {Canvas, CanvasController} from "./graphics";
 import {Spec} from "./spec";
+import {ReactElement} from "react";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -11,18 +12,17 @@ class FileControl{
     fileName: string;
     fileReference: UFile;
     fileExtension: string;
-    fileDisplay: HTMLElement;
+    fileDisplay: ReactElement;
     alternativeDisplay: HTMLElement;
     togglePane = false;
     //Root of the spec, defaults to undefined for non-JSON files
     specRoot: Spec=new Spec('undefined');
-    constructor(fileName: string, fileReference: UFile, fileDisplay: HTMLElement = undefined){
+    constructor(fileName: string, fileReference: UFile){
         this.id = FileControl.idGenerator;
         FileControl.instances[this.id] = this;
         FileControl.idGenerator++;
         this.fileName = fileName;
         this.fileReference = fileReference;
-        this.fileDisplay = fileDisplay;
         this.fileExtension = fileName.split('.').pop();
     }
 }
@@ -48,6 +48,9 @@ class GFileControl extends FileControl{
     canvasController: CanvasController;
     constructor(fileName: string, fileReference: UFile){
         super(fileName, fileReference);
+    }
+    loadFile(){
+        this.canvasController.loadFile(this.fileReference);
     }
 }
 

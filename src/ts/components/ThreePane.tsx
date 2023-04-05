@@ -9,10 +9,11 @@ export default function ThreePane({ui,rootId, fileControl}: {ui: UI, rootId: str
     const loadGraphics = ()=>{
         if(fileControl.canvasController==undefined){
             fileControl.canvasController = new CanvasController(hostId);
+            fileControl.loadFile();
         }else{
             fileControl.canvasController.setNewHost(document.getElementById(hostId));
         }
     }
     useEffect(loadGraphics);
-    return <div id={hostId} style={{width: '100%', height:'100%'}}/>
+    return <div id={hostId} style={{width: '100%', height:'100%', position:'relative'}}/>
 }

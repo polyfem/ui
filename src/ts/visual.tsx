@@ -11,15 +11,20 @@ import AppBar from "@mui/material/AppBar";
 import EditorPane from "./components/EditorPane";
 import FileView from "./components/FileView";
 import {Spec} from "./spec";
+import {FileControl} from "./fileControl";
+
 
 const drawerWidth = 300;
 
-class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, activeSpec: Spec}>{
+class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, activeSpec: Spec,
+    activeFile: number, openedFiles: FileControl[]}>{
     ui: UI;
     constructor(props:{ui: UI, rootId: string}){
         super(props);
         this.ui = props.ui;
-        this.state = {open:true, activeSpec: props.ui.activeSpec};
+        this.state = {open:true, activeSpec: props.ui.activeSpec,
+            activeFile:undefined, openedFiles:[]};
+        this.ui.vs = this;
     }
     openSpec(target: string){
         let specNode = this.ui.specRoot.children[target];
@@ -29,6 +34,12 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
     closeSpec(){
         this.ui.activeSpec = this.ui.emptySpec;
         this.setState({activeSpec: this.ui.activeSpec});
+    }
+    setActiveFile(activeFile: number){
+        this.setState({activeFile: activeFile});
+    }
+    setOpenedFiles(files: FileControl[]){
+        this.setState({openedFiles: files});
     }
     render(){
         return <Box sx={{ display: 'grid' }}
@@ -61,7 +72,10 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
             <Box sx={{ flexGrow: 1, p: 3 }}
                  style={{gridColumn: '2 / span 1',
                      gridRow: '2 / span 1', padding:'0'}}>
-                <EditorPane {...this.props} specRoot={this.state.activeSpec}/>
+                <EditorPane {...this.props} specRoot={this.state.activeSpec}
+                            openedFiles={this.state.openedFiles}
+                            activeFile ={this.state.activeFile}
+                />
             </Box>
         </Box>;
     }

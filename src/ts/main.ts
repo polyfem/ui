@@ -4,27 +4,22 @@ import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import $ from 'jquery';
-import {FileHandle} from "fs/promises";
 import {FileControl, GFileControl} from "./fileControl";
 
 class UI{
     fs: UFileSystem;
+    /**
+     * Bound to active instance of Visual through
+     * React props callback
+     */
     vs: Visual;
     specRoot: Spec;
     //The root of the spec being edited
     activeSpec: Spec;
     emptySpec = new Spec('none');
     specEngine: SpecEngine;
-    activeFile: FileControl;
-    /**
-     * Callback supplied by visual
-     */
-    setActiveFile: (activeFile: FileControl)=>void;
-    openedFiles: FileControl[];
-    /**
-     * Callback supplied by visual
-     */
-    setOpenedFiles: (files: FileControl[])=>void;
+    activeFile: number = 0;
+    openedFiles: FileControl[]=[];
     constructor(){
         this.mountFileSystem('../server-root');
         this.specEngine = new SpecEngine(this);
@@ -43,13 +38,47 @@ class UI{
         ReactDOM.render(component, document.getElementById(rootId));
     }
     openFile(file: UFile){
-        switch(file.url.split('.').pop()){
-            case 'glb':
-                let fileControl = new GFileControl(file.name, file);
-                this.activeFile = fileControl;
-                return fileControl;
+        let index = 0;
+        let fileControl;
+        while(this.openedFiles[index]!=undefined
+        && this.openedFiles[index].fileReference.url!=file.url) {
+            index++;
         }
-        return undefined;
+        switch(file.url.split('.').pop()){
+            case 'gltf':
+                fileControl = new GFileControl(file.name, file);
+                break;
+            case 'glb':
+                fileControl = new GFileControl(file.name, file);
+                break;
+            default:
+                fileControl = new FileControl(file.name, file);
+                break;
+        }
+        this.openedFiles[index] = fileControl;
+        this.vs.setOpenedFiles(this.openedFiles);
+        this.setActiveFile(index);
+        return fileControl;
+    }
+    closeFile(file: FileControl){
+        let index = 0;
+        while(this.openedFiles[index]!=undefined
+        && this.openedFiles[index].fileReference.url!=file.fileReference.url) {
+            index++;
+        }
+        this.openedFiles.splice(index, 1);
+        //Some art in selecting the correct active file
+        if(this.activeFile>index) {
+            this.setActiveFile(this.activeFile-1);
+        }
+        if(this.activeFile==index){
+            this.setActiveFile((this.activeFile==0)?0:this.activeFile-1);
+        }
+        this.vs.setOpenedFiles(this.openedFiles);
+    }
+    setActiveFile(activeFile:number){
+        this.activeFile = activeFile;
+        this.vs.setActiveFile(this.activeFile);
     }
 }
 
