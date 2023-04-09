@@ -120,9 +120,23 @@ class GeometricOperation{
     }
 }
 ```
+
 ### server/*
 The local REST server is built in Node.js and technically is independent from the structural hierarchy of the entire Front End
 (which is everything above). So its folder should be separated from the 'src/' source folder.
+
+GET _/mesh-convert/:orgFileURL/:targetFileName:_ 
+
+Converts a file at the `orgFileURL` to an accessible format, such as .obj, and returns it with the `targetFileName`. 
+This route is the only non-stateless method in the server as it caches the converted results at the `orgFileURL` inside
+the server/temp folder. When accessing files at the orgFileURL, its last modified-date is compared with the timestamp of the 
+cached file. This will greatly speed up the file access time, and appear as if the files are converted at the 
+time of accessing to simulate REST.
+```typescript
+var stats = fs.statSync(orgFileURL);
+var mtime = stats.mtime;
+console.log(mtime);
+```
 
 ## Debugging
 ~~* `npm` commands now needs to be run with `--force` due to unknown versioning issues in React.~~
