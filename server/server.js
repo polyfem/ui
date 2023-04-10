@@ -82,28 +82,30 @@ function mountFileSystem(rootURL){
     }));
     app.get('/mesh-convert/:orgFileURL/:targetFileName', function (req, res) {
         let orgURL = req.params['orgFileURL'];
-        let targetName = req.params['targetFileName'];
-        let dir = path.dirname(orgURL);
-        let joinedName = path.join(dir,`$`+targetName);
-        let fullName = joinedName.replace("\\", "%2F")
-            .replace("/", "%2F");
-        let targetURL = path.join('temp', fullName);
+        let tarURL = req.params['targetFileName'];
+        let stats = fs.statSync(orgURL);
+        let mtime = stats.mtimeMs;
+        let cachedName = `${encodeURIComponent(orgURL)}${mtime}.${tarURL.split('.').pop()}`;
+        console.log(cachedName);
+        let cachedURL = path.join('temp', cachedName);
+        console.log(path.resolve(cachedURL));
+        if(!fs.existsSync(cachedURL)){//Only convert if no records exists in cache
+            let command = `python mesh-convert.py ${orgURL} ${cachedURL}`
+            execSync(command);
+        }
         let options = {
-            root: rootURL,
-            dotfiles: 'ignore',
+            dotfiles: 'allow',
             headers: {
                 'x-timestamp': Date.now(),
                 'x-sent': true,
                 'Access-Control-Allow-Origin': '*'
             }
         }
-        let command = `python mesh-convert.py ${orgURL} ${targetURL}`
-        execSync(command);
-        res.sendFile(targetURL, options, function (err) {
+        res.sendFile(path.resolve(cachedURL), options, function (err) {
             if (err) {
                 console.error('Error code: '+ err);
             } else {
-                console.log('Sent:', targetURL)
+                console.log('Sent:', cachedURL)
             }
         });
     });
