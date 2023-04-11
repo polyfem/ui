@@ -49,7 +49,15 @@ class CanvasController{
         canvas.animate();
         return canvas;
     }
-
+    discard(){
+        this.canvas.renderer.dispose();
+    }
+    startAnimation(){
+        this.canvas.paused = false;
+    }
+    stopAnimation(){
+        this.canvas.paused = true;
+    }
     loadFile(file:UFile){
         switch(file.extension){
             case 'glb':
@@ -95,6 +103,7 @@ class Canvas {
     public width: number;
     public height: number;
     public time: number = 0;
+    public paused = false;
     public config: {
         perspective: boolean,
         dpp: number
@@ -170,8 +179,10 @@ class Canvas {
     }
 
     animation(time: number) {
-        this.time = time / 1000;
-        this.renderer.render(this.scene, this.camera);
+        if(!this.paused){
+            this.time = time / 1000;
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 
     onResize() {

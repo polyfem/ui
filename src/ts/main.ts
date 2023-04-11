@@ -44,19 +44,26 @@ class UI{
         && this.openedFiles[index].fileReference.url!=file.url) {
             index++;
         }
-        switch(file.url.split('.').pop()){
-            case 'msh':
-            case 'vtu':
-            case 'gltf':
-            case 'glb':
-            case 'obj':
-                fileControl = new GFileControl(file.name, file);
-                break;
-            default:
-                fileControl = new FileControl(file.name, file);
-                break;
+        if(this.openedFiles[index]==undefined){
+            switch(file.url.split('.').pop()){
+                case 'msh':
+                case 'vtu':
+                case 'gltf':
+                case 'glb':
+                case 'obj':
+                    fileControl = new GFileControl(file.name, file);
+                    break;
+                default:
+                    fileControl = new FileControl(file.name, file);
+                    break;
+            }
+            this.openedFiles[index] = fileControl;
+        }else{
+            let fileControl = this.openedFiles[index];
+            if(fileControl instanceof GFileControl){
+                fileControl.canvasController.startAnimation();
+           }
         }
-        this.openedFiles[index] = fileControl;
         this.vs.setOpenedFiles(this.openedFiles);
         this.setActiveFile(index);
         return fileControl;
@@ -68,6 +75,10 @@ class UI{
             index++;
         }
         this.openedFiles.splice(index, 1);
+        if(file instanceof GFileControl){//Close renderer to save space
+            file.canvasController.discard();
+            file.canvasController.stopAnimation();
+        }
         //Some art in selecting the correct active file
         if(this.activeFile>index) {
             this.setActiveFile(this.activeFile-1);
