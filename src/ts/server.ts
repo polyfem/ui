@@ -66,8 +66,10 @@ class UFile{
     name: string;
     isDir: boolean = false;
     children: UFile[] = [];
+    extension: string;
     constructor(url: string, name: string, isDir: boolean){
         this.url = url;
+        this.extension = this.url.split('.').pop();
         this.name = name;
         this.isDir = isDir;
     }
@@ -122,10 +124,23 @@ class UFile{
     }
 
     /**
-     * Creates a URL from which contents of this file can be accessed through
+     * Creates a URL from which contents of this file can be accessed through,
+     * deals with file type conversions here depending on the geometric file format
      */
     accessURL(){
-        return 'http://localhost:8081/queryFile/?address=./'+this.url;
+        switch(this.extension){
+            case 'glb':
+            case 'gltf':
+            case 'obj':
+                return 'http://localhost:8081/queryFile/?address=./'+this.url;
+            case 'msh':
+            case 'vtu':
+                let nameComponents = this.name.split('.');
+                nameComponents.pop();
+                nameComponents.push('obj');
+                let name = encodeURIComponent(nameComponents.join('.'));
+                return `http://localhost:8081/mesh-convert/${encodeURIComponent(this.url)}/${name}`;
+        }
     }
 }
 

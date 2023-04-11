@@ -45,10 +45,11 @@ class UI{
             index++;
         }
         switch(file.url.split('.').pop()){
+            case 'msh':
+            case 'vtu':
             case 'gltf':
-                fileControl = new GFileControl(file.name, file);
-                break;
             case 'glb':
+            case 'obj':
                 fileControl = new GFileControl(file.name, file);
                 break;
             default:
