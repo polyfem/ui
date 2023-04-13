@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {FileControl} from "./fileControl";
+import {FileControl, GeometryJSONStruct} from "./fileControl";
 import { OrbitControls } from './external/OrbitControls';
 import {OrbitControlsGizmo} from './external/OrbitControlsGizmo.js';
 import { GLTFLoader } from './external/GLTFLoader.js';
@@ -7,10 +7,13 @@ import {OBJLoader} from './external/OBJLoader.js';
 
 import {AxesHelper, GridHelper, Mesh, MeshNormalMaterial, WebGLRenderer} from "three";
 import {UFile} from "./server";
+import {UI} from "./main";
 
 class CanvasController{
     canvas: Canvas;
-    constructor(hostId: string) {
+    ui: UI;
+    constructor(ui: UI, hostId: string) {
+        this.ui = ui;
         this.canvas = this.initiate(hostId);
     }
     initiate(hostId:string) {
@@ -26,7 +29,8 @@ class CanvasController{
         camera.position.z = 12;
         //camera.position.z = 10;
         camera.lookAt(0, 0, 0);
-        // camera.up.set(0, 0, 1);
+        // camera.up.set(0, 0, 1)
+        // THREE.Object3D.DEFAULT_UP = new THREE.Vector3(0,0,1);
         //camera.up.set(0, 1, 0);
 
         scene = new THREE.Scene();
@@ -64,6 +68,7 @@ class CanvasController{
             case 'gltf':
                 let loader = new GLTFLoader();
                 loader.load( file.accessURL(),  (gltf: any)=>{
+                    console.log(gltf);
                     this.canvas.scene.add( gltf.scene );
                 }, undefined, function ( error:Error ) {
                     console.error( error );
@@ -82,7 +87,36 @@ class CanvasController{
                 })
                 break;
         }
-        console.log(file.accessURL());
+    }
+    loadGeometry(geometry: GeometryJSONStruct){
+        let extension = geometry.mesh.split('.').pop();
+        let fileName = geometry.mesh.split('/').pop();
+        let transform = geometry.transformation;
+        let tr = (transform.translation)?transform.translation:[0,0,0];
+        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
+        let transVec = new THREE.Vector3(translation[0],translation[2],-translation[1]);
+        let normalizedTrans = transVec.clone().normalize();
+        let sc = (transform.scale)?transform.scale:[1,1,1];
+        let scale = <number[]>((sc instanceof Number)? [sc, sc,sc]: sc);
+        let rt = (transform.rotation)?transform.rotation:[0,0,0];
+        let rotation = <number[]> ((rt instanceof Number)? [rt, rt,rt]: rt);
+        switch (extension) {
+            case 'msh':
+            case 'vtu':
+            case 'obj':
+                let objLoader = new OBJLoader();
+                let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
+                objLoader.load(file.accessURL(), (obj:any)=>{
+                    obj.traverse( function ( child:Mesh ) {
+                        child.material = new MeshNormalMaterial();
+                        child.translateOnAxis(normalizedTrans,transVec.length());
+                        child.scale.set(scale[0],scale[2],scale[1]);
+                        child.rotation.set(rotation[0],rotation[1],rotation[2]);
+                    } );
+                    this.canvas.scene.add(obj);
+                })
+                break;
+        }
     }
 
     setNewHost(element: HTMLElement) {

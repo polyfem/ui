@@ -48,7 +48,7 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
                 size="small"
                 variant="standard"
                 helperText={specNode.type}
-                style={{verticalAlign: 'baseline'}}/>
+                style={{verticalAlign: 'baseline'}} value={specNode.value}/>
         </ListItem>;
         // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
         // </span>;
@@ -63,7 +63,7 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                     {Object.keys(specNode.children).map((key)=>
-                        (<SpecFieldV ui={ui} rootId={rootId} specNode={specNode.children[key]} level={level+1}/>))}
+                        (<SpecFieldV key={key} ui={ui} rootId={rootId} specNode={specNode.children[key]} level={level+1}/>))}
                 </List>
             </Collapse>
             {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}

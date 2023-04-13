@@ -82,7 +82,7 @@ function a11yProps(index: number) {
 class TabPane extends React.Component<{ui:UI, rootId: string,
     openedFiles: FileControl[],
     activeFile: number}, {value: number}>{
-    control = new GFileControl('testfile.json', undefined);
+    control: GFileControl;
     ui: UI;
     constructor(props: {ui:UI, rootId: string,
         openedFiles: FileControl[],

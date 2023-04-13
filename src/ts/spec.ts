@@ -31,6 +31,24 @@ class Spec{
     constructor(name: string){
         this.name = name;
     }
+    loadFromJSON(json:any){
+        if(typeof json == 'object'){
+            this.type = Array.isArray(json)?'list':'object';
+            for(let key in json){
+                let nextSpec = new Spec(key);
+                nextSpec.loadFromJSON(json[key]);
+                this.pushChild(nextSpec);
+            }
+            this.isLeaf = false;
+        }
+        else{
+            this.type = typeof json;
+            if(this.type=='number')
+                this.type = 'float';
+            this.value = json;
+            this.isLeaf = true;
+        }
+    }
     /**
      * Smart pushes a child to subNodes, uses
      * index as key if type of this is array, otherwise
@@ -165,12 +183,12 @@ class SpecEngine {
             let subNodeName = original.children[key].name;
             // Record which nodes have already been included
             included.push(subNodeName);
-            console.log(original.children[key]);
-            console.log(this.validate(`${query}/${subNodeName}`, original.children[key]));
+            // console.log(original.children[key]);
+            // console.log(this.validate(`${query}/${subNodeName}`, original.children[key]));
             //Populate the validated subNode
             spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key]));
         }
-        console.log(raw);
+        // console.log(raw);
         //Fill out all the required fields that haven't been included
         if(raw.required){//If required is not undefined
             for(let required of raw.required){
@@ -197,6 +215,17 @@ class SpecEngine {
     getSpecRoot(): Spec{
         return this.query('',
             ['geometry','space','solver','boundary_conditions','materials','output']);
+    }
+
+    /**
+     * Loads and validates a spec from root
+     * @param json
+     */
+    loadAndValidate(json: {}){
+        let specRoot = new Spec('');
+        specRoot.loadFromJSON(json);
+        this.validate('', specRoot);
+        return specRoot;
     }
 }
 

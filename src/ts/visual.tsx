@@ -28,6 +28,10 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
     }
     openSpec(target: string){
         let specNode = this.ui.specRoot.children[target];
+        if(specNode==undefined){
+            this.closeSpec();
+            return;
+        }
         this.ui.activeSpec = specNode;
         this.setState({activeSpec: specNode});
     }

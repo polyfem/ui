@@ -51,10 +51,11 @@ class UI{
                 case 'gltf':
                 case 'glb':
                 case 'obj':
-                    fileControl = new GFileControl(file.name, file);
+                case 'json':
+                    fileControl = new GFileControl(this,file.name, file);
                     break;
                 default:
-                    fileControl = new FileControl(file.name, file);
+                    fileControl = new FileControl(this,file.name, file);
                     break;
             }
             this.openedFiles[index] = fileControl;
@@ -91,6 +92,20 @@ class UI{
     setActiveFile(activeFile:number){
         this.activeFile = activeFile;
         this.vs.setActiveFile(this.activeFile);
+        if(this.openedFiles[activeFile] instanceof GFileControl){
+            this.setSpec(this.openedFiles[activeFile].specRoot);
+        }
+    }
+    setSpec(spec:Spec){
+        if(spec==undefined){
+            this.vs.closeSpec();
+            return;
+        }
+        let previousActive = this.activeSpec;
+        this.specRoot = spec;
+        if(previousActive.name!='none')
+            this.vs.openSpec(this.activeSpec.name);
+        return spec;
     }
 }
 

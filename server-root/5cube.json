@@ -11,7 +11,7 @@
 	},
 	"geometry": [
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
 					-1.6625064611434937,
@@ -27,7 +27,7 @@
 			"volume_selection": 1
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
 					0,
@@ -43,7 +43,7 @@
 			"volume_selection": 1
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
 					1.0681440830230713,
@@ -59,7 +59,7 @@
 			"volume_selection": 1
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
 					0.9668654799461365,
@@ -75,7 +75,7 @@
 			"volume_selection": 1
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
 					-1.0307741165161133,
@@ -91,7 +91,7 @@
 			"volume_selection": 1
 		},
 		{
-			"mesh": "data/plane.obj",
+			"mesh": "plane.obj",
 			"is_obstacle": true,
 			"transformation": {
 				"translation": [
@@ -120,14 +120,19 @@
 					0.8056816458702087
 				],
 				"scale": [
-					13.370278358459473,
-					10.08761978149414,
-					12.399657249450684
+					5.370278358459473,
+					5.08761978149414,
+					5.399657249450684
+				],
+				"rotation": [
+					3.23,
+					1.34,
+					0.56
 				]
 			}
 		},
 		{
-			"mesh": "data/creature.msh",
+			"mesh": "creature.msh",
 			"transformation": {
 				"translation": [
 					-1.7868762016296387,

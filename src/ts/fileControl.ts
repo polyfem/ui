@@ -2,10 +2,12 @@ import {UFile} from "./server";
 import {Canvas, CanvasController} from "./graphics";
 import {Spec} from "./spec";
 import {ReactElement} from "react";
+import {UI} from "./main";
 
 class FileControl{
     //Generated uniquely and incrementally
     id: number;
+    ui: UI;
     static idGenerator: number = 0;
     //Opened instances of file control
     static instances:{[key:number]:FileControl} = {};
@@ -17,7 +19,8 @@ class FileControl{
     togglePane = false;
     //Root of the spec, defaults to undefined for non-JSON files
     specRoot: Spec=new Spec('undefined');
-    constructor(fileName: string, fileReference: UFile){
+    constructor(ui: UI,fileName: string, fileReference: UFile){
+        this.ui = ui;
         this.id = FileControl.idGenerator;
         FileControl.instances[this.id] = this;
         FileControl.idGenerator++;
@@ -26,7 +29,6 @@ class FileControl{
         this.fileExtension = fileName.split('.').pop();
     }
 }
-
 
 /**
  * Provides the basic structure of a geometric operation
@@ -41,16 +43,37 @@ class GeometricOperation{
     }
 }
 
+interface GeometryJSONStruct{
+    mesh: string;
+    transformation: Transformation;
+}
+interface Transformation{
+    scale: number[] | number;
+    translation: number[];
+    //Expressed in euler
+    rotation: number[];
+}
 /**
  * A file that is contains geometries being visualized
  */
 class GFileControl extends FileControl{
     canvasController: CanvasController;
-    constructor(fileName: string, fileReference: UFile){
-        super(fileName, fileReference);
+    constructor(ui: UI,fileName: string, fileReference: UFile){
+        super(ui,fileName, fileReference);
     }
+
     loadFile(){
-        this.canvasController.loadFile(this.fileReference);
+        if(this.fileReference.extension=='json'){
+            this.fileReference.syncRead((data:string)=>{
+                let json = JSON.parse(data);
+                this.specRoot = this.ui.specEngine.loadAndValidate(json);
+                this.ui.setSpec(this.specRoot);
+                let geometries:GeometryJSONStruct[] = json['geometry'];
+                geometries.forEach(geometry => this.canvasController.loadGeometry(geometry));
+            })
+        }
+        else
+            this.canvasController.loadFile(this.fileReference);
     }
 }
 
@@ -155,4 +178,4 @@ class GFileControl extends FileControl{
 //     }
 // }
 
-export {FileControl, GeometricOperation, GFileControl};
+export {FileControl, GeometricOperation, GFileControl, GeometryJSONStruct};
