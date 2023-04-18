@@ -25,6 +25,12 @@ class Spec{
     selection: string[];
 
     /**
+     * Operation variables
+     */
+    editing = false;
+    selected = false;
+    secondarySelected = false;
+    /**
      * Specs must have a non-empty name
      * @param name
      */
@@ -63,6 +69,35 @@ class Spec{
             this.children[child.name] = child;
         }else return; // Only list or object accepts child
         this.subNodesCount++;
+    }
+
+    /**
+     * Retrieves the corresponding child from up to the
+     * current spec
+     * @param query query separated by /
+     * @param force if force query, then all missing children will be added,
+     *    isLeaf will always be set to false to ensure the correct returned value
+     */
+    findChild(query: string, force = false){
+        let keys = query.split('/');
+        console.log(keys);
+        let child:Spec = this;
+        while(keys.length>0){
+            child.isLeaf &&= !force;
+            if(keys[0]==''||keys[0]=='.'){//Check for pseudo path
+                keys.shift();
+            }
+            else if(child && !child.isLeaf) {
+                let key = keys.shift();
+                if(force && child.children[key]==undefined){
+                    child.children[key] = new Spec(key);
+                }
+                child = child.children[key];
+            }
+            else
+                return undefined;
+        }
+        return child;
     }
 }
 

@@ -39,6 +39,9 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
         this.ui.activeSpec = this.ui.emptySpec;
         this.setState({activeSpec: this.ui.activeSpec});
     }
+    updateSpec(){
+        this.setState({activeSpec: this.ui.activeSpec});
+    }
     setActiveFile(activeFile: number){
         this.setState({activeFile: activeFile});
     }

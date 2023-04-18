@@ -107,6 +107,13 @@ class UI{
             this.vs.openSpec(this.activeSpec.name);
         return spec;
     }
+
+    /**
+     * Highlights the corresponding geometry spec being highlighted
+     */
+    updateSpecPane(){
+        this.vs.updateSpec();
+    }
 }
 
 $(()=>{

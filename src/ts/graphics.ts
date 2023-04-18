@@ -1,23 +1,61 @@
 import * as THREE from 'three';
-import {FileControl, GeometryJSONStruct} from "./fileControl";
+import {FileControl, GeometryJSONStruct, GFileControl} from "./fileControl";
 import { OrbitControls } from './external/OrbitControls';
 import {OrbitControlsGizmo} from './external/OrbitControlsGizmo.js';
 import { GLTFLoader } from './external/GLTFLoader.js';
 import {OBJLoader} from './external/OBJLoader.js';
+import {TransformControls} from "./external/TransformControls.js";
 
-import {AxesHelper, GridHelper, Mesh, MeshNormalMaterial, WebGLRenderer} from "three";
+import {
+    AxesHelper, Box3,
+    GridHelper,
+    Mesh,
+    MeshBasicMaterial,
+    MeshNormalMaterial,
+    MeshPhongMaterial, Vector2,
+    WebGLRenderer
+} from "three";
 import {UFile} from "./server";
 import {UI} from "./main";
+import {Spec} from "./spec";
 
 class CanvasController{
     canvas: Canvas;
     ui: UI;
-    constructor(ui: UI, hostId: string) {
+    raySelector: RaySelector;
+    meshToSpec: Map<Mesh, Spec>;
+    //Active aspect of geometry being edited
+    //One of translation, rotation, or scale
+    activeEdit: string='translation';
+    activeGeometry: Spec;
+    fileControl: GFileControl;
+    constructor(ui: UI, hostId: string, fileControl: GFileControl) {
         this.ui = ui;
+        this.fileControl = fileControl;
         this.canvas = this.initiate(hostId);
+        this.addRaySelector();
+        this.raySelector.selectionCallback = (mesh)=>{
+            this.canvas.transformControl.attach(mesh);
+            let geoSpec = this.meshToSpec.get(mesh);
+            geoSpec.selected=true;
+            geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = true;
+            geoSpec.findChild(`/transformation`).secondarySelected = true;
+            this.activeGeometry = geoSpec;
+            this.ui.updateSpecPane();
+        }
+        this.raySelector.clearSelectionCallback = (mesh)=>{
+            this.canvas.transformControl.detach();
+            let geoSpec = this.meshToSpec.get(mesh);
+            geoSpec.selected = false;
+            geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = false;
+            geoSpec.findChild(`/transformation`).secondarySelected = false;
+            this.activeGeometry = undefined;
+            this.ui.updateSpecPane();
+        }
+        this.configureTransformControl();
+        this.meshToSpec = new Map();
     }
     initiate(hostId:string) {
-
         let camera: THREE.Camera, scene: THREE.Scene, renderer: WebGLRenderer;
         let htmlElement = document.getElementById(hostId);
         camera = new THREE.PerspectiveCamera(75, htmlElement.offsetWidth/ htmlElement.offsetHeight, 0.01, 10000);
@@ -53,6 +91,57 @@ class CanvasController{
         canvas.animate();
         return canvas;
     }
+
+    /**
+     * Clears spec editing state from originally active edit,
+     * sets current editing state of current active edit to true
+     * @param activeEdit
+     * @private
+     */
+    private switchActiveEdit(activeEdit: string){
+        this.activeGeometry.findChild(`/transformation/${this.activeEdit}`, true).editing = false;
+        this.activeEdit = activeEdit;
+        this.activeGeometry.findChild(`/transformation/${activeEdit}`, true).editing = true;
+        this.ui.updateSpecPane();
+    }
+    addRaySelector(){
+        let htmlElement = this.canvas.renderer.domElement;
+        this.raySelector = new RaySelector(this.canvas);
+        let moved = false;
+        let downListener = () => {
+            moved = false
+        };
+        htmlElement.addEventListener('mousedown', downListener);
+        let moveListener = (e:MouseEvent) => {
+            moved = true;
+            this.raySelector.onPointerMove(e,htmlElement);
+        };
+        htmlElement.addEventListener('mousemove', moveListener);
+        let upListener = (e:MouseEvent) => {
+            if (moved) {
+                console.log('moved')
+            } else {
+                this.raySelector.select();
+            }
+        };
+        htmlElement.addEventListener('mouseup', upListener);
+    }
+    configureTransformControl(){
+        document.onkeydown = (e)=>{
+            if(e.key == 't'){
+                this.canvas.transformControl.setMode('translate');
+                this.switchActiveEdit('translation');
+            }
+            if(e.key == 'r'){
+                this.canvas.transformControl.setMode('rotate');
+                this.switchActiveEdit('rotation');
+            }
+            if(e.key == 's'){
+                this.canvas.transformControl.setMode('scale');
+                this.switchActiveEdit('scale');
+            }
+        }
+    }
     discard(){
         this.canvas.renderer.dispose();
     }
@@ -84,11 +173,16 @@ class CanvasController{
                         child.material = new MeshNormalMaterial();
                     } );
                     this.canvas.scene.add(obj);
-                })
+                });
                 break;
         }
     }
-    loadGeometry(geometry: GeometryJSONStruct){
+
+    /**
+     * @param geometry
+     * @param index index of the geometry inside the parent spec
+     */
+    loadGeometry(geometry: GeometryJSONStruct, index: number){
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
         let transform = geometry.transformation;
@@ -100,20 +194,26 @@ class CanvasController{
         let scale = <number[]>((sc instanceof Number)? [sc, sc,sc]: sc);
         let rt = (transform.rotation)?transform.rotation:[0,0,0];
         let rotation = <number[]> ((rt instanceof Number)? [rt, rt,rt]: rt);
+        let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
+        console.log(this.fileControl.specRoot);
+        let specRoot = this.fileControl.specRoot.findChild(`/geometry/${index}`);
         switch (extension) {
             case 'msh':
             case 'vtu':
             case 'obj':
                 let objLoader = new OBJLoader();
-                let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
                 objLoader.load(file.accessURL(), (obj:any)=>{
-                    obj.traverse( function ( child:Mesh ) {
+                    obj.traverse( ( child:Mesh )=>{
+                        if(child instanceof THREE.Group){
+                            return;
+                        }
                         child.material = new MeshNormalMaterial();
                         child.translateOnAxis(normalizedTrans,transVec.length());
                         child.scale.set(scale[0],scale[2],scale[1]);
                         child.rotation.set(rotation[0],rotation[1],rotation[2]);
+                        this.canvas.scene.add(child);
+                        this.meshToSpec.set(child, specRoot);
                     } );
-                    this.canvas.scene.add(obj);
                 })
                 break;
         }
@@ -121,6 +221,67 @@ class CanvasController{
 
     setNewHost(element: HTMLElement) {
         this.canvas.setNewHost(element);
+    }
+
+}
+
+class RaySelector{
+    rayCaster = new THREE.Raycaster();
+    camera: THREE.Camera;
+    scene: THREE.Scene;
+    canvas: Canvas;
+    intersected: THREE.Mesh;
+    selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
+        emissive:0xffff00, emissiveIntensity:0.1});
+    // Original material of the currently selected material
+    originalMaterial: THREE.Material;
+
+    pointer = new Vector2();
+    constructor(canvas: Canvas){
+        this.canvas = canvas;
+        this.camera = canvas.camera;
+        this.scene = canvas.scene;
+        this.onPointerMove = this.onPointerMove.bind(this);
+        this.select = this.select.bind(this);
+    }
+    onPointerMove( event:MouseEvent,element: HTMLElement) {
+        let rect = element.getBoundingClientRect();
+        let x = event.clientX - rect.left; //x position within the element.
+        let y = event.clientY - rect.top;
+        this.pointer.x = ( x / rect.width ) * 2 - 1;
+        this.pointer.y = - ( y / rect.height ) * 2 + 1;
+    }
+    select(){
+        this.rayCaster.setFromCamera( this.pointer, this.camera );
+        const intersects = this.rayCaster.intersectObjects( this.scene.children, false );
+        if ( intersects.length > 0 ) {
+            let selected = intersects[ 0 ].object;
+            if ( this.intersected != selected
+                    && selected instanceof THREE.Mesh) {
+                if ( this.intersected && this.intersected instanceof THREE.Mesh) {
+                    this.intersected.material = this.originalMaterial;
+                    this.clearSelectionCallback(this.intersected);
+                }
+                this.intersected = selected;
+                this.originalMaterial = selected.material
+                this.intersected.material = this.selectionMaterial;
+                this.selectionCallback(selected);
+            }
+
+        } else {
+            if ( this.intersected ){
+                this.intersected.material = this.originalMaterial;
+                this.clearSelectionCallback(this.intersected);
+            }
+            this.intersected = undefined;
+            this.originalMaterial = undefined;
+        }
+    }
+    selectionCallback(mesh: Mesh){
+
+    }
+    clearSelectionCallback(mesh: Mesh){
+
     }
 }
 
@@ -134,6 +295,7 @@ class Canvas {
     public renderer: THREE.WebGLRenderer;
     public htmlElement: HTMLElement;
     public controlsGizmo: OrbitControlsGizmo;
+    public transformControl: TransformControls;
     public width: number;
     public height: number;
     public time: number = 0;
@@ -157,6 +319,14 @@ class Canvas {
 
         let orbitControl = new OrbitControls(camera, renderer.domElement);
         this.controlsGizmo = new  OrbitControlsGizmo(orbitControl, { size:  100, padding:  8 });
+
+        this.transformControl = new TransformControls(camera, renderer.domElement);
+        this.transformControl.addEventListener( 'dragging-changed', function ( event ) {
+            orbitControl.enabled = ! event.value;
+        } );
+        this.scene.add(this.transformControl);
+        this.scene.background = new THREE.Color(0x333333);
+
         let controlEl = (<HTMLElement>this.controlsGizmo.domElement);
         controlEl.style.position='absolute';
         controlEl.style.right='7pt';
@@ -168,16 +338,19 @@ class Canvas {
         htmlElement.appendChild(this.controlsGizmo.domElement);
 
         // new OrbitalControlUpdater(tr, canvas);
-        let light1 = new THREE.DirectionalLight(0xffffff, 0.5);
+        let light1 = new THREE.DirectionalLight(0xffffff, 0.25);
         light1.position.set(0, 0, 5);
-        scene.add(light1);
-        let light2 = new THREE.DirectionalLight(0xffffff, 0.5);
-        light2.position.set(0, 0, -5);
-        scene.add(light2);
-        let light3 = new THREE.AmbientLight(0xffffff, 0.5);
-        light3.position.set(0, -5, 0);
-        scene.add(light3);
-
+        camera.add(light1);
+        let light2 = new THREE.DirectionalLight(0xffffff, 0.15);
+        light2.position.set(0, 5, 5);
+        camera.add(light2);
+        let light3 = new THREE.DirectionalLight(0xffffff, 0.15);
+        light3.position.set(0, -5, 5);
+        camera.add(light3);
+        let light4 = new THREE.AmbientLight(0xffffff, 0.5);
+        light4.position.set(5, 0, 0);
+        scene.add(light4);
+        scene.add(camera);
         // let gridHelper = new THREE.GridHelper(12, 12);
         // gridHelper.rotateX(Math.PI / 2);
         // this.scene.add(gridHelper);

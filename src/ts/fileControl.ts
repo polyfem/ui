@@ -69,7 +69,7 @@ class GFileControl extends FileControl{
                 this.specRoot = this.ui.specEngine.loadAndValidate(json);
                 this.ui.setSpec(this.specRoot);
                 let geometries:GeometryJSONStruct[] = json['geometry'];
-                geometries.forEach(geometry => this.canvasController.loadGeometry(geometry));
+                geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index));
             })
         }
         else

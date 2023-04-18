@@ -22,22 +22,33 @@ class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec},
             <Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
                 File Does Not Contain Specification
             </Box>
-            :<Box style={{marginLeft: '15pt', marginTop:'15pt', height:'100%', overflow:'auto'}}>
+            :<Box style={{height:'100%', overflow:'auto'}}>
             <List>
-                <SpecFieldV ui={ui} rootId={rootId} specNode={specRoot} level={0}/>
+                <SpecFieldV ui={ui} index={-1} specNode={specRoot} level={0} selected={true} select={()=>{}}/>
             </List>
         </Box>;
     }
 }
 
 //Spec field view
-const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: string, specNode: Spec, level: number}){
-    let [expanded, setExpanded] = useState(true);
+const SpecFieldV = function({ui, index, specNode, level, selected, select}:
+                                {ui: UI, index: number, specNode: Spec,
+                                    level: number, selected:boolean, select:(key:number)=>void}){
+    let [expanded, setExpanded] = useState(level<2);
+    //For usage with lists
+    let [selection, setSelection] = useState(0);
     const handleClick = ()=>{
        setExpanded(!expanded);
+       select(index);
     };
+    const selectChild=(index:number)=>{
+        if(index==selection)//Toggle or select
+            setSelection(-1);
+        else
+            setSelection(index);
+    }
     if(specNode.isLeaf){
-        return <ListItem sx={{ pl: level, alignItems:'baseline'}}>
+        return <ListItem sx={{ pl: 2+level-1, alignItems:'baseline'}}>
             <Tooltip title={specNode.doc}>
                 <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt'}}>
                     {specNode.name}:
@@ -53,17 +64,40 @@ const SpecFieldV = function({ui, rootId, specNode, level}: {ui: UI, rootId: stri
         // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
         // </span>;
     }else{
+        //Determine whether self is expanded conditional on if self is an list element or an object element
+        let expand = (index==-1)?expanded:selected;
+        //Give preview text of list items if they are not expanded
+        let primary = specNode.name;
+        if(index!=-1&&!expand){
+            let children = specNode.children;
+            let keys = Object.keys(children);
+            let enumeration = '';
+            for(let i = 0; i<2; i++){
+                enumeration+=`${keys[i]}: ${children[keys[i]].value}${(i!=keys.length-1)?', ':'...'}`;
+            }
+            enumeration = enumeration.substring(0,17);
+            primary += `:   ${specNode.type=='list'? '[':'{'}${enumeration}...${specNode.type=='list'? ']':'}'}`
+        }
         return <React.Fragment>
-            <Tooltip title={specNode.doc}>
-                <ListItemButton onClick={handleClick} sx={{ pl: level}}>
-                    <ListItemText primary={specNode.name} primaryTypographyProps={{fontSize: '11pt'}}  />
-                    { expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-                </ListItemButton>
-            </Tooltip>
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
+            {(level!=0)?
+                <Tooltip title={specNode.doc} >
+                    <ListItemButton onClick={handleClick}
+                                    sx={{ pl: 2+level-1,
+                                        background:(specNode.editing||specNode.secondarySelected)?'aliceblue':((specNode.selected)?'#ffd400':undefined)}}>
+                        <ListItemText primary={primary} style={{ whiteSpace: 'pre' }} primaryTypographyProps={{fontSize: '11pt'}}  />
+                        { expand ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                    </ListItemButton>
+                </Tooltip>:undefined}
+            <Collapse in={expand} timeout="auto" sx={{background: (specNode.editing)?'aliceblue':undefined}} unmountOnExit>
                 <List component="div" disablePadding>
-                    {Object.keys(specNode.children).map((key)=>
-                        (<SpecFieldV key={key} ui={ui} rootId={rootId} specNode={specNode.children[key]} level={level+1}/>))}
+                    {(specNode.type=='list')?
+                        Object.keys(specNode.children).map((key)=>{
+                            let index = parseInt(key);
+                            return <SpecFieldV key={key} index={index} ui={ui} selected={index==selection} select={selectChild} specNode={specNode.children[key]} level={level+1}/>;
+                        })
+                    :  Object.keys(specNode.children).map((key)=>
+                            (<SpecFieldV key={key} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>))
+                    }
                 </List>
             </Collapse>
             {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}

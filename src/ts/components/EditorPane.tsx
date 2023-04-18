@@ -64,7 +64,7 @@ function TabPanel(props: TabPanelProps) {
             style={{height:'100%', width:'100%', overflow:'auto'}}
         >
             {value === index && (
-                <Box sx={{ p: 1, height:'100%', width:'100%'}}>
+                <Box sx={{ height:'100%', width:'100%'}}>
                     {children}
                 </Box>
             )}
