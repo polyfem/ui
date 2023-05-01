@@ -10,11 +10,14 @@ class Spec{
     query: string;
     pointer: string;
     name: string;
-    isLeaf: boolean;
+    isLeaf: boolean = false;
+    //Tentative specs are disabled before they are confirmed
+    tentative: boolean = false;
+    tentativeChild: Spec;
     //Automatically populated by required
     children: {[key: string]:Spec} = {};
     //Records the size of the subNodes, immutable
-    private subNodesCount = 0;
+    subNodesCount = 0;
     //Remaining fields are only informational
     doc: string;
     //Optional subfields
@@ -33,9 +36,11 @@ class Spec{
     /**
      * Specs must have a non-empty name
      * @param name
+     * @param isLeaf
      */
-    constructor(name: string){
+    constructor(name: string, isLeaf=false){
         this.name = name;
+        this.isLeaf = isLeaf;
     }
     loadFromJSON(json:any){
         if(typeof json == 'object'){
@@ -80,7 +85,6 @@ class Spec{
      */
     findChild(query: string, force = false){
         let keys = query.split('/');
-        console.log(keys);
         let child:Spec = this;
         while(keys.length>0){
             child.isLeaf &&= !force;
@@ -136,11 +140,11 @@ class SpecEngine {
         //Special case with the root spec, as '/' splits into ['','']
         //instead of ['']
         let subTree = this.specTree.traverse(['']);
-        subTree.rawSpec = this.rawSpecs[0];
+        subTree.rawSpec[0] = this.rawSpecs[0];
         for(let i = 1; i<this.rawPointers.length; i++){
             let rawSpec = this.rawSpecs[i];
             let subTree = this.specTree.traverse(this.rawPointers[i].split('/'));
-            subTree.rawSpec = rawSpec;
+            subTree.rawSpec.push(rawSpec);
         }
     }
 
@@ -156,7 +160,7 @@ class SpecEngine {
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
-        let raw = loc.rawSpec;
+        let raw = loc.rawSpec[0];
         let spec = new Spec(keys.pop());
         //Fill out the fields of the spec
         spec.query = query;
@@ -197,7 +201,7 @@ class SpecEngine {
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
-        let raw = loc.rawSpec;
+        let raw = loc.rawSpec[0];
         let spec = new Spec(original.name);
         //Fill out the fields of the spec
         spec.query = query;
@@ -259,8 +263,19 @@ class SpecEngine {
     loadAndValidate(json: {}){
         let specRoot = new Spec('');
         specRoot.loadFromJSON(json);
-        this.validate('', specRoot);
-        return specRoot;
+        return this.validate('', specRoot);
+    }
+
+    /**
+     * Returns the suggested children
+     * of a given spec
+     */
+    getChildTypes(specNode: Spec): { [key: string]: RawSpecTree}{
+        let rawSpecNode = this.specTree.query(specNode.pointer.split('/'));
+        if(rawSpecNode){
+            return rawSpecNode.subTree;
+        }
+        return undefined;
     }
 }
 
@@ -278,7 +293,10 @@ interface RawSpec{
 //of the spec structure
 class RawSpecTree{
     subTree: {[key:string]: RawSpecTree}={};
-    rawSpec: RawSpec;
+    /**
+     * Overloaded specs
+     */
+    rawSpec: RawSpec[]=[];
     /**
      * Finds a sub tree of the given key, if not then
      * creates a new one under the key and returns it
@@ -329,4 +347,4 @@ class RawSpecTree{
     }
 }
 
-export {Spec, SpecEngine};
+export {Spec, SpecEngine, RawSpecTree};

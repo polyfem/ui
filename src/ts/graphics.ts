@@ -28,6 +28,7 @@ class CanvasController{
     //One of translation, rotation, or scale
     activeEdit: string='translation';
     activeGeometry: Spec;
+    activeMesh: Mesh;
     fileControl: GFileControl;
     constructor(ui: UI, hostId: string, fileControl: GFileControl) {
         this.ui = ui;
@@ -35,6 +36,7 @@ class CanvasController{
         this.canvas = this.initiate(hostId);
         this.addRaySelector();
         this.raySelector.selectionCallback = (mesh)=>{
+            this.activeMesh = mesh;
             this.canvas.transformControl.attach(mesh);
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected=true;
@@ -44,6 +46,7 @@ class CanvasController{
             this.ui.updateSpecPane();
         }
         this.raySelector.clearSelectionCallback = (mesh)=>{
+            this.activeMesh = undefined;
             this.canvas.transformControl.detach();
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected = false;
@@ -141,6 +144,36 @@ class CanvasController{
                 this.switchActiveEdit('scale');
             }
         }
+        this.canvas.transformControl.addEventListener('objectChange', (e)=>{
+            let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
+            if(transformation.subNodesCount==0){
+                transformation.children[0] = new Spec('0', true);
+                transformation.children[1] = new Spec('1', true);
+                transformation.children[2] = new Spec('2', true);
+            }
+            switch(this.activeEdit){
+                case 'translation':
+                    let translations = transformation.children;
+                    translations[0].value = this.activeMesh.position.x;
+                    translations[1].value = this.activeMesh.position.y;
+                    translations[2].value = this.activeMesh.position.z;
+                    break;
+                case 'rotation':
+                    let rotations = transformation.children;
+                    if(rotations)
+                    rotations[0].value = this.activeMesh.rotation.x;
+                    rotations[1].value = this.activeMesh.rotation.y;
+                    rotations[2].value = this.activeMesh.rotation.z;
+                    break;
+                case 'scale':
+                    let scale = transformation.children;
+                    scale[0].value = this.activeMesh.scale.x;
+                    scale[1].value = this.activeMesh.scale.y;
+                    scale[2].value = this.activeMesh.scale.z;
+                    break;
+            }
+            this.ui.updateSpecPane();
+        });
     }
     discard(){
         this.canvas.renderer.dispose();
@@ -170,7 +203,7 @@ class CanvasController{
                 objLoader.load(file.accessURL(), (obj:any)=>{
                     console.log(obj);
                     obj.traverse( function ( child:Mesh ) {
-                        child.material = new MeshNormalMaterial();
+                        child.material = new MeshNormalMaterial({side: THREE.DoubleSide});
                     } );
                     this.canvas.scene.add(obj);
                 });
@@ -207,7 +240,7 @@ class CanvasController{
                         if(child instanceof THREE.Group){
                             return;
                         }
-                        child.material = new MeshNormalMaterial();
+                        child.material = new MeshNormalMaterial({side: THREE.DoubleSide});
                         child.translateOnAxis(normalizedTrans,transVec.length());
                         child.scale.set(scale[0],scale[2],scale[1]);
                         child.rotation.set(rotation[0],rotation[1],rotation[2]);
@@ -232,7 +265,7 @@ class RaySelector{
     canvas: Canvas;
     intersected: THREE.Mesh;
     selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
-        emissive:0xffff00, emissiveIntensity:0.1});
+        emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
     // Original material of the currently selected material
     originalMaterial: THREE.Material;
 

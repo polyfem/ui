@@ -10,6 +10,7 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import {ListItem} from "@mui/material";
+import SpecCreator from "./SpecCreator";
 
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
@@ -49,7 +50,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
     }
     if(specNode.isLeaf){
         return <ListItem sx={{ pl: 2+level-1, alignItems:'baseline'}}>
-            <Tooltip title={specNode.doc}>
+            <Tooltip title={specNode.doc} arrow>
                 <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt'}}>
                     {specNode.name}:
                 </label>
@@ -80,7 +81,9 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
         }
         return <React.Fragment>
             {(level!=0)?
-                <Tooltip title={specNode.doc} >
+                <Tooltip
+                    placement="right"
+                    arrow title={specNode.doc} >
                     <ListItemButton onClick={handleClick}
                                     sx={{ pl: 2+level-1,
                                         background:(specNode.editing||specNode.secondarySelected)?'aliceblue':((specNode.selected)?'#ffd400':undefined)}}>
@@ -99,6 +102,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                             (<SpecFieldV key={key} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>))
                     }
                 </List>
+                <SpecCreator ui={ui} specNode={specNode} level={level}/>
             </Collapse>
             {/*<Collapse in={expanded} timeout="auto" unmountOnExit>*/}
             {/*    {specNode.subNodes.map((value, index, array)=>(<SpecFieldV ui={ui} rootId={rootId} specNode={value}/>))}*/}
