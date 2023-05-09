@@ -7,7 +7,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
-import {Box, TextField, Tooltip, tooltipClasses, TooltipProps, Typography, IconButton} from "@mui/material";
+import {Box, TextField, Tooltip, tooltipClasses, TooltipProps, Typography, IconButton, Divider} from "@mui/material";
 import {useState} from "react";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -29,6 +29,9 @@ const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
     // },
 }));
 
+//Color palette for level indication
+const colorRotations = ['crimson','forestgreen','cornflowerblue','sandybrown','darkviolet'];
+const getColor = (level:number)=>colorRotations[(level-1)%colorRotations.length];
 
 class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec}, any>{
     render(){
@@ -66,8 +69,10 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
         else
             setSelection(index);
     }
-    const confirmAdd = ()=>{specNode.setTentative(false);
+    const confirmAdd = ()=>{
+        specNode.setTentative(false);
         ui.updateSpecPane();
+        setExpanded(true);
     };
     const cancelAdd = ()=>{specNode.parent.removeChild(specNode);
         ui.updateSpecPane();
@@ -75,6 +80,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
     if(specNode.isLeaf){
         return <ListItem sx={{ pl: 2+level-1, alignItems:'baseline'}}
                          >
+            <Divider orientation="vertical" sx={{mr:1, borderColor:getColor(level)}} flexItem />
             <HtmlTooltip title={specNode.doc} arrow>
                 <label style={{verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt',
                             opacity:(specNode.tentative)?0.38:1}}>
@@ -123,6 +129,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                     <ListItemButton onClick={handleClick}
                                     sx={{ pl: 2+level-1,
                                         background:(specNode.editing||specNode.secondarySelected)?'aliceblue':((specNode.selected)?'#ffd400':undefined)}}>
+                        <Divider orientation="vertical" sx={{mr:1, borderColor:getColor(level)}} flexItem />
                         <ListItemText primary={primary} style={{ whiteSpace: 'pre',
                             opacity:(specNode.tentative)?0.38:1}} primaryTypographyProps={{fontSize: '11pt'}}/>
                         { expand ? <ExpandMoreIcon style={{opacity:(specNode.tentative)?0.38:1}}/>
@@ -142,28 +149,28 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                         Object.keys(specNode.children).map((key)=>{
                             let index = parseInt(key);
                             return (!specNode.children[key].tentative)?
-                                <SpecFieldV key={key} index={index} ui={ui} selected={index==selection} select={selectChild} specNode={specNode.children[key]} level={level+1}/>
+                                <SpecFieldV key={specNode.children[key].query} index={index} ui={ui} selected={index==selection} select={selectChild} specNode={specNode.children[key]} level={level+1}/>
                                 :undefined;
                         })
                     :  Object.keys(specNode.children).map((key)=>
                             (!specNode.children[key].tentative)?
-                                <SpecFieldV key={key} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>
+                                <SpecFieldV key={specNode.children[key].query} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>
                                 :undefined)
                     }
                 </List>
-                <SpecCreator ui={ui} specNode={specNode} level={level}/>
+                <SpecCreator ui={ui} key={specNode.pointer} specNode={specNode} level={level+1} color={getColor(level+1)}/>
                 {/*Tentative previews begin here*/}
                 <List component="div" disablePadding>
                     {(specNode.type=='list')?
                         Object.keys(specNode.children).map((key)=>{
                             let index = parseInt(key);
                             return (specNode.children[key].tentative)?
-                                <SpecFieldV key={key} index={index} ui={ui} selected={index==selection} select={selectChild} specNode={specNode.children[key]} level={level+1}/>
+                                <SpecFieldV key={specNode.children[key].query} index={index} ui={ui} selected={index==selection} select={selectChild} specNode={specNode.children[key]} level={level+1}/>
                                 :undefined;
                         })
                         :  Object.keys(specNode.children).map((key)=>
                             (specNode.children[key].tentative)?
-                            (<SpecFieldV key={key} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>)
+                            (<SpecFieldV key={specNode.children[key].query} index={-1} ui={ui} selected={true} select={()=>{}} specNode={specNode.children[key]} level={level+1}/>)
                             :undefined)
                     }
                 </List>

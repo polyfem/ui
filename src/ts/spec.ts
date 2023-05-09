@@ -164,6 +164,7 @@ class SpecEngine {
         //Special case with the root spec, as '/' splits into ['','']
         //instead of ['']
         let subTree = this.specTree.traverse(['']);
+        //rawSpecs[0] corresponds to pointer: '/'
         subTree.rawSpec[0] = this.rawSpecs[0];
         for(let i = 1; i<this.rawPointers.length; i++){
             let rawSpec = this.rawSpecs[i];
@@ -178,14 +179,16 @@ class SpecEngine {
      *               /geometry/object1 -> /geometry/*
      * @param parent
      * @param include selects which subSpecs to include from the tree
+     * @param typeOverride overrides which instance of the matched rawSpec is to be utilized. Can only
+     * be specified to the level of the query (non recursive), default 0
      */
-    query(query: string, parent: Spec, include:string[]=[]): Spec{
+    query(query: string, parent: Spec, include:string[]=[], typeOverride:number=0): Spec{
         let keys = query.split('/');
         console.log(keys);
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
-        let raw = loc.rawSpec[0];
+        let raw = loc.rawSpec[typeOverride];
         let spec = new Spec(keys.pop(), parent);
         //Fill out the fields of the spec
         spec.query = query;
@@ -220,19 +223,25 @@ class SpecEngine {
      * @param original original tree from which to start the validation process. the original
      * tree is left untouched, a new copy of the validated tree is generated and returned
      * @param parent
+     * @param typeOverride overrides which instance of the matched rawSpec is to be utilized; can only
+     * be specified to the level of the query (non recursive); default -1 which means unspecified,
+     * in which case Spec Engine uses a set of matching criteria to automatically
+     * identify the rawSpec matched
      */
-    validate(query:string, original:Spec, parent:Spec): Spec{
+    validate(query:string, original:Spec, parent:Spec, typeOverride:number=0): Spec{
         let keys = query.split('/');
         //Query for the raw spec for the original element
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
-        let raw = loc.rawSpec[0];
+        let raw = (typeOverride<0||typeOverride>=loc.rawSpec.length)?
+                        loc.getMatchingRaw(original):loc.rawSpec[typeOverride];
         let spec = new Spec(original.name, parent);
         //Fill out the fields of the spec
         spec.query = query;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
+        spec.typename = raw.typename;
         spec.doc = raw.doc;
         spec.optional = raw.optional;
         // Non-object type corresponds to leaf nodes
@@ -246,7 +255,7 @@ class SpecEngine {
         // must deal with the possibility of misused indexing depending on
         // the type of spec
         for(let key in original.children){
-            let subNodeName = original.children[key].name;
+            let subNodeName = key;
             // Record which nodes have already been included
             included.push(subNodeName);
             // console.log(original.children[key]);
@@ -266,7 +275,7 @@ class SpecEngine {
                 }
             }
         }
-        // if(raw.optional){//If required is not undefined
+        // if(raw.optional){//this will create a maximal tree
         //     for(let required of raw.optional){
         //         //Escape the subfields that are already included
         //         if(included.indexOf(required)<0){
@@ -402,8 +411,7 @@ class RawSpecTree{
 
         for (const rawSpec of this.rawSpec) {
             // Criteria 1.1
-            if (this.childrenSubset(rawSpec.required, spec.children)
-                && rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
+            if (rawSpec.required&&rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
                 if (maxPrecedence < 3) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 3;
@@ -417,14 +425,15 @@ class RawSpecTree{
                 }
             }
             // Criteria 1.2
-            else if (rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
+            else if (rawSpec.required&&rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
                 if (maxPrecedence < 1) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 1;
                 }
             }
             // Criteria 1.3
-            else if (this.childrenSubset([...rawSpec.required, ...rawSpec.optional],spec.children)) {
+            else if (rawSpec.required&&rawSpec.optional&& //Make sure these lists have been specified
+                this.childrenSubset([...rawSpec.required, ...rawSpec.optional],spec.children)) {
                 if (maxPrecedence < 0) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 0;

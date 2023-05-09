@@ -3,3 +3,5 @@ node_modules/
 dist/
 server/bin
 server/temp
+exportable
+exportable.zip
