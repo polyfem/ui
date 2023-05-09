@@ -147,9 +147,9 @@ class CanvasController{
         this.canvas.transformControl.addEventListener('objectChange', (e)=>{
             let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
             if(transformation.subNodesCount==0){
-                transformation.children[0] = new Spec('0', true);
-                transformation.children[1] = new Spec('1', true);
-                transformation.children[2] = new Spec('2', true);
+                transformation.children[0] = new Spec('0', transformation, true);
+                transformation.children[1] = new Spec('1', transformation, true);
+                transformation.children[2] = new Spec('2', transformation, true);
             }
             switch(this.activeEdit){
                 case 'translation':

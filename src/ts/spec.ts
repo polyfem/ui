@@ -11,6 +11,7 @@ class Spec{
     pointer: string;
     name: string;
     isLeaf: boolean = false;
+    parent: Spec;
     //Tentative specs are disabled before they are confirmed
     tentative: boolean = false;
     tentativeChild: Spec;
@@ -26,6 +27,7 @@ class Spec{
     value: any;
     type: string;
     selection: string[];
+    typename: string = undefined;
 
     /**
      * Operation variables
@@ -36,17 +38,19 @@ class Spec{
     /**
      * Specs must have a non-empty name
      * @param name
+     * @param parent
      * @param isLeaf
      */
-    constructor(name: string, isLeaf=false){
+    constructor(name: string, parent: Spec, isLeaf=false){
         this.name = name;
+        this.parent = parent;
         this.isLeaf = isLeaf;
     }
     loadFromJSON(json:any){
         if(typeof json == 'object'){
             this.type = Array.isArray(json)?'list':'object';
             for(let key in json){
-                let nextSpec = new Spec(key);
+                let nextSpec = new Spec(key, this);
                 nextSpec.loadFromJSON(json[key]);
                 this.pushChild(nextSpec);
             }
@@ -69,11 +73,18 @@ class Spec{
         if(child==undefined) // Ignore undefined requests
             return;
         if(this.type == 'list'){
+            child.name=`${this.subNodesCount}`;
             this.children[this.subNodesCount] = child;
         }else if(this.type=='object'){
             this.children[child.name] = child;
         }else return; // Only list or object accepts child
         this.subNodesCount++;
+    }
+    removeChild(child: Spec){
+        if(child.parent == this && child.name in this.children){
+            delete this.children[child.name];
+            this.subNodesCount--;
+        }
     }
 
     /**
@@ -94,7 +105,7 @@ class Spec{
             else if(child && !child.isLeaf) {
                 let key = keys.shift();
                 if(force && child.children[key]==undefined){
-                    child.children[key] = new Spec(key);
+                    child.children[key] = new Spec(key, this);
                 }
                 child = child.children[key];
             }
@@ -102,6 +113,19 @@ class Spec{
                 return undefined;
         }
         return child;
+    }
+
+    /**
+     * Recursively sets this and all
+     * its subsequent children with the assigned value of
+     * tentative
+     * @param tentative
+     */
+    setTentative(tentative: boolean){
+        this.tentative = tentative;
+        for(let key in this.children){
+            this.children[key].setTentative(tentative);
+        }
     }
 }
 
@@ -152,16 +176,17 @@ class SpecEngine {
      * Builds a minimal spec from the location given in the query
      * @param query a query matchable to a pointer, for example:
      *               /geometry/object1 -> /geometry/*
+     * @param parent
      * @param include selects which subSpecs to include from the tree
      */
-    query(query: string, include:string[]=[]): Spec{
+    query(query: string, parent: Spec, include:string[]=[]): Spec{
         let keys = query.split('/');
         console.log(keys);
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
         let raw = loc.rawSpec[0];
-        let spec = new Spec(keys.pop());
+        let spec = new Spec(keys.pop(), parent);
         //Fill out the fields of the spec
         spec.query = query;
         spec.pointer = raw.pointer;
@@ -174,13 +199,13 @@ class SpecEngine {
         spec.optional = raw.optional;
         //Fill out the subNodes that have to be included
         for(let included of include){
-            spec.pushChild(this.query(`${query}/${included}`));
+            spec.pushChild(this.query(`${query}/${included}`, spec));
         }
         //Fill out all the subNodes by recursively populating
         //the minimal trees of required fields
         if(raw.required){//If required is not undefined
             for(let required of raw.required){
-                spec.pushChild(this.query(`${query}/${required}`));
+                spec.pushChild(this.query(`${query}/${required}`, spec));
             }
         }
         return spec;
@@ -194,15 +219,16 @@ class SpecEngine {
      * @param query specifies the location of the original spec within the larger spec tree
      * @param original original tree from which to start the validation process. the original
      * tree is left untouched, a new copy of the validated tree is generated and returned
+     * @param parent
      */
-    validate(query:string, original:Spec): Spec{
+    validate(query:string, original:Spec, parent:Spec): Spec{
         let keys = query.split('/');
         //Query for the raw spec for the original element
         let loc = this.specTree.query(keys);
         if(loc==undefined)//Terminate if invalid query
             return undefined;
         let raw = loc.rawSpec[0];
-        let spec = new Spec(original.name);
+        let spec = new Spec(original.name, parent);
         //Fill out the fields of the spec
         spec.query = query;
         spec.pointer = raw.pointer;
@@ -213,6 +239,7 @@ class SpecEngine {
         spec.isLeaf = ['object', 'list'].indexOf(raw.type)<0;
         //Load value from previous spec
         spec.value = original.value;
+        spec.tentative = original.tentative;
         //Make a list to record which subNodes have been included
         let included:string[] = [];
         //Validate recursively,
@@ -225,7 +252,7 @@ class SpecEngine {
             // console.log(original.children[key]);
             // console.log(this.validate(`${query}/${subNodeName}`, original.children[key]));
             //Populate the validated subNode
-            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key]));
+            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key], parent));
         }
         // console.log(raw);
         //Fill out all the required fields that haven't been included
@@ -234,7 +261,7 @@ class SpecEngine {
                 //Escape the subfields that are already included
                 if(included.indexOf(required)<0){
                     let newQuery = `${query}/${required}`;
-                    spec.pushChild(this.query(newQuery));
+                    spec.pushChild(this.query(newQuery, parent));
                     spec.isLeaf = false;
                 }
             }
@@ -252,7 +279,7 @@ class SpecEngine {
         return spec;
     }
     getSpecRoot(): Spec{
-        return this.query('',
+        return this.query('',undefined,
             ['geometry','space','solver','boundary_conditions','materials','output']);
     }
 
@@ -261,9 +288,9 @@ class SpecEngine {
      * @param json
      */
     loadAndValidate(json: {}){
-        let specRoot = new Spec('');
+        let specRoot = new Spec('', undefined);
         specRoot.loadFromJSON(json);
-        return this.validate('', specRoot);
+        return this.validate('', specRoot, undefined);
     }
 
     /**
@@ -271,11 +298,13 @@ class SpecEngine {
      * of a given spec
      */
     getChildTypes(specNode: Spec): { [key: string]: RawSpecTree}{
+        if(!specNode.pointer)
+            return {};
         let rawSpecNode = this.specTree.query(specNode.pointer.split('/'));
         if(rawSpecNode){
             return rawSpecNode.subTree;
         }
-        return undefined;
+        return {};
     }
 }
 
@@ -286,7 +315,8 @@ interface RawSpec{
     "type": string,
     "required":string[],
     "optional":string[];
-    "doc": string
+    "doc": string,
+    "typename": string|undefined
 }
 
 //Interface of rawSpecTree, an intermediate representation
@@ -332,7 +362,7 @@ class RawSpecTree{
      * Traverses without creating new raw specs, also matches
      * any key to '*' when no direct match is found
      * @param keys
-     * @return subtree the corresponding RawSpec subtree if the query stirng
+     * @return subtree the corresponding RawSpec subtree if the query string
      * is found, undefined if no match is found
      */
     query(keys:string[]): RawSpecTree{
@@ -344,6 +374,69 @@ class RawSpecTree{
                 return undefined;
             return child.query(keys);
         }
+    }
+
+    /**
+     * Resolves the spec given and finds a matching raw spec
+     * for typed validation.
+     * Criteria for spec matching:
+     *  1. spec children
+     *      1.1 Let r be raw spec, s be spec given, if
+     *          r.required \subset s.children, then
+     *          r is matched
+     *      1.2 Let r be raw spec, s be spec given, if
+     *          s.children \subset r.required, then
+     *          r is matched
+     *      1.3 Let r be a raw spec, s be spec given, if
+     *          s.children \subset r.required U r.optional,
+     *          then r is matched
+     *  2. if type name of spec matches raw
+     *
+     *  Matching precedence: 1.1 > 2 > 1.2 > 1.3
+     *
+     * @param spec
+     */
+    getMatchingRaw(spec: Spec): RawSpec {
+        let matchedRaw = this.rawSpec[0];
+        let maxPrecedence = -1;
+
+        for (const rawSpec of this.rawSpec) {
+            // Criteria 1.1
+            if (this.childrenSubset(rawSpec.required, spec.children)
+                && rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
+                if (maxPrecedence < 3) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 3;
+                }
+            }
+            // Criteria 2
+            else if (rawSpec.typename!=undefined && spec.typename === rawSpec.typename) {
+                if (maxPrecedence < 2) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 2;
+                }
+            }
+            // Criteria 1.2
+            else if (rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
+                if (maxPrecedence < 1) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 1;
+                }
+            }
+            // Criteria 1.3
+            else if (this.childrenSubset([...rawSpec.required, ...rawSpec.optional],spec.children)) {
+                if (maxPrecedence < 0) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 0;
+                }
+            }
+        }
+
+        return matchedRaw;
+    }
+
+    childrenSubset(arr: string[], children: {[key: string]:Spec}): boolean {
+        return Object.keys(children).every(child => arr.includes(child));
     }
 }
 

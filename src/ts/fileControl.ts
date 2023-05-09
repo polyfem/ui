@@ -18,7 +18,7 @@ class FileControl{
     alternativeDisplay: HTMLElement;
     togglePane = false;
     //Root of the spec, defaults to undefined for non-JSON files
-    specRoot: Spec=new Spec('undefined');
+    specRoot: Spec=new Spec('undefined', undefined);
     constructor(ui: UI,fileName: string, fileReference: UFile){
         this.ui = ui;
         this.id = FileControl.idGenerator;

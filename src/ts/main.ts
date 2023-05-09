@@ -16,7 +16,7 @@ class UI{
     specRoot: Spec;
     //The root of the spec being edited
     activeSpec: Spec;
-    emptySpec = new Spec('none');
+    emptySpec = new Spec('none', undefined);
     specEngine: SpecEngine;
     activeFile: number = 0;
     openedFiles: FileControl[]=[];
