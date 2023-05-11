@@ -56,7 +56,9 @@ class SpecPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec},
 const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                                 {ui: UI, index: number, specNode: Spec,
                                     level: number, selected:boolean, select:(key:number)=>void}){
-    let [expanded, setExpanded] = useState(level<2);
+    let [expanded, setExpanded] = useState(level<2||specNode.forceExpansion);
+    if(specNode.forceExpansion)
+        specNode.forceExpansion=false;
     //For usage with lists
     let [selection, setSelection] = useState(0);
     const handleClick = ()=>{
@@ -70,6 +72,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
             setSelection(index);
     }
     const confirmAdd = ()=>{
+        specNode.forceExpansion=true;
         specNode.setTentative(false);
         ui.updateSpecPane();
         setExpanded(true);

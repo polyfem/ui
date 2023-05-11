@@ -36,6 +36,12 @@ class Spec{
     selected = false;
     secondarySelected = false;
     /**
+     * Set to true after the spec has been newly
+     * turned from tentative to added, this value being set to
+     * true will make the added field expand for preview
+     */
+    forceExpansion = false;
+    /**
      * Specs must have a non-empty name
      * @param name
      * @param parent
