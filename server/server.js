@@ -91,6 +91,7 @@ function mountFileSystem(rootURL){
         console.log(path.resolve(cachedURL));
         if(!fs.existsSync(cachedURL)){//Only convert if no records exists in cache
             let command = `python mesh-convert.py ${orgURL} ${cachedURL}`
+            console.log(command);
             execSync(command);
         }
         let options = {

@@ -80,9 +80,11 @@ class Spec{
             return;
         if(this.type == 'list'){
             child.name=`${this.subNodesCount}`;
+            child.query = `${this.query}/${child.name}`;
             this.children[this.subNodesCount] = child;
         }else if(this.type=='object'){
             this.children[child.name] = child;
+            child.query = `${this.query}/${child.name}`;
         }else return; // Only list or object accepts child
         this.subNodesCount++;
     }

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "http-server ./dist && node ./src/server/server.js",
-    "install": "pip install meshio",
+    "install": "pip install meshio \n python -m pip install libigl",
     "build": "gulp --gulpfile gulpfile.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

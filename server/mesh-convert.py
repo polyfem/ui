@@ -1,6 +1,7 @@
 import meshio
 import os
 import sys
+import igl
 
 url = sys.argv[1]
 targetURL = sys.argv[2]
@@ -12,10 +13,10 @@ mesh = meshio.read(
 )
 # mesh.points, mesh.cells, mesh.cells_dict, ...
 
-print(mesh.points)
-print(mesh.cells)
+# print(mesh.points)
+# print(mesh.cells)
 
-print(mesh.cells_dict)
+# print(mesh.cells_dict)
 
 def fct():
     return [[1,2,3],[2,3,0], [0, 1, 2], [1, 3,0],
@@ -33,9 +34,11 @@ def decomposeTetra(tetraCell):
 def decompose(mesh):
     cells = []
     tetraCells = mesh.cells_dict.get('tetra')
-    if(tetraCells is not None):
-        for tetraCell in tetraCells:
-            cells += decomposeTetra(tetraCell)        
+    # if(tetraCells is not None):
+    #     for tetraCell in tetraCells:
+    #         cells += decomposeTetra(tetraCell)   
+    print(tetraCells)             
+    cells=igl.boundary_facets(tetraCells)
     triangleCells = mesh.cells_dict.get('triangle')
     if(triangleCells is not None):
         cells+=triangleCells.tolist()
@@ -46,6 +49,6 @@ def decompose(mesh):
     return newMesh
 
 newMesh = decompose(mesh)
-print(newMesh.cells_dict)
+# print(newMesh.cells_dict)
 newMesh.write(targetURL)
 

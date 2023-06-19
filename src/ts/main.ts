@@ -2,7 +2,7 @@ import {UFile, UFileSystem} from "./server";
 import {Visual} from "./visual";
 import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
 import {FileControl, GFileControl} from "./fileControl";
 
@@ -35,7 +35,8 @@ class UI{
     }
     loadVisual(rootId: string){
         let component = React.createElement(Visual, {ui:this, rootId});
-        ReactDOM.render(component, document.getElementById(rootId));
+        let root = createRoot(document.getElementById(rootId));
+        root.render(component);
     }
     openFile(file: UFile){
         let index = 0;

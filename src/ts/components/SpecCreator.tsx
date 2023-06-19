@@ -77,7 +77,7 @@ const SpecCreator = function({ui, specNode, level, color}:
                     }}
                     ref={typeAnchorEl}
                 >
-                    {childType}
+                    {(childType=='*')?specNode.name:childType}
                     <Tooltip placement="right"
                              arrow title={docString}>
                         <IconButton aria-label="fingerprint" color="info"
