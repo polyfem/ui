@@ -30,6 +30,7 @@ class CanvasController{
     activeGeometry: Spec;
     activeMesh: Mesh;
     fileControl: GFileControl;
+    meshList: {[id: string]:THREE.Mesh[]}={};
     constructor(ui: UI, hostId: string, fileControl: GFileControl) {
         this.ui = ui;
         this.fileControl = fileControl;
@@ -131,6 +132,8 @@ class CanvasController{
     }
     configureTransformControl(){
         document.onkeydown = (e)=>{
+            if(this.activeGeometry==undefined)
+                return;
             if(e.key == 't'){
                 this.canvas.transformControl.setMode('translate');
                 this.switchActiveEdit('translation');
@@ -146,30 +149,31 @@ class CanvasController{
         }
         this.canvas.transformControl.addEventListener('objectChange', (e)=>{
             let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
+            transformation.type = 'list';
             if(transformation.subNodesCount==0){
-                transformation.children[0] = new Spec('0', transformation, true);
-                transformation.children[1] = new Spec('1', transformation, true);
-                transformation.children[2] = new Spec('2', transformation, true);
+                for(let i = 0; i<3; i++){
+                    transformation.pushChild(new Spec(`${i}`, transformation, true));
+                }
             }
             switch(this.activeEdit){
                 case 'translation':
                     let translations = transformation.children;
-                    translations[0].value = this.activeMesh.position.x;
-                    translations[1].value = this.activeMesh.position.y;
-                    translations[2].value = this.activeMesh.position.z;
+                    translations[0].setValue(this.activeMesh.position.x);
+                    translations[1].setValue(this.activeMesh.position.y);
+                    translations[2].setValue(this.activeMesh.position.z);
                     break;
                 case 'rotation':
                     let rotations = transformation.children;
                     if(rotations)
-                    rotations[0].value = this.activeMesh.rotation.x;
-                    rotations[1].value = this.activeMesh.rotation.y;
-                    rotations[2].value = this.activeMesh.rotation.z;
+                    rotations[0].setValue(this.activeMesh.rotation.x);
+                    rotations[1].setValue(this.activeMesh.rotation.y);
+                    rotations[2].setValue(this.activeMesh.rotation.z);
                     break;
                 case 'scale':
                     let scale = transformation.children;
-                    scale[0].value = this.activeMesh.scale.x;
-                    scale[1].value = this.activeMesh.scale.y;
-                    scale[2].value = this.activeMesh.scale.z;
+                    scale[0].setValue(this.activeMesh.scale.x);
+                    scale[1].setValue(this.activeMesh.scale.y);
+                    scale[2].setValue(this.activeMesh.scale.z);
                     break;
             }
             this.ui.updateSpecPane();
@@ -184,6 +188,7 @@ class CanvasController{
     stopAnimation(){
         this.canvas.paused = true;
     }
+
     loadFile(file:UFile){
         switch(file.extension){
             case 'glb':
@@ -211,6 +216,7 @@ class CanvasController{
         }
     }
 
+    pauseGeometryUpdate = false;
     /**
      * @param geometry
      * @param index index of the geometry inside the parent spec
@@ -219,33 +225,63 @@ class CanvasController{
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
         let transform = geometry.transformation;
-        let tr = (transform.translation)?transform.translation:[0,0,0];
-        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
-        let transVec = new THREE.Vector3(translation[0],translation[2],-translation[1]);
-        let normalizedTrans = transVec.clone().normalize();
-        let sc = (transform.scale)?transform.scale:[1,1,1];
-        let scale = <number[]>((sc instanceof Number)? [sc, sc,sc]: sc);
-        let rt = (transform.rotation)?transform.rotation:[0,0,0];
-        let rotation = <number[]> ((rt instanceof Number)? [rt, rt,rt]: rt);
         let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
-        console.log(this.fileControl.specRoot);
         let specRoot = this.fileControl.specRoot.findChild(`/geometry/${index}`);
         switch (extension) {
             case 'msh':
             case 'vtu':
             case 'obj':
+                let transformation = specRoot.findChild('/transformation');
                 let objLoader = new OBJLoader();
                 objLoader.load(file.accessURL(), (obj:any)=>{
-                    obj.traverse( ( child:Mesh )=>{
-                        if(child instanceof THREE.Group){
-                            return;
+                    this.meshList[specRoot.query]=[];
+                    let translationListener = (query:string, target:Spec, event:string)=>{
+                        let tr = this.ui.specEngine.compile(target);
+                        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
+                        let transVec = new THREE.Vector3(translation[0],translation[2],-translation[1]);
+                        let normalizedTr = transVec.clone().normalize();
+                        obj.traverse( ( child:Mesh )=>{
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            child.translateOnAxis(normalizedTr,transVec.length());});
+
+                    }
+                    let scaleListener = (query:string, target:Spec, event:string)=>{
+                        let sc = this.ui.specEngine.compile(target);
+                        let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
+                        obj.traverse( ( child:Mesh )=>{
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            child.scale.set(scale[0],scale[2],scale[1]);});
+                    }
+                    let rotationListener = (query:string, target:Spec, event:string)=>{
+                        let rt = (transform.rotation)?transform.rotation:[0,0,0];
+                        let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
+                        obj.traverse( ( child:Mesh )=>{
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            child.rotation.set(rotation[0],rotation[1],rotation[2]);});
+                    }
+                    let addChildListener = (query:string, target:Spec, event:string)=>{
+                        switch(target.name){
+                            case 'translation':
+
+                                break;
+                            case 'rotation':
+                                break;
+                            case 'scale':
+                                break;
+                            default: //Yet to be implemented: rotation_mode, dimension
                         }
-                        child.material = new MeshNormalMaterial({side: THREE.DoubleSide});
-                        child.translateOnAxis(normalizedTrans,transVec.length());
-                        child.scale.set(scale[0],scale[2],scale[1]);
-                        child.rotation.set(rotation[0],rotation[1],rotation[2]);
+                    }
+
+                    obj.traverse( ( child:Mesh )=>{
                         this.canvas.scene.add(child);
                         this.meshToSpec.set(child, specRoot);
+                        this.meshList[specRoot.query].push(child);
                     } );
                 })
                 break;

@@ -4,6 +4,9 @@
 import {UI} from "./main";
 import {UFile} from "./server";
 
+/**
+ * Implements a simple event tree
+ */
 class Spec{
     // Query gives precise location of the spec,
     // pointer permits * as wild cards
@@ -25,6 +28,54 @@ class Spec{
     optional: string[] = [];
     //Currently populated value
     value: any;
+    /**
+     * Sets the value of this, excluded services are prevented from
+     * being dispatched
+     * @param newValue
+     */
+    setValue(newValue:any){
+        this.value = newValue;
+        this.dispatchValueChange();
+        this.dispatchChange(this.query,this,'v');
+    };
+
+    //Value dispatcher
+    protected dispatchValueChange(){
+        for(let service of this.valueServices){
+            service(this.value);
+        }
+    }
+    //Services subscribed to value
+    valueServices: ((newValue:any)=>void)[]=[];
+    subscribeValueService(service:(newValue:any)=>void){
+        this.valueServices.push(service);
+        return service;
+    }// list, object, float, string, etc.
+    /*
+     * Services subscribed to value change or children change,
+     * children change include child count or child recursive change
+     */
+    changeServices: ((changeQuery:string, self:Spec)=>void)[]=[];
+    subscribeChangeService(service:(query:string, self:Spec)=>void){
+        this.changeServices.push(service);
+        return service;
+    }
+    /**
+     * Dispatched any time value is changed if leaf, or children size/value
+     * change if non-leaf. Dispatches self services first before propagating
+     * upward
+     * @param query
+     * @param target
+     * @param event `r` for recursive, `ca` for child add,
+     * `cd` for child deletion, `i` for initialization, `v` for value change
+     */
+    protected dispatchChange(query:string, target:Spec, event: string){
+        for(let service of this.changeServices){
+            service(query, target);
+        }
+        this.parent.dispatchChange(query, target, event);
+    }
+
     type: string;
     selection: string[];
     typename: string = undefined;
@@ -33,8 +84,55 @@ class Spec{
      * Operation variables
      */
     editing = false;
-    selected = false;
-    secondarySelected = false;
+    private selectedStore = false;
+    selectionServices:((selected:boolean)=>void)[]= [];
+    private secondarySelectedStore = false;
+    secondarySelectionServices:((selected:boolean)=>void)[]= [];
+
+    /**
+     * Sets the value of primary selection,
+     * dispatches the selection event
+     * @param selected
+     */
+    set selected(selected:boolean){
+        this.selectedStore = selected;
+        this.dispatchSelection(selected);
+    }
+    get selected(){
+        return this.selectedStore;
+    }
+    protected dispatchSelection(selected:boolean){
+        for(let service of this.selectionServices){
+            service(selected);
+        }
+    }
+
+    /**
+     * Sets the value of secondary selection,
+     * dispatches the selection event
+     * @param selected
+     */
+    set secondarySelected(selected:boolean){
+        this.secondarySelectedStore = selected;
+        this.dispatchSecondarySelection(selected);
+    }
+    get secondarySelected(){
+        return this.secondarySelectedStore;
+    }
+    protected dispatchSecondarySelection(selected:boolean){
+        for(let service of this.secondarySelectionServices){
+            service(selected);
+        }
+    }
+
+    subscribeSelectionService(service:(selected:boolean)=>void, primary:boolean){
+        if(primary){
+            this.selectionServices.push(service);
+        }else{
+            this.secondarySelectionServices.push(service);
+        }
+    }
+
     /**
      * Set to true after the spec has been newly
      * turned from tentative to added, this value being set to
@@ -69,6 +167,7 @@ class Spec{
             this.value = json;
             this.isLeaf = true;
         }
+        this.dispatchChange(this.query, this, 'i');
     }
     /**
      * Smart pushes a child to subNodes, uses
@@ -87,11 +186,13 @@ class Spec{
             child.query = `${this.query}/${child.name}`;
         }else return; // Only list or object accepts child
         this.subNodesCount++;
+        this.dispatchChange(child.query, child, 'ca');
     }
     removeChild(child: Spec){
         if(child.parent == this && child.name in this.children){
             delete this.children[child.name];
             this.subNodesCount--;
+            this.dispatchChange(child.query, this, 'cd');
         }
     }
 
@@ -114,6 +215,7 @@ class Spec{
                 let key = keys.shift();
                 if(force && child.children[key]==undefined){
                     child.children[key] = new Spec(key, this);
+                    this.isLeaf = false;
                 }
                 child = child.children[key];
             }
@@ -322,6 +424,32 @@ class SpecEngine {
             return rawSpecNode.subTree;
         }
         return {};
+    }
+
+    /**
+     * Compiles a Spec into an JSON object
+     * @param spec
+     */
+    compile(spec: Spec):any{
+        switch(spec.type){
+            case 'list':
+                let list = [];
+                let index = 0;
+                while(index in spec.children){
+                    list.push(this.compile(spec.children[index]));
+                    index++;
+                }
+                return list;
+            case 'object':
+                let obj:{[key:string]:any} = {};
+                for(let key in spec.children){
+                    obj[key] = this.compile(spec.children[key]);
+                }
+                return obj;
+            default:
+                // if(spec.isLeaf)
+                return spec.value;
+        }
     }
 }
 

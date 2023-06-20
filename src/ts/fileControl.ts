@@ -75,6 +75,11 @@ class GFileControl extends FileControl{
         else
             this.canvasController.loadFile(this.fileReference);
     }
+
+    saveSpec(){
+        let json = this.ui.specEngine.compile(this.specRoot);
+        this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
+    }
 }
 
 // class JSONFileControl extends FileControl{

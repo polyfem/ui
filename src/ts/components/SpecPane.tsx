@@ -8,7 +8,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
 import {Box, TextField, Tooltip, tooltipClasses, TooltipProps, Typography, IconButton, Divider} from "@mui/material";
-import {useState} from "react";
+import {ChangeEvent, useState} from "react";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
@@ -81,6 +81,13 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
         ui.updateSpecPane();
     };
     if(specNode.isLeaf){
+        let [text, setText] = useState(specNode.value)
+        specNode.subscribeValueService(()=>{setText(specNode.value);});
+        console.log(`${specNode} value service subscribed`);
+        const onChange = (e: ChangeEvent)=>{
+            // @ts-ignore
+            specNode.setValue(e.target.value);
+        }
         return <ListItem sx={{ pl: 2+level-1, alignItems:'baseline'}}
                          >
             <Divider orientation="vertical" sx={{mr:1, borderColor:getColor(level)}} flexItem />
@@ -96,7 +103,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                 variant="standard"
                 helperText={specNode.type}
                 disabled={specNode.tentative}
-                style={{verticalAlign: 'baseline'}} value={specNode.value}/>
+                style={{verticalAlign: 'baseline'}} value={text} onChange={onChange}/>
             {specNode.tentative ? <span style={{whiteSpace: "nowrap"}}>
                             <IconButton disabled={false}  onClick={confirmAdd}>
                                 <CheckIcon color='success'/>
