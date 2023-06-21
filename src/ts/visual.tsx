@@ -53,8 +53,8 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
                     style={{gridTemplateColumns: `${drawerWidth}px 1fr`,
                             gridTemplateRows: `64px minmax(0,1fr)`,
                             height: '100%'}}>
-            <CssBaseline />
-            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            <CssBaseline/>
+            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1}}
                     style={{gridColumn: '1 / span 2',
                         gridRow: '1 / span 1', boxShadow: 'none'}}>
                 <NavBar/>

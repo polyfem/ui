@@ -17,7 +17,6 @@ class Spec{
     parent: Spec;
     //Tentative specs are disabled before they are confirmed
     tentative: boolean = false;
-    tentativeChild: Spec;
     //Automatically populated by required
     children: {[key: string]:Spec} = {};
     //Records the size of the subNodes, immutable
@@ -36,7 +35,7 @@ class Spec{
     setValue(newValue:any){
         this.value = newValue;
         this.dispatchValueChange();
-        this.dispatchChange(this.query,this,'v');
+        this.dispatchChange(this.query,'v');
     };
 
     //Value dispatcher
@@ -45,18 +44,27 @@ class Spec{
             service(this.value);
         }
     }
-    //Services subscribed to value
+
+    /**
+     * Services subscribed to value updates
+     */
     valueServices: ((newValue:any)=>void)[]=[];
     subscribeValueService(service:(newValue:any)=>void){
         this.valueServices.push(service);
         return service;
-    }// list, object, float, string, etc.
+    }
+    unsubscribeValueService(service:(newValue:any)=>void){
+        let index = this.valueServices.indexOf(service);
+        if(index!=-1)
+            delete this.valueServices[index];
+    }
+
     /*
      * Services subscribed to value change or children change,
      * children change include child count or child recursive change
      */
-    changeServices: ((changeQuery:string, self:Spec)=>void)[]=[];
-    subscribeChangeService(service:(query:string, self:Spec)=>void){
+    changeServices: ((changeQuery:string, target:Spec, event:string)=>void)[]=[];
+    subscribeChangeService(service:(query:string, target:Spec,event:string)=>void){
         this.changeServices.push(service);
         return service;
     }
@@ -69,11 +77,12 @@ class Spec{
      * @param event `r` for recursive, `ca` for child add,
      * `cd` for child deletion, `i` for initialization, `v` for value change
      */
-    protected dispatchChange(query:string, target:Spec, event: string){
+    protected dispatchChange(query:string, event: string){
         for(let service of this.changeServices){
-            service(query, target);
+            service(query, this,event);
         }
-        this.parent.dispatchChange(query, target, event);
+        if(this.parent!=undefined)
+            this.parent.dispatchChange(query, event);
     }
 
     type: string;
@@ -85,9 +94,9 @@ class Spec{
      */
     editing = false;
     private selectedStore = false;
-    selectionServices:((selected:boolean)=>void)[]= [];
+    selectionServices:((target: Spec, selected:boolean)=>void)[]= [];
     private secondarySelectedStore = false;
-    secondarySelectionServices:((selected:boolean)=>void)[]= [];
+    secondarySelectionServices:((target: Spec, selected:boolean)=>void)[]= [];
 
     /**
      * Sets the value of primary selection,
@@ -103,7 +112,7 @@ class Spec{
     }
     protected dispatchSelection(selected:boolean){
         for(let service of this.selectionServices){
-            service(selected);
+            service(this, selected);
         }
     }
 
@@ -121,11 +130,11 @@ class Spec{
     }
     protected dispatchSecondarySelection(selected:boolean){
         for(let service of this.secondarySelectionServices){
-            service(selected);
+            service(this, selected);
         }
     }
 
-    subscribeSelectionService(service:(selected:boolean)=>void, primary:boolean){
+    subscribeSelectionService(service:(target:Spec, selected:boolean)=>void, primary:boolean){
         if(primary){
             this.selectionServices.push(service);
         }else{
@@ -167,7 +176,7 @@ class Spec{
             this.value = json;
             this.isLeaf = true;
         }
-        this.dispatchChange(this.query, this, 'i');
+        this.dispatchChange(this.query, 'i');
     }
     /**
      * Smart pushes a child to subNodes, uses
@@ -185,14 +194,15 @@ class Spec{
             this.children[child.name] = child;
             child.query = `${this.query}/${child.name}`;
         }else return; // Only list or object accepts child
+        child.parent = this;
         this.subNodesCount++;
-        this.dispatchChange(child.query, child, 'ca');
+        this.dispatchChange(child.query, 'ca');
     }
     removeChild(child: Spec){
         if(child.parent == this && child.name in this.children){
             delete this.children[child.name];
             this.subNodesCount--;
-            this.dispatchChange(child.query, this, 'cd');
+            this.dispatchChange(child.query, 'cd');
         }
     }
 
@@ -215,7 +225,10 @@ class Spec{
                 let key = keys.shift();
                 if(force && child.children[key]==undefined){
                     child.children[key] = new Spec(key, this);
+                    child.query = `${this.query}/${child.name}`;
+                    child.parent = this;
                     this.isLeaf = false;
+                    this.dispatchChange(this.query,'ca');
                 }
                 child = child.children[key];
             }

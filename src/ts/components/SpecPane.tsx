@@ -8,7 +8,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
 import {Box, TextField, Tooltip, tooltipClasses, TooltipProps, Typography, IconButton, Divider} from "@mui/material";
-import {ChangeEvent, useState} from "react";
+import {ChangeEvent, useEffect, useState} from "react";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
@@ -81,13 +81,26 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
         ui.updateSpecPane();
     };
     if(specNode.isLeaf){
-        let [text, setText] = useState(specNode.value)
-        specNode.subscribeValueService(()=>{setText(specNode.value);});
-        console.log(`${specNode} value service subscribed`);
+        let [text, setText] = useState(specNode.value);
         const onChange = (e: ChangeEvent)=>{
+            e.preventDefault();
+            // @ts-ignore
+            if(specNode.type=='float'&&isNaN(e.target.value)){
+                return;
+            }
             // @ts-ignore
             specNode.setValue(e.target.value);
         }
+        useEffect(() => {
+            let valueService = () => {
+                setText(specNode.value);
+            };
+            specNode.subscribeValueService(valueService);
+            return () => { //Unsubscribe the service upon component shut down
+                specNode.unsubscribeValueService(valueService);
+            };
+        }, [setText]);
+        // console.log(`${specNode.query} value service subscribed`);
         return <ListItem sx={{ pl: 2+level-1, alignItems:'baseline'}}
                          >
             <Divider orientation="vertical" sx={{mr:1, borderColor:getColor(level)}} flexItem />
@@ -118,6 +131,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
     }else{
         //Determine whether self is expanded conditional on if self is an list element or an object element
         let expand = ((index==-1)?expanded:selected)||specNode.tentative;
+        specNode.secondarySelected = expand&&!specNode.tentative&&!specNode.selected;
         //Give preview text of list items if they are not expanded
         let primary = specNode.name;
         if(index!=-1&&!expand){
@@ -153,7 +167,7 @@ const SpecFieldV = function({ui, index, specNode, level, selected, select}:
                             </IconButton></span>:undefined}
                     </ListItemButton>
                 </HtmlTooltip>:undefined}
-            <Collapse in={expand} timeout="auto" sx={{background: (specNode.editing)?'aliceblue':undefined}} unmountOnExit>
+            <Collapse in={expand} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                     {(specNode.type=='list')?
                         Object.keys(specNode.children).map((key)=>{

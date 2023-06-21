@@ -30,7 +30,7 @@ class EditorPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec
         return <div style={{display: 'grid',
             width: '100%',
             height: '100%',
-            gridTemplateColumns: '25% 36px minmax(0,1fr)',
+            gridTemplateColumns: '25% 6px minmax(0,1fr)',
             gridTemplateRows: '100%'}}>
             <div style={{gridColumn:'1 / span 1'}}>
                 <SpecPane {...this.props} specRoot={this.props.specRoot}/>
@@ -61,7 +61,7 @@ function TabPanel(props: TabPanelProps) {
             id={`simple-tabpanel-${index}`}
             aria-labelledby={`simple-tab-${index}`}
             {...other}
-            style={{height:'100%', width:'100%', overflow:'auto'}}
+            style={{height:'100%', width:'100%', overflow:'auto', background:'#333333'}}
         >
             {value === index && (
                 <Box sx={{ height:'100%', width:'100%'}}>

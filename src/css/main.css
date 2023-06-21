@@ -223,3 +223,7 @@ fieldset{
     border-color: gray;
     border-radius: 3pt;
 }
+
+.MuiToolbar-root{
+    background: #333333;
+}

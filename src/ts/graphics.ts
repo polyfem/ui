@@ -8,7 +8,7 @@ import {TransformControls} from "./external/TransformControls.js";
 
 import {
     AxesHelper, Box3,
-    GridHelper,
+    GridHelper, Material,
     Mesh,
     MeshBasicMaterial,
     MeshNormalMaterial,
@@ -41,9 +41,11 @@ class CanvasController{
             this.canvas.transformControl.attach(mesh);
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected=true;
+            geoSpec.findChild(`/transformation`, true).editing = true;
             geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = true;
             geoSpec.findChild(`/transformation`).secondarySelected = true;
             this.activeGeometry = geoSpec;
+            console.log(this.activeGeometry);
             this.ui.updateSpecPane();
         }
         this.raySelector.clearSelectionCallback = (mesh)=>{
@@ -51,6 +53,7 @@ class CanvasController{
             this.canvas.transformControl.detach();
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected = false;
+            this.activeGeometry.findChild(`/transformation`).editing = false;
             geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = false;
             geoSpec.findChild(`/transformation`).secondarySelected = false;
             this.activeGeometry = undefined;
@@ -132,6 +135,7 @@ class CanvasController{
     }
     configureTransformControl(){
         document.onkeydown = (e)=>{
+            console.log(this.activeGeometry);
             if(this.activeGeometry==undefined)
                 return;
             if(e.key == 't'){
@@ -155,6 +159,8 @@ class CanvasController{
                     transformation.pushChild(new Spec(`${i}`, transformation, true));
                 }
             }
+            // To avoid double-updating the graphics
+            this.pauseGeometryUpdate=true;
             switch(this.activeEdit){
                 case 'translation':
                     let translations = transformation.children;
@@ -176,7 +182,7 @@ class CanvasController{
                     scale[2].setValue(this.activeMesh.scale.z);
                     break;
             }
-            this.ui.updateSpecPane();
+            this.pauseGeometryUpdate=false;
         });
     }
     discard(){
@@ -216,6 +222,45 @@ class CanvasController{
         }
     }
 
+    addJSONListeners(){
+
+        const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
+            emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
+        const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
+            emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
+        const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
+        const selection2Listener=(target: Spec, selected: boolean)=>{
+            if(selected&&!target.selected){
+                for(let mesh of this.meshList[target.query]){
+                    // previousMaterial = mesh.material;
+                    mesh.material = selectionMaterial2;
+                }
+            }else if(!selected&&!target.selected){
+                for(let mesh of this.meshList[target.query]){
+                    mesh.material = regularMaterial;
+                }
+            }
+        }
+        const selectionListener=(target: Spec, selected: boolean)=>{
+            if(selected){
+                for(let mesh of this.meshList[target.query]){
+                    // previousMaterial = mesh.material;
+                    mesh.material = selectionMaterial;
+                }
+            }else if(!selected&&!target.secondarySelected){
+                for(let mesh of this.meshList[target.query]){
+                    mesh.material = regularMaterial;
+                }
+            }
+        }
+        let geometriesSpec = this.fileControl.specRoot.findChild('/geometry');
+        for(let key in geometriesSpec.children){
+            let geometry = geometriesSpec.children[key];
+            geometry.subscribeSelectionService(selectionListener, true);
+            geometry.subscribeSelectionService(selection2Listener, false);
+        }
+    }
+
     pauseGeometryUpdate = false;
     /**
      * @param geometry
@@ -224,65 +269,100 @@ class CanvasController{
     loadGeometry(geometry: GeometryJSONStruct, index: number){
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
-        let transform = geometry.transformation;
         let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
         let specRoot = this.fileControl.specRoot.findChild(`/geometry/${index}`);
         switch (extension) {
             case 'msh':
             case 'vtu':
             case 'obj':
-                let transformation = specRoot.findChild('/transformation');
                 let objLoader = new OBJLoader();
                 objLoader.load(file.accessURL(), (obj:any)=>{
                     this.meshList[specRoot.query]=[];
-                    let translationListener = (query:string, target:Spec, event:string)=>{
-                        let tr = this.ui.specEngine.compile(target);
-                        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
-                        let transVec = new THREE.Vector3(translation[0],translation[2],-translation[1]);
-                        let normalizedTr = transVec.clone().normalize();
-                        obj.traverse( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            child.translateOnAxis(normalizedTr,transVec.length());});
-
-                    }
-                    let scaleListener = (query:string, target:Spec, event:string)=>{
-                        let sc = this.ui.specEngine.compile(target);
-                        let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
-                        obj.traverse( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            child.scale.set(scale[0],scale[2],scale[1]);});
-                    }
-                    let rotationListener = (query:string, target:Spec, event:string)=>{
-                        let rt = (transform.rotation)?transform.rotation:[0,0,0];
-                        let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
-                        obj.traverse( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            child.rotation.set(rotation[0],rotation[1],rotation[2]);});
-                    }
-                    let addChildListener = (query:string, target:Spec, event:string)=>{
-                        switch(target.name){
-                            case 'translation':
-
-                                break;
-                            case 'rotation':
-                                break;
-                            case 'scale':
-                                break;
-                            default: //Yet to be implemented: rotation_mode, dimension
-                        }
-                    }
-
                     obj.traverse( ( child:Mesh )=>{
+                        if(child instanceof THREE.Group){
+                            return;
+                        }
                         this.canvas.scene.add(child);
                         this.meshToSpec.set(child, specRoot);
                         this.meshList[specRoot.query].push(child);
                     } );
+
+                    let translationListener = (query:string, target:Spec)=>{
+                        let tr = this.ui.specEngine.compile(target);
+                        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
+                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
+                                child.position.set(translation[0],translation[2],-translation[1]);});
+
+                    }
+                    let scaleListener = (query:string, target:Spec)=>{
+                        let sc = this.ui.specEngine.compile(target);
+                        if(sc instanceof Array&&sc.length<3)
+                            return;
+                        let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
+                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
+                            console.log(child);
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
+                                child.scale.set(scale[0],scale[2],scale[1]);
+                        });
+                    }
+                    let rotationListener = (query:string, target:Spec)=>{
+                        let rt = this.ui.specEngine.compile(target);
+                        let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
+                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
+                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                                return;
+                            }
+                            if(!isNaN((rotation[0]))&&!isNaN(rotation[1])&&!isNaN(rotation[2]))
+                                child.rotation.set(rotation[0],rotation[1],rotation[2]);});
+                    }
+                    //Here the parameter target will be the added children of transformation spec,
+                    //the listeners above are designed for each of the translation/rotation/scale updates
+                    let transformationChildListener = (query:string, target:Spec, event:string)=>{
+                        if(event=='ca'){
+                            let target = this.fileControl.specRoot.findChild(query);
+                            switch(target.name){
+                                case 'translation':
+                                    target.subscribeChangeService(translationListener);
+                                    break;
+                                case 'rotation':
+                                    target.subscribeChangeService(rotationListener);
+                                    break;
+                                case 'scale':
+                                    target.subscribeChangeService(scaleListener);
+                                    break;
+                                default: //Yet to be implemented: rotation_mode, dimension
+                            }
+                        }
+                    }
+                    let transformation = specRoot.findChild('/transformation');
+                    transformation.subscribeChangeService(transformationChildListener);
+                    if(transformation.children!=undefined){//Initialize existing listeners
+                        for(let key in transformation.children){
+                            let target = transformation.children[key];
+                            switch(key){
+                                case 'translation':
+                                    target.subscribeChangeService
+                                        (translationListener)(target.query,target,undefined);
+                                    break;
+                                case 'rotation':
+                                    target.subscribeChangeService
+                                        (rotationListener)(target.query,target,undefined);
+                                    break;
+                                case 'scale':
+                                    target.subscribeChangeService
+                                        (scaleListener)(target.query,target,undefined);
+                                    break;
+                                default: //Yet to be implemented: rotation_mode, dimension
+                            }
+                        }
+                    }
                 })
                 break;
         }
@@ -291,7 +371,6 @@ class CanvasController{
     setNewHost(element: HTMLElement) {
         this.canvas.setNewHost(element);
     }
-
 }
 
 class RaySelector{
@@ -300,10 +379,6 @@ class RaySelector{
     scene: THREE.Scene;
     canvas: Canvas;
     intersected: THREE.Mesh;
-    selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
-        emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
-    // Original material of the currently selected material
-    originalMaterial: THREE.Material;
 
     pointer = new Vector2();
     constructor(canvas: Canvas){
@@ -328,22 +403,17 @@ class RaySelector{
             if ( this.intersected != selected
                     && selected instanceof THREE.Mesh) {
                 if ( this.intersected && this.intersected instanceof THREE.Mesh) {
-                    this.intersected.material = this.originalMaterial;
                     this.clearSelectionCallback(this.intersected);
                 }
                 this.intersected = selected;
-                this.originalMaterial = selected.material
-                this.intersected.material = this.selectionMaterial;
                 this.selectionCallback(selected);
             }
 
         } else {
             if ( this.intersected ){
-                this.intersected.material = this.originalMaterial;
                 this.clearSelectionCallback(this.intersected);
             }
             this.intersected = undefined;
-            this.originalMaterial = undefined;
         }
     }
     selectionCallback(mesh: Mesh){

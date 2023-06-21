@@ -70,6 +70,10 @@ class GFileControl extends FileControl{
                 this.ui.setSpec(this.specRoot);
                 let geometries:GeometryJSONStruct[] = json['geometry'];
                 geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index));
+                this.canvasController.addJSONListeners();
+                this.specRoot.subscribeChangeService(()=>{
+                    this.saveSpec();
+                })
             })
         }
         else
