@@ -40,6 +40,7 @@ class Spec{
 
     //Value dispatcher
     protected dispatchValueChange(){
+        console.log(this.valueServices);
         for(let service of this.valueServices){
             service(this.value);
         }
@@ -351,7 +352,7 @@ class SpecEngine {
      * in which case Spec Engine uses a set of matching criteria to automatically
      * identify the rawSpec matched
      */
-    validate(query:string, original:Spec, parent:Spec, typeOverride:number=0): Spec{
+    validate(query:string, original:Spec, parent:Spec, typeOverride:number=-1): Spec{
         let keys = query.split('/');
         //Query for the raw spec for the original element
         let loc = this.specTree.query(keys);
@@ -549,25 +550,32 @@ class RawSpecTree{
      *          s.children \subset r.required U r.optional,
      *          then r is matched
      *  2. if type name of spec matches raw
+     *  3. if type of spec matches raw
      *
-     *  Matching precedence: 1.1 > 2 > 1.2 > 1.3
+     *  Matching precedence: 1.1 > 2 > 3 > 1.2 > 1.3
      *
      * @param spec
      */
     getMatchingRaw(spec: Spec): RawSpec {
         let matchedRaw = this.rawSpec[0];
         let maxPrecedence = -1;
-
+        console.log(spec);
         for (const rawSpec of this.rawSpec) {
             // Criteria 1.1
             if (rawSpec.required&&rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
-                if (maxPrecedence < 3) {
+                if (maxPrecedence < 4) {
                     matchedRaw = rawSpec;
-                    maxPrecedence = 3;
+                    maxPrecedence = 4;
                 }
             }
             // Criteria 2
             else if (rawSpec.typename!=undefined && spec.typename === rawSpec.typename) {
+                if (maxPrecedence < 3) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 3;
+                }
+            }// Criteria 3
+            else if (rawSpec.type!=undefined && spec.type === rawSpec.type) {
                 if (maxPrecedence < 2) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 2;
@@ -589,7 +597,6 @@ class RawSpecTree{
                 }
             }
         }
-
         return matchedRaw;
     }
 
