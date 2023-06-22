@@ -58,6 +58,7 @@ interface Transformation{
  */
 class GFileControl extends FileControl{
     canvasController: CanvasController;
+    autoSave: boolean = true;
     constructor(ui: UI,fileName: string, fileReference: UFile){
         super(ui,fileName, fileReference);
     }
@@ -71,8 +72,19 @@ class GFileControl extends FileControl{
                 let geometries:GeometryJSONStruct[] = json['geometry'];
                 geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index));
                 this.canvasController.addJSONListeners();
+                // Following method times for 0.5 seconds of inactivity
+                // New requests increment the waiting key
+                // successful update resets it
+                let waitingKey = 0;
                 this.specRoot.subscribeChangeService(()=>{
-                    this.saveSpec();
+                    let key = ++waitingKey;
+                    setTimeout(()=>{
+                        if(this.autoSave&&key==waitingKey){
+                            //Auto save after 0.5 seconds of inactivity
+                            this.saveSpec();
+                            waitingKey = 0;
+                        }
+                    }, 500);
                 })
             })
         }
@@ -81,6 +93,7 @@ class GFileControl extends FileControl{
     }
 
     saveSpec(){
+        console.log("Saving spec");
         let json = this.ui.specEngine.compile(this.specRoot);
         this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
     }

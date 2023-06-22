@@ -12,6 +12,13 @@ import EditorPane from "./components/EditorPane";
 import FileView from "./components/FileView";
 import {Spec} from "./spec";
 import {FileControl} from "./fileControl";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+const darkTheme = createTheme({
+    palette: {
+        mode: 'light',
+    },
+});
 
 
 const drawerWidth = 300;
@@ -49,42 +56,44 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
         this.setState({openedFiles: files});
     }
     render(){
-        return <Box sx={{ display: 'grid' }}
-                    style={{gridTemplateColumns: `${drawerWidth}px 1fr`,
-                            gridTemplateRows: `64px minmax(0,1fr)`,
-                            height: '100%'}}>
-            <CssBaseline/>
-            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1}}
-                    style={{gridColumn: '1 / span 2',
-                        gridRow: '1 / span 1', boxShadow: 'none'}}>
-                <NavBar/>
-            </AppBar>
-            <Drawer
-                variant="permanent"
-                sx={{
-                    width: drawerWidth,
-                    flexShrink: 0,
-                    [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-                }}
-                style={{gridColumn: '1 / span 1',
-                gridRow: '2 / span 1'}}
-            >
-                <Toolbar />
-                <Box sx={{height: '100%', overflow: 'hidden'}}>
-                    <ToolKit ui={this.ui} visual={this} open={this.state.activeSpec.name}/>
-                    <Divider />
-                    <FileView{...this.props}/>
+        return <ThemeProvider theme={darkTheme}>
+            <Box sx={{ display: 'grid' }}
+                 style={{gridTemplateColumns: `${drawerWidth}px 1fr`,
+                     gridTemplateRows: `64px minmax(0,1fr)`,
+                     height: '100%'}}>
+                <CssBaseline/>
+                <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1}}
+                        style={{gridColumn: '1 / span 2',
+                            gridRow: '1 / span 1', boxShadow: 'none'}}>
+                    <NavBar/>
+                </AppBar>
+                <Drawer
+                    variant="permanent"
+                    sx={{
+                        width: drawerWidth,
+                        flexShrink: 0,
+                        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+                    }}
+                    style={{gridColumn: '1 / span 1',
+                        gridRow: '2 / span 1'}}
+                >
+                    <Toolbar />
+                    <Box sx={{height: '100%', overflow: 'hidden'}}>
+                        <ToolKit ui={this.ui} visual={this} open={this.state.activeSpec.name}/>
+                        <Divider />
+                        <FileView{...this.props}/>
+                    </Box>
+                </Drawer>
+                <Box sx={{ flexGrow: 1, p: 3 }}
+                     style={{gridColumn: '2 / span 1',
+                         gridRow: '2 / span 1', padding:'0'}}>
+                    <EditorPane {...this.props} specRoot={this.state.activeSpec}
+                                openedFiles={this.state.openedFiles}
+                                activeFile ={this.state.activeFile}
+                    />
                 </Box>
-            </Drawer>
-            <Box sx={{ flexGrow: 1, p: 3 }}
-                 style={{gridColumn: '2 / span 1',
-                     gridRow: '2 / span 1', padding:'0'}}>
-                <EditorPane {...this.props} specRoot={this.state.activeSpec}
-                            openedFiles={this.state.openedFiles}
-                            activeFile ={this.state.activeFile}
-                />
             </Box>
-        </Box>;
+        </ThemeProvider>;
     }
 }
 

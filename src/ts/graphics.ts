@@ -12,12 +12,18 @@ import {
     Mesh,
     MeshBasicMaterial,
     MeshNormalMaterial,
-    MeshPhongMaterial, Vector2,
+    MeshPhongMaterial, Vector2, Vector3,
     WebGLRenderer
 } from "three";
 import {UFile} from "./server";
 import {UI} from "./main";
 import {Spec} from "./spec";
+
+const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
+    emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
+const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
+    emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
+const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
 
 class CanvasController{
     canvas: Canvas;
@@ -71,10 +77,10 @@ class CanvasController{
         // let height = htmlElement.offsetHeight;
         // camera = new THREE.OrthographicCamera(-width/2/dpp, width/2/dpp,
         //     height/2/dpp, -height/2/dpp, -2000, 2000);
-        camera.position.z = 12;
+        camera.position.y = -12;
         //camera.position.z = 10;
         camera.lookAt(0, 0, 0);
-        // camera.up.set(0, 0, 1)
+        camera.up.set(0, 0, 1);
         // THREE.Object3D.DEFAULT_UP = new THREE.Vector3(0,0,1);
         //camera.up.set(0, 1, 0);
 
@@ -223,12 +229,6 @@ class CanvasController{
     }
 
     addJSONListeners(){
-
-        const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
-            emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
-        const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
-            emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
-        const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
         const selection2Listener=(target: Spec, selected: boolean)=>{
             if(selected&&!target.selected){
                 for(let mesh of this.meshList[target.query]){
@@ -282,6 +282,8 @@ class CanvasController{
                         if(child instanceof THREE.Group){
                             return;
                         }
+                        child.geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new Vector3(0,1,0), new Vector3(0,0,1)));
+                        child.material = regularMaterial;
                         this.canvas.scene.add(child);
                         this.meshToSpec.set(child, specRoot);
                         this.meshList[specRoot.query].push(child);
@@ -295,7 +297,7 @@ class CanvasController{
                                 return;
                             }
                             if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
-                                child.position.set(translation[0],translation[2],-translation[1]);});
+                                child.position.set(translation[0],translation[1],translation[2]);});
 
                     }
                     let scaleListener = (query:string, target:Spec)=>{
@@ -309,7 +311,7 @@ class CanvasController{
                                 return;
                             }
                             if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
-                                child.scale.set(scale[0],scale[2],scale[1]);
+                                child.scale.set(scale[0],scale[1],scale[2]);
                         });
                     }
                     let rotationListener = (query:string, target:Spec)=>{

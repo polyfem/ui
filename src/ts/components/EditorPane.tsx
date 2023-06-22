@@ -35,7 +35,7 @@ class EditorPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec
             <div style={{gridColumn:'1 / span 1'}}>
                 <SpecPane {...this.props} specRoot={this.props.specRoot}/>
             </div>
-            <Divider orientation="vertical" style={{gridColumn:'2 / span 1'}}>
+            <Divider orientation="vertical" style={{gridColumn:'2 / span 1', backgroundColor:'#555'}}>
                 <KeyboardDoubleArrowRightIcon/>
             </Divider>
             <div style={{gridColumn:'3 / span 1'}}>
@@ -102,12 +102,18 @@ class TabPane extends React.Component<{ui:UI, rootId: string,
     render(){
         let value = this.props.activeFile;
         return (
-            <Box sx={{ width: '100%', height:'100%'}}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ width: '100%', height:'100%', backgroundColor:'#333'}}>
+                <Box sx={{ borderBottom: 1, borderColor: '#777', backgroundColor:'#333'}}>
                     <Tabs value={value} onChange={this.handleChange}
+                          textColor='inherit'
+                          TabIndicatorProps={{
+                              sx: {
+                                  backgroundColor: "navajowhite",
+                              }
+                          }}
                           sx={{height: '17pt', padding: '0pt'}} aria-label="basic tabs example">
                         {this.props.openedFiles.map((item, index)=>{
-                            return <Tab label={item.fileName} {...a11yProps(index)}
+                            return <Tab label={item.fileName} sx={{color:(value==index)?'navajowhite':'white'}} {...a11yProps(index)}
                                  icon={<CloseIcon onClick={(e)=>this.handleClose(e,item)}/>}  key={item.fileReference.url} iconPosition="end" />;
                         })}
                     </Tabs>
