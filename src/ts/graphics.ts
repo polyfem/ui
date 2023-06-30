@@ -6,13 +6,14 @@ import { GLTFLoader } from './external/GLTFLoader.js';
 import {OBJLoader} from './external/OBJLoader.js';
 import {TransformControls} from "./external/TransformControls.js";
 
+
 import {
     AxesHelper, Box3,
     GridHelper, Material,
     Mesh,
     MeshBasicMaterial,
     MeshNormalMaterial,
-    MeshPhongMaterial, Vector2, Vector3,
+    MeshPhongMaterial, ShaderMaterial, Vector2, Vector3,
     WebGLRenderer
 } from "three";
 import {UFile} from "./server";
@@ -23,7 +24,89 @@ const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
 const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
-const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
+// const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
+
+const vectorArray = [];//Alternate between size and position,
+//size taking negative values indicate the end of the array
+const emptyVector = new THREE.Vector3(-1, -1, -1);
+for (let i = 0; i < 40; i++) {
+    vectorArray.push(emptyVector);
+}
+
+//Standard model of shader material
+const regularMaterial = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
+    uniforms: {
+        Ka: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
+        Kd0: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
+        Kd1: { value: new THREE.Vector3(0.5, 0.7, 0.9) },//When selected
+        Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
+        LightIntensity: { value: new THREE.Vector4(0.55, 0.55, 0.55, 1.0) },
+        LightPosition: { value: new THREE.Vector4(0.0, 0, 10.0, 1.0) },
+        Shininess: { value: 200.0 },
+        selectionBoxes: {value: vectorArray}
+    },
+    vertexShader: `
+      varying vec3 Normal;
+      varying vec3 Position;
+      varying vec3 orgPosition;
+
+      void main() {
+        Normal = normalize(normalMatrix * normal);
+        orgPosition = position;
+        Position = vec3(modelViewMatrix * vec4(position, 1.0));
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 Normal;
+      varying vec3 Position;
+      varying vec3 orgPosition;
+
+      uniform vec3 Ka;
+      uniform vec3 Kd0;
+      uniform vec3 Kd1;
+      uniform vec3 Ks;
+      uniform vec4 LightPosition;
+      uniform vec3 LightIntensity;
+      uniform float Shininess;
+      uniform vec3 vectorArray[20];
+
+      vec3 phong() {
+        vec3 n = normalize(Normal);
+        vec3 s = normalize(vec3(LightPosition) - Position);
+        vec3 v = normalize(vec3(-Position));
+        vec3 r = reflect(-s, n);
+        vec3 Kd = Kd0;
+        
+        bool rightSide = orgPosition.x>0.0;
+        if(rightSide)
+            Kd=Kd1;
+        //Check for box intersections
+        for (int i = 0; i < 20; i++) {
+         if (vectorArray[i] == vec3(-1.0, -1.0, -1.0)) {
+           // Handle empty or invalid elements
+           // ...
+           break; // Terminate the loop
+         }
+    
+         // Process valid elements
+         vec3 vector = vectorArray[i];
+         // ...
+        }
+
+        vec3 ambient = Ka;
+        vec3 diffuse = Kd * abs(dot(s, n));
+        vec3 specular = Ks * pow(abs(dot(r, v)), Shininess);
+
+        return LightIntensity * (ambient + diffuse + specular);
+      }
+
+      void main() {
+        gl_FragColor = vec4(phong(), 1.0);
+      }
+    `
+});
 
 class CanvasController{
     canvas: Canvas;
@@ -37,6 +120,7 @@ class CanvasController{
     activeMesh: Mesh;
     fileControl: GFileControl;
     meshList: {[id: string]:THREE.Mesh[]}={};
+    meshArray: THREE.Mesh[]=[];
     constructor(ui: UI, hostId: string, fileControl: GFileControl) {
         this.ui = ui;
         this.fileControl = fileControl;
@@ -51,7 +135,6 @@ class CanvasController{
             geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = true;
             geoSpec.findChild(`/transformation`).secondarySelected = true;
             this.activeGeometry = geoSpec;
-            console.log(this.activeGeometry);
             this.ui.updateSpecPane();
         }
         this.raySelector.clearSelectionCallback = (mesh)=>{
@@ -119,7 +202,7 @@ class CanvasController{
     }
     addRaySelector(){
         let htmlElement = this.canvas.renderer.domElement;
-        this.raySelector = new RaySelector(this.canvas);
+        this.raySelector = new RaySelector(this);
         let moved = false;
         let downListener = () => {
             moved = false
@@ -253,11 +336,25 @@ class CanvasController{
                 }
             }
         }
+
         let geometriesSpec = this.fileControl.specRoot.findChild('/geometry');
         for(let key in geometriesSpec.children){
             let geometry = geometriesSpec.children[key];
             geometry.subscribeSelectionService(selectionListener, true);
             geometry.subscribeSelectionService(selection2Listener, false);
+        }
+
+        let surfaceSelections = this.fileControl.specRoot.matchChildren(...'/geometry/*/surface_selection'.split('/'));
+        for(let surfaceSelection of surfaceSelections){
+            let boxSelectorSpecs = surfaceSelection.matchChildren(...'/*/box'.split('/'));
+            console.log('box selector spec: ');
+            console.log(boxSelectorSpecs);
+            for(let boxSelectorSpec of boxSelectorSpecs){
+                let boxSelector = new BoxSelector(this);
+                surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
+                    (boxSelectorSpec.query,boxSelectorSpec,'v');
+            }
         }
     }
 
@@ -287,10 +384,13 @@ class CanvasController{
                         this.canvas.scene.add(child);
                         this.meshToSpec.set(child, specRoot);
                         this.meshList[specRoot.query].push(child);
+                        this.meshArray.push(child);
                     } );
 
                     let translationListener = (query:string, target:Spec)=>{
                         let tr = this.ui.specEngine.compile(target);
+                        if(tr instanceof Array&&tr.length<3)
+                            return;
                         let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
                         this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
                             if(this.pauseGeometryUpdate||child instanceof THREE.Group){
@@ -306,7 +406,6 @@ class CanvasController{
                             return;
                         let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
                         this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
-                            console.log(child);
                             if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                                 return;
                             }
@@ -316,6 +415,8 @@ class CanvasController{
                     }
                     let rotationListener = (query:string, target:Spec)=>{
                         let rt = this.ui.specEngine.compile(target);
+                        if(rt instanceof Array&&rt.length<3)
+                            return;
                         let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
                         this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
                             if(this.pauseGeometryUpdate||child instanceof THREE.Group){
@@ -370,8 +471,50 @@ class CanvasController{
         }
     }
 
+    selectObject(mesh: THREE.Mesh, boundingBox: THREE.Box3Helper){
+        // mesh.geometry.
+    }
+
     setNewHost(element: HTMLElement) {
         this.canvas.setNewHost(element);
+    }
+}
+
+class BoxSelector{
+    canvas: Canvas;
+    canvasController: CanvasController;
+    ui: UI;
+    helper: THREE.Box3Helper;
+    constructor(canvasController: CanvasController){
+        this.canvasController = canvasController;
+        this.canvas = canvasController.canvas;
+        this.ui = this.canvasController.ui;
+        const box = new THREE.Box3();
+        box.setFromCenterAndSize( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 1, 1 ) );
+        this.helper = new THREE.Box3Helper( box, new THREE.Color(0xabcdef) );
+        this.helper.visible = false;
+        this.canvas.scene.add( this.helper );
+        this.surfaceSelectionBoxListener=this.surfaceSelectionBoxListener.bind(this);
+        this.selectionListener=this.selectionListener.bind(this);
+    }
+    surfaceSelectionBoxListener(query:string, target: Spec, event: string){
+        if(event=='v'){
+            if(target.subNodesCount>=2){
+                let center = this.ui.specEngine.compile(target.children[0]);
+                let size = this.ui.specEngine.compile(target.children[1]);
+                if(center==undefined||size==undefined||center.length<3||size.length<3
+                    ||isNaN(center[0])||isNaN(size[0])||isNaN(center[1])||isNaN(size[1])
+                    ||isNaN(center[2])||isNaN(size[2]))
+                    return;
+                this.helper.box.setFromCenterAndSize(new Vector3(center[0],center[1],center[2]),
+                    new Vector3(size[0],size[1],size[2]));
+                this.helper.updateMatrixWorld();
+                this.helper.visible = target.parent.parent.secondarySelected;
+            }
+        }
+    }
+    selectionListener(target: Spec, selected:boolean){
+        this.helper.visible = selected;
     }
 }
 
@@ -379,14 +522,16 @@ class RaySelector{
     rayCaster = new THREE.Raycaster();
     camera: THREE.Camera;
     scene: THREE.Scene;
+    controller: CanvasController;
     canvas: Canvas;
     intersected: THREE.Mesh;
 
     pointer = new Vector2();
-    constructor(canvas: Canvas){
-        this.canvas = canvas;
-        this.camera = canvas.camera;
-        this.scene = canvas.scene;
+    constructor(controller: CanvasController){
+        this.controller = controller;
+        this.canvas = controller.canvas;
+        this.camera = controller.canvas.camera;
+        this.scene = controller.canvas.scene;
         this.onPointerMove = this.onPointerMove.bind(this);
         this.select = this.select.bind(this);
     }
@@ -399,7 +544,7 @@ class RaySelector{
     }
     select(){
         this.rayCaster.setFromCamera( this.pointer, this.camera );
-        const intersects = this.rayCaster.intersectObjects( this.scene.children, false );
+        const intersects = this.rayCaster.intersectObjects( this.controller.meshArray, false );
         if ( intersects.length > 0 ) {
             let selected = intersects[ 0 ].object;
             if ( this.intersected != selected
@@ -410,7 +555,6 @@ class RaySelector{
                 this.intersected = selected;
                 this.selectionCallback(selected);
             }
-
         } else {
             if ( this.intersected ){
                 this.clearSelectionCallback(this.intersected);

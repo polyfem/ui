@@ -40,7 +40,6 @@ class Spec{
 
     //Value dispatcher
     protected dispatchValueChange(){
-        console.log(this.valueServices);
         for(let service of this.valueServices){
             service(this.value);
         }
@@ -57,7 +56,7 @@ class Spec{
     unsubscribeValueService(service:(newValue:any)=>void){
         let index = this.valueServices.indexOf(service);
         if(index!=-1)
-            delete this.valueServices[index];
+            this.valueServices.splice(index,1);
     }
 
     /*
@@ -74,7 +73,6 @@ class Spec{
      * change if non-leaf. Dispatches self services first before propagating
      * upward
      * @param query
-     * @param target
      * @param event `r` for recursive, `ca` for child add,
      * `cd` for child deletion, `i` for initialization, `v` for value change
      */
@@ -86,9 +84,14 @@ class Spec{
             this.parent.dispatchChange(query, event);
     }
 
+    /**
+     * One of object, list, float, string
+     */
     type: string;
     selection: string[];
-    typename: string = undefined;
+    typename: string;
+    // For selecting the corresponding subset of type
+    typeIndex = -1;
 
     /**
      * Operation variables
@@ -240,6 +243,28 @@ class Spec{
     }
 
     /**
+     * Matches all children satisfying the pointer criteria
+     * @param keys
+     */
+    matchChildren(...keys: string[]):Spec[]{
+        //Skip redundant pseudo path
+        while(keys.length>1&&(keys[0]=='.'||keys[0]==''))
+            keys.shift();
+        if(keys.length==0||keys[0]=='.'||keys[0]=='')
+            return [this];
+        else if(keys[0]=='*'){
+            let matchedChildren:Spec[] = [];
+            keys.shift();
+            for(let key in this.children){
+                matchedChildren.push(...this.children[key].matchChildren(...keys));
+            }
+            return matchedChildren;
+        }
+        else return (this.children!=undefined&&this.children[keys[0]]!=undefined)?
+                this.children[keys.shift()].matchChildren(...keys):[];
+    }
+
+    /**
      * Recursively sets this and all
      * its subsequent children with the assigned value of
      * tentative
@@ -318,6 +343,8 @@ class SpecEngine {
         spec.query = query;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
+        spec.typename = raw.typename;
+        spec.typeIndex = typeOverride;
         spec.doc = raw.doc;
         //Object type correspond to tree structures
         spec.isLeaf = ['object', 'list'].indexOf(raw.type)<0;
@@ -366,6 +393,7 @@ class SpecEngine {
         spec.pointer = raw.pointer;
         spec.type = raw.type;
         spec.typename = raw.typename;
+        spec.typeIndex = typeOverride;
         spec.doc = raw.doc;
         spec.optional = raw.optional;
         // Non-object type corresponds to leaf nodes
@@ -435,6 +463,17 @@ class SpecEngine {
             return {};
         let rawSpecNode = this.specTree.query(specNode.pointer.split('/'));
         if(rawSpecNode){
+            if(specNode.typeIndex>=0){// Select the proper subset of options
+                let subType = rawSpecNode.rawSpec[specNode.typeIndex];
+                let subTree:{ [key: string]: RawSpecTree} = {};
+                for(let key of subType.optional!=undefined?subType.optional:[]){
+                    subTree[key] = rawSpecNode.subTree[key];
+                }
+                for(let key of subType.required!=undefined?subType.required:[]){
+                    subTree[key] = rawSpecNode.subTree[key];
+                }
+                return subTree;
+            }
             return rawSpecNode.subTree;
         }
         return {};
@@ -460,8 +499,11 @@ class SpecEngine {
                     obj[key] = this.compile(spec.children[key]);
                 }
                 return obj;
+            case 'float':
+                return parseFloat(spec.value);
+            case 'int':
+                return parseInt(spec.value);
             default:
-                // if(spec.isLeaf)
                 return spec.value;
         }
     }
@@ -559,7 +601,6 @@ class RawSpecTree{
     getMatchingRaw(spec: Spec): RawSpec {
         let matchedRaw = this.rawSpec[0];
         let maxPrecedence = -1;
-        console.log(spec);
         for (const rawSpec of this.rawSpec) {
             // Criteria 1.1
             if (rawSpec.required&&rawSpec.required.every(child => spec.children.hasOwnProperty(child))) {
