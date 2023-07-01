@@ -49,19 +49,19 @@ const regularMaterial = new THREE.ShaderMaterial({
     vertexShader: `
       varying vec3 Normal;
       varying vec3 Position;
-      varying vec3 orgPosition;
+      varying vec4 orgPosition;
 
       void main() {
         Normal = normalize(normalMatrix * normal);
-        orgPosition = position;
         Position = vec3(modelViewMatrix * vec4(position, 1.0));
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        orgPosition = projectionMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       varying vec3 Normal;
       varying vec3 Position;
-      varying vec3 orgPosition;
+      varying vec4 orgPosition;
 
       uniform vec3 Ka;
       uniform vec3 Kd0;
@@ -311,7 +311,10 @@ class CanvasController{
         }
     }
 
-    addJSONListeners(){
+    /**
+     * Load listeners on a per geometry basis
+     */
+    addJSONListeners(geometrySpec: Spec){
         const selection2Listener=(target: Spec, selected: boolean)=>{
             if(selected&&!target.selected){
                 for(let mesh of this.meshList[target.query]){
@@ -337,14 +340,10 @@ class CanvasController{
             }
         }
 
-        let geometriesSpec = this.fileControl.specRoot.findChild('/geometry');
-        for(let key in geometriesSpec.children){
-            let geometry = geometriesSpec.children[key];
-            geometry.subscribeSelectionService(selectionListener, true);
-            geometry.subscribeSelectionService(selection2Listener, false);
-        }
+        geometrySpec.subscribeSelectionService(selectionListener, true);
+        geometrySpec.subscribeSelectionService(selection2Listener, false);
 
-        let surfaceSelections = this.fileControl.specRoot.matchChildren(...'/geometry/*/surface_selection'.split('/'));
+        let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
         for(let surfaceSelection of surfaceSelections){
             let boxSelectorSpecs = surfaceSelection.matchChildren(...'/*/box'.split('/'));
             console.log('box selector spec: ');
@@ -354,6 +353,86 @@ class CanvasController{
                 surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
                 boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
                     (boxSelectorSpec.query,boxSelectorSpec,'v');
+            }
+        }
+
+        const translationListener = (query:string, target:Spec)=>{
+            let tr = this.ui.specEngine.compile(target);
+            if(tr instanceof Array&&tr.length<3)
+                return;
+            let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
+            this.meshList[geometrySpec.query].forEach( ( child:Mesh )=>{
+                if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                    return;
+                }
+                if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
+                    child.position.set(translation[0],translation[1],translation[2]);});
+
+        }
+        const scaleListener = (query:string, target:Spec)=>{
+            let sc = this.ui.specEngine.compile(target);
+            if(sc instanceof Array&&sc.length<3)
+                return;
+            let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
+            this.meshList[geometrySpec.query].forEach( ( child:Mesh )=>{
+                if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                    return;
+                }
+                if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
+                    child.scale.set(scale[0],scale[1],scale[2]);
+            });
+        }
+        const rotationListener = (query:string, target:Spec)=>{
+            let rt = this.ui.specEngine.compile(target);
+            if(rt instanceof Array&&rt.length<3)
+                return;
+            let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
+            this.meshList[geometrySpec.query].forEach( ( child:Mesh )=>{
+                if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                    return;
+                }
+                if(!isNaN((rotation[0]))&&!isNaN(rotation[1])&&!isNaN(rotation[2]))
+                    child.rotation.set(rotation[0],rotation[1],rotation[2]);});
+        }
+        //Here the parameter target will be the added children of transformation spec,
+        //the listeners above are designed for each of the translation/rotation/scale updates
+        let transformationChildListener = (query:string, target:Spec, event:string)=>{
+            if(event=='ca'){
+                let target = this.fileControl.specRoot.findChild(query);
+                switch(target.name){
+                    case 'translation':
+                        target.subscribeChangeService(translationListener);
+                        break;
+                    case 'rotation':
+                        target.subscribeChangeService(rotationListener);
+                        break;
+                    case 'scale':
+                        target.subscribeChangeService(scaleListener);
+                        break;
+                    default: //Yet to be implemented: rotation_mode, dimension
+                }
+            }
+        }
+        let transformation = geometrySpec.findChild('/transformation');
+        transformation.subscribeChangeService(transformationChildListener);
+        if(transformation.children!=undefined){//Initialize existing listeners
+            for(let key in transformation.children){
+                let target = transformation.children[key];
+                switch(key){
+                    case 'translation':
+                        target.subscribeChangeService
+                        (translationListener)(target.query,target,undefined);
+                        break;
+                    case 'rotation':
+                        target.subscribeChangeService
+                        (rotationListener)(target.query,target,undefined);
+                        break;
+                    case 'scale':
+                        target.subscribeChangeService
+                        (scaleListener)(target.query,target,undefined);
+                        break;
+                    default: //Yet to be implemented: rotation_mode, dimension
+                }
             }
         }
     }
@@ -386,86 +465,7 @@ class CanvasController{
                         this.meshList[specRoot.query].push(child);
                         this.meshArray.push(child);
                     } );
-
-                    let translationListener = (query:string, target:Spec)=>{
-                        let tr = this.ui.specEngine.compile(target);
-                        if(tr instanceof Array&&tr.length<3)
-                            return;
-                        let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
-                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
-                                child.position.set(translation[0],translation[1],translation[2]);});
-
-                    }
-                    let scaleListener = (query:string, target:Spec)=>{
-                        let sc = this.ui.specEngine.compile(target);
-                        if(sc instanceof Array&&sc.length<3)
-                            return;
-                        let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
-                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
-                                child.scale.set(scale[0],scale[1],scale[2]);
-                        });
-                    }
-                    let rotationListener = (query:string, target:Spec)=>{
-                        let rt = this.ui.specEngine.compile(target);
-                        if(rt instanceof Array&&rt.length<3)
-                            return;
-                        let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
-                        this.meshList[specRoot.query].forEach( ( child:Mesh )=>{
-                            if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                                return;
-                            }
-                            if(!isNaN((rotation[0]))&&!isNaN(rotation[1])&&!isNaN(rotation[2]))
-                                child.rotation.set(rotation[0],rotation[1],rotation[2]);});
-                    }
-                    //Here the parameter target will be the added children of transformation spec,
-                    //the listeners above are designed for each of the translation/rotation/scale updates
-                    let transformationChildListener = (query:string, target:Spec, event:string)=>{
-                        if(event=='ca'){
-                            let target = this.fileControl.specRoot.findChild(query);
-                            switch(target.name){
-                                case 'translation':
-                                    target.subscribeChangeService(translationListener);
-                                    break;
-                                case 'rotation':
-                                    target.subscribeChangeService(rotationListener);
-                                    break;
-                                case 'scale':
-                                    target.subscribeChangeService(scaleListener);
-                                    break;
-                                default: //Yet to be implemented: rotation_mode, dimension
-                            }
-                        }
-                    }
-                    let transformation = specRoot.findChild('/transformation');
-                    transformation.subscribeChangeService(transformationChildListener);
-                    if(transformation.children!=undefined){//Initialize existing listeners
-                        for(let key in transformation.children){
-                            let target = transformation.children[key];
-                            switch(key){
-                                case 'translation':
-                                    target.subscribeChangeService
-                                        (translationListener)(target.query,target,undefined);
-                                    break;
-                                case 'rotation':
-                                    target.subscribeChangeService
-                                        (rotationListener)(target.query,target,undefined);
-                                    break;
-                                case 'scale':
-                                    target.subscribeChangeService
-                                        (scaleListener)(target.query,target,undefined);
-                                    break;
-                                default: //Yet to be implemented: rotation_mode, dimension
-                            }
-                        }
-                    }
+                    this.addJSONListeners(specRoot);
                 })
                 break;
         }
@@ -485,11 +485,12 @@ class BoxSelector{
     canvasController: CanvasController;
     ui: UI;
     helper: THREE.Box3Helper;
+    mesh: THREE.Mesh;
     constructor(canvasController: CanvasController){
         this.canvasController = canvasController;
         this.canvas = canvasController.canvas;
         this.ui = this.canvasController.ui;
-        const box = new THREE.Box3();
+        let box = new THREE.Box3();
         box.setFromCenterAndSize( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 1, 1 ) );
         this.helper = new THREE.Box3Helper( box, new THREE.Color(0xabcdef) );
         this.helper.visible = false;
@@ -498,6 +499,7 @@ class BoxSelector{
         this.selectionListener=this.selectionListener.bind(this);
     }
     surfaceSelectionBoxListener(query:string, target: Spec, event: string){
+        console.log(query);
         if(event=='v'){
             if(target.subNodesCount>=2){
                 let center = this.ui.specEngine.compile(target.children[0]);
@@ -506,10 +508,14 @@ class BoxSelector{
                     ||isNaN(center[0])||isNaN(size[0])||isNaN(center[1])||isNaN(size[1])
                     ||isNaN(center[2])||isNaN(size[2]))
                     return;
-                this.helper.box.setFromCenterAndSize(new Vector3(center[0],center[1],center[2]),
-                    new Vector3(size[0],size[1],size[2]));
-                this.helper.updateMatrixWorld();
-                this.helper.visible = target.parent.parent.secondarySelected;
+                let meshList = this.canvasController.meshList[target.parent.parent.parent.query];
+                if(meshList!=undefined){
+                    let location = new Vector3(center[0],center[1],center[2]).add(meshList[0].position);
+                    this.helper.box.setFromCenterAndSize(location,
+                        new Vector3(size[0],size[1],size[2]));
+                    this.helper.updateMatrixWorld();
+                    this.helper.visible = target.parent.parent.secondarySelected;
+                }
             }
         }
     }
