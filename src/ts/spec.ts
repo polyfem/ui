@@ -463,7 +463,7 @@ class SpecEngine {
             return {};
         let rawSpecNode = this.specTree.query(specNode.pointer.split('/'));
         if(rawSpecNode){
-            if(specNode.typeIndex>=0){// Select the proper subset of options
+            if(specNode.type=='object'&&specNode.typeIndex>=0){// Select the proper subset of options
                 let subType = rawSpecNode.rawSpec[specNode.typeIndex];
                 let subTree:{ [key: string]: RawSpecTree} = {};
                 for(let key of subType.optional!=undefined?subType.optional:[]){
