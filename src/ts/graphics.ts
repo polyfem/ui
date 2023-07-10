@@ -52,7 +52,7 @@ class GeometryController{
                 Ka: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
                 Kd0: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
                 Kd1: { value: new THREE.Vector3(0.9, 0.55, 0.21) },//When selected
-                Ks: { value: new THREE.Vector3(0.8, 0.8, 0.8) },
+                Ks: { value: new THREE.Vector3(0.2, 0.2, 0.2) },
                 LightIntensity: { value: new THREE.Vector4(0.55, 0.55, 0.55, 1.0) },
                 LightPosition: { value: new THREE.Vector4(0.0, 0, 10.0, 1.0) },
                 Shininess: { value: 200.0 },
@@ -93,6 +93,7 @@ class GeometryController{
         vec3 r = reflect(-s, n);
         vec3 Kd = Kd0;
         vec3 emissive = vec3(0,0,0);
+        vec3 ambient = Ka;
         
         //Check for box intersections
         for (int i = 0; i < 20; i++) {
@@ -108,7 +109,8 @@ class GeometryController{
                 if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
                     && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
                     Kd = Kd1;
-                    emissive = vec3(0.1,0.1,0);
+                    emissive = vec3(0.3,0.3,0);
+                    ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             default:
@@ -116,7 +118,6 @@ class GeometryController{
          }
         }
 
-        vec3 ambient = Ka;
         vec3 diffuse = Kd * abs(dot(s, n));
         vec3 specular = Ks * pow(abs(dot(r, v)), Shininess);
 
