@@ -387,13 +387,14 @@ class SpecEngine {
             return undefined;
         let raw = (typeOverride<0||typeOverride>=loc.rawSpec.length)?
                         loc.getMatchingRaw(original):loc.rawSpec[typeOverride];
+        let rawIndex = loc.rawSpec.indexOf(raw);
         let spec = new Spec(original.name, parent);
         //Fill out the fields of the spec
         spec.query = query;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
         spec.typename = raw.typename;
-        spec.typeIndex = typeOverride;
+        spec.typeIndex = rawIndex;
         spec.doc = raw.doc;
         spec.optional = raw.optional;
         // Non-object type corresponds to leaf nodes

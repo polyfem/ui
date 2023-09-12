@@ -5,6 +5,7 @@ import {OrbitControlsGizmo} from './external/OrbitControlsGizmo.js';
 import { GLTFLoader } from './external/GLTFLoader.js';
 import {OBJLoader} from './external/OBJLoader.js';
 import {TransformControls} from "./external/TransformControls.js";
+import GeometryController from "./graphics/GeometryController";
 
 
 import {
@@ -19,6 +20,8 @@ import {
 import {UFile} from "./server";
 import {UI} from "./main";
 import {Spec} from "./spec";
+import BoxSelector from "./graphics/BoxSelector";
+import RaySelector from "./graphics/RaySelector";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
@@ -26,111 +29,6 @@ const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
 // const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
 
-class GeometryController{
-    mesh: THREE.Mesh;
-    //Number of selection conditions simultaneously
-    //imposed on the geometry
-    selectionCount = 0;
-    /**
-     * Material that the geometry is rendered with
-     */
-    material: ShaderMaterial;
-    constructor(mesh: THREE.Mesh){
-        this.mesh = mesh;
-        mesh.matrixWorldAutoUpdate = true;
-        let vectorArray = [];//Alternate between specification type size and position,
-//type.x < 0 indicate the end of the array
-//type.x = 0 implies box selection type
-        let emptyVector = new THREE.Vector3(-1, -1, -1);
-        for (let i = 0; i < 120; i++) {
-            vectorArray.push(emptyVector);
-        }
-//Standard model of shader material
-        this.material = new THREE.ShaderMaterial({
-            side: THREE.DoubleSide,
-            uniforms: {
-                Ka: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
-                Kd0: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
-                Kd1: { value: new THREE.Vector3(0.9, 0.55, 0.21) },//When selected
-                Ks: { value: new THREE.Vector3(0.2, 0.2, 0.2) },
-                LightIntensity: { value: new THREE.Vector4(0.55, 0.55, 0.55, 1.0) },
-                LightPosition: { value: new THREE.Vector4(0.0, 0, 10.0, 1.0) },
-                Shininess: { value: 200.0 },
-                selectionBoxes: {value: vectorArray},
-                matrixWorld: { value: mesh.matrixWorld }
-            },
-            vertexShader: `
-      varying vec3 Normal;
-      varying vec3 Position;
-      flat out vec3 orgPosition;
-      uniform mat4 matrixWorld;
-
-      void main() {
-        Normal = normalize(normalMatrix * normal);
-        Position = vec3(modelViewMatrix * vec4(position, 1.0));
-        gl_Position =  projectionMatrix*modelViewMatrix*vec4(position, 1.0);
-        orgPosition = vec3(matrixWorld*vec4(position, 1.0));
-      }
-    `,
-            fragmentShader: `
-      varying vec3 Normal;
-      varying vec3 Position;
-      flat in vec3 orgPosition;
-
-      uniform vec3 Ka;
-      uniform vec3 Kd0;
-      uniform vec3 Kd1;
-      uniform vec3 Ks;
-      uniform vec4 LightPosition;
-      uniform vec3 LightIntensity;
-      uniform float Shininess;
-      uniform vec3 selectionBoxes[60];
-
-      vec3 phong() {
-        vec3 n = normalize(Normal);
-        vec3 s = normalize(vec3(LightPosition) - Position);
-        vec3 v = normalize(vec3(-Position));
-        vec3 r = reflect(-s, n);
-        vec3 Kd = Kd0;
-        vec3 emissive = vec3(0,0,0);
-        vec3 ambient = Ka;
-        
-        //Check for box intersections
-        for (int i = 0; i < 20; i++) {
-         if (selectionBoxes[i*3].x == -1.0) {
-           break; // Terminate the loop
-         }
-         switch(int(selectionBoxes[i*3].x)){
-            case 0:
-                vec3 center = selectionBoxes[i*3+1];
-                vec3 size = selectionBoxes[i*3+2];
-                vec3 ub = center+size/2.0;
-                vec3 lb = center-size/2.0;
-                if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
-                    && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
-                    Kd = Kd1;
-                    emissive = vec3(0.3,0.3,0);
-                    ambient = vec3(0.5,0.5,0.5);
-                }
-                break;
-            default:
-                break;
-         }
-        }
-
-        vec3 diffuse = Kd * abs(dot(s, n));
-        vec3 specular = Ks * pow(abs(dot(r, v)), Shininess);
-
-        return LightIntensity * (ambient + diffuse + specular)+emissive;
-      }
-
-      void main() {
-        gl_FragColor = vec4(phong(), 1.0);
-      }
-    `
-        });
-    }
-}
 class CanvasController{
     canvas: Canvas;
     ui: UI;
@@ -279,9 +177,6 @@ class CanvasController{
                     translations[0].setValue(this.activeMesh.position.x);
                     translations[1].setValue(this.activeMesh.position.y);
                     translations[2].setValue(this.activeMesh.position.z);
-                    console.log(this.activeMesh.matrixWorld);
-                    console.log(this.canvas.scene.matrixWorld);
-                    console.log(this.activeMesh.modelViewMatrix);
                     break;
                 case 'rotation':
                     let rotations = transformation.children;
@@ -295,6 +190,7 @@ class CanvasController{
                     scale[0].setValue(this.activeMesh.scale.x);
                     scale[1].setValue(this.activeMesh.scale.y);
                     scale[2].setValue(this.activeMesh.scale.z);
+                    this.updateBoxSizes(this.activeGeometry);
                     break;
             }
             this.pauseGeometryUpdate=false;
@@ -337,6 +233,13 @@ class CanvasController{
         }
     }
 
+    updateBoxSizes(geometrySpec: Spec){
+        let controllers = this.meshList[geometrySpec.query];
+        controllers.forEach((value)=>{
+            value.updateBoxSizes();
+        });
+    }
+
     /**
      * Load listeners on a per geometry basis
      */
@@ -376,21 +279,29 @@ class CanvasController{
         geometrySpec.subscribeSelectionService(selectionListener, true);
         geometrySpec.subscribeSelectionService(selection2Listener, false);
 
+        // Selection path geometryObject/surface_selection
         let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
         let geometryControllers = this.meshList[geometrySpec.query];
         for(let surfaceSelection of surfaceSelections){
-            let boxSelectorSpecs = surfaceSelection.matchChildren(...'/*/box'.split('/'));
-            console.log('box selector spec: ');
-            console.log(boxSelectorSpecs);
-            for(let boxSelectorSpec of boxSelectorSpecs){
+            const subscribeBoxSelector = (boxSelectorSpec: Spec)=>{
                 for(let geometryController of geometryControllers){
-                    let boxSelector = new BoxSelector(this, geometryController.selectionCount++);
+                    let boxSelector = new BoxSelector(this, boxSelectorSpec, geometryController, geometryController.selectionCount++);
                     surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
                     boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
                     (boxSelectorSpec.query,boxSelectorSpec,'v');
                     surfaceSelection.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
                 }
+            };
+            let boxSelectorSpecs = surfaceSelection.matchChildren(...'/*/box'.split('/'));
+            for(let boxSelectorSpec of boxSelectorSpecs){
+               subscribeBoxSelector(boxSelectorSpec);
             }
+            surfaceSelection.subscribeChangeService((query,target, event)=>{
+                if(event=='ca'&&query.split('/')[5]=='box'){
+                    let boxSelectorSpec = this.fileControl.specRoot.findChild(query);
+                    subscribeBoxSelector(boxSelectorSpec);
+                }
+            })
         }
 
         const translationListener = (query:string, target:Spec)=>{
@@ -419,6 +330,9 @@ class CanvasController{
                 }
                 if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
                     child.scale.set(scale[0],scale[1],scale[2]);
+                for(let key in controller.boxSelectors){
+                    controller.boxSelectors[key].updateBoxSize();
+                }
             });
         }
         const rotationListener = (query:string, target:Spec)=>{
@@ -523,136 +437,6 @@ class CanvasController{
     }
 }
 
-class BoxSelector{
-    canvas: Canvas;
-    canvasController: CanvasController;
-    ui: UI;
-    helper: THREE.Box3Helper;
-    selectionIndex = 0;
-    surfaceSelectorEngaged = false;
-    //Tests for secondary selection of parents
-    parentSelectorEngaged = false;
-
-    /**
-     *
-     * @param canvasController
-     * @param selectionIndex specifies which selection this is controlling
-     */
-    constructor(canvasController: CanvasController,selectionIndex:number){
-        this.canvasController = canvasController;
-        this.canvas = canvasController.canvas;
-        this.selectionIndex = selectionIndex;
-        this.ui = this.canvasController.ui;
-        let box = new THREE.Box3();
-        box.setFromCenterAndSize( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 1, 1, 1 ) );
-        this.helper = new THREE.Box3Helper( box, new THREE.Color(0xabcdef) );
-        this.helper.visible = false;
-        this.canvas.scene.add( this.helper );
-        this.surfaceSelectionBoxListener=this.surfaceSelectionBoxListener.bind(this);
-        this.selectionListener=this.selectionListener.bind(this);
-        this.parentSelectionListener=this.parentSelectionListener.bind(this);
-    }
-    surfaceSelectionBoxListener(query:string, target: Spec, event: string){
-        console.log(query);
-        if(event=='v'){
-            if(target.subNodesCount>=2){
-                let center = this.ui.specEngine.compile(target.children[0]);
-                let size = this.ui.specEngine.compile(target.children[1]);
-                console.log(center);
-                console.log(size);
-                if(center==undefined||size==undefined||center.length<3||size.length<3
-                    ||isNaN(center[0])||isNaN(size[0])||isNaN(center[1])||isNaN(size[1])
-                    ||isNaN(center[2])||isNaN(size[2]))
-                    return;
-                let meshControllers = this.canvasController.meshList[target.parent.parent.parent.query];
-                if(meshControllers!=undefined){
-                    for(let meshController of meshControllers){
-                        let centerVec = new Vector3(center[0],center[1],center[2]);
-                        let sizeVec = new Vector3(size[0],size[1],size[2]);
-                        this.helper.box.setFromCenterAndSize(centerVec,
-                            sizeVec);
-                        this.helper.updateMatrixWorld();
-                        this.helper.visible = target.parent.parent.secondarySelected;
-                        let selectionSettings = meshController.material.uniforms.selectionBoxes.value;
-                        selectionSettings[this.selectionIndex*3] = new Vector3(0,0,0);
-                        selectionSettings[this.selectionIndex*3+1]=centerVec;
-                        selectionSettings[this.selectionIndex*3+2]=sizeVec;
-                        //@ts-ignore
-                        meshController.material.uniforms.selectionBoxes.needsUpdate = true;
-                    }
-                }
-            }
-        }
-    }
-    selectionListener(target: Spec, selected:boolean){
-        this.surfaceSelectorEngaged = selected;
-        this.helper.visible = this.surfaceSelectorEngaged&&(target.selected||target.secondarySelected);
-        if(selected){
-            for(let controller of this.canvasController.meshList[target.parent.query]){
-                controller.mesh.material = controller.material;
-            }
-        }else{// Force style update callbacks
-            target.parent.secondarySelected = target.parent.secondarySelected;
-            target.parent.selected = target.parent.selected;
-        }
-    }
-    parentSelectionListener(target: Spec, selected: boolean){
-        this.parentSelectorEngaged = selected;
-        this.helper.visible =  this.surfaceSelectorEngaged&&(target.selected||target.secondarySelected);
-    }
-}
-
-class RaySelector{
-    rayCaster = new THREE.Raycaster();
-    camera: THREE.Camera;
-    scene: THREE.Scene;
-    controller: CanvasController;
-    canvas: Canvas;
-    intersected: THREE.Mesh;
-
-    pointer = new Vector2();
-    constructor(controller: CanvasController){
-        this.controller = controller;
-        this.canvas = controller.canvas;
-        this.camera = controller.canvas.camera;
-        this.scene = controller.canvas.scene;
-        this.onPointerMove = this.onPointerMove.bind(this);
-        this.select = this.select.bind(this);
-    }
-    onPointerMove( event:MouseEvent,element: HTMLElement) {
-        let rect = element.getBoundingClientRect();
-        let x = event.clientX - rect.left; //x position within the element.
-        let y = event.clientY - rect.top;
-        this.pointer.x = ( x / rect.width ) * 2 - 1;
-        this.pointer.y = - ( y / rect.height ) * 2 + 1;
-    }
-    select(){
-        this.rayCaster.setFromCamera( this.pointer, this.camera );
-        const intersects = this.rayCaster.intersectObjects( this.controller.meshArray, false );
-        if ( intersects.length > 0 ) {
-            let selected = intersects[ 0 ].object;
-            if ( this.intersected != selected
-                    && selected instanceof THREE.Mesh) {
-                if ( this.intersected && this.intersected instanceof THREE.Mesh) {
-                    this.clearSelectionCallback(this.intersected);
-                }
-                this.intersected = selected;
-                this.selectionCallback(selected);
-            }
-        } else {
-            if ( this.intersected ){
-                this.clearSelectionCallback(this.intersected);
-            }
-            this.intersected = undefined;
-        }
-    }
-    selectionCallback(mesh: Mesh){
-
-    }
-    clearSelectionCallback(mesh: Mesh){
-
-    }
-}
 
 /**
  * Canvas

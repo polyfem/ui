@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "http-server ./dist && node ./src/server/server.js",
-    "install": "pip install meshio \n python -m pip install libigl",
+    "install": "pip install meshio \n python -m pip install libigl\n",
     "build": "gulp --gulpfile gulpfile.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -51,6 +51,7 @@
     "browserify": "^17.0.0",
     "cors": "^2.8.5",
     "express": "^4.18.1",
+    "gulp-cli": "^2.3.0",
     "gulp-sourcemaps": "^3.0.0",
     "jquery": "^3.6.0",
     "react": "^18.2.0",
