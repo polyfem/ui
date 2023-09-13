@@ -4,8 +4,9 @@ import {Spec} from "../spec";
 import {Mesh, Vector2, Vector3} from "three";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
+import Selector from "./Selector";
 
-export default class BoxSelector {
+export default class BoxSelector implements Selector{
     canvas: Canvas;
     canvasController: CanvasController;
     ui: UI;
@@ -16,6 +17,7 @@ export default class BoxSelector {
     parentSelectorEngaged = false;
     meshController: GeometryController;
     boxSelectionSpec: Spec;
+    boxBoundsSpec: Spec;
 
     /**
      *
@@ -27,10 +29,11 @@ export default class BoxSelector {
     constructor(canvasController: CanvasController, boxSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
         this.canvasController = canvasController;
         this.meshController = geometryController;
-        this.meshController.boxSelectors[boxSelectionSpec.query] = this;
+        this.meshController.selectors[boxSelectionSpec.query] = this;
         this.canvas = canvasController.canvas;
         this.selectionIndex = selectionIndex;
         this.boxSelectionSpec = boxSelectionSpec;
+        this.boxBoundsSpec = boxSelectionSpec.findChild('box');
         this.ui = this.canvasController.ui;
         let box = new THREE.Box3();
         box.setFromCenterAndSize(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1));
@@ -42,15 +45,15 @@ export default class BoxSelector {
         this.parentSelectionListener = this.parentSelectionListener.bind(this);
     }
 
-    updateBoxSize(){
-        this.surfaceSelectionBoxListener('',this.boxSelectionSpec,'v');
+    updateSelector(){
+        this.surfaceSelectionBoxListener('',this.boxBoundsSpec,'v');
     }
 
     surfaceSelectionBoxListener(query: string, target: Spec, event: string) {
         if (event == 'v') {
-            if (target.subNodesCount >= 2) {//Need both center and size to be specified
-                let center = this.ui.specEngine.compile(target.children[0]);
-                let size = this.ui.specEngine.compile(target.children[1]);
+            if (this.boxBoundsSpec.subNodesCount >= 2) {//Need both center and size to be specified
+                let center = this.ui.specEngine.compile(this.boxBoundsSpec.children[0]);
+                let size = this.ui.specEngine.compile(this.boxBoundsSpec.children[1]);
                 if (center == undefined || size == undefined || center.length < 3 || size.length < 3
                     || isNaN(center[0]) || isNaN(size[0]) || isNaN(center[1]) || isNaN(size[1])
                     || isNaN(center[2]) || isNaN(size[2]))
@@ -62,7 +65,6 @@ export default class BoxSelector {
                 this.helper.box.setFromCenterAndSize(centerVec,
                     sizeVec);
                 this.helper.updateMatrixWorld();
-                this.helper.visible = target.parent.parent.secondarySelected;
                 let selectionSettings = meshController.material.uniforms.selectionBoxes.value;
                 selectionSettings[this.selectionIndex * 3] = new Vector3(0, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = centerVec;
@@ -88,6 +90,6 @@ export default class BoxSelector {
 
     parentSelectionListener(target: Spec, selected: boolean) {
         this.parentSelectorEngaged = selected;
-        this.helper.visible = this.surfaceSelectorEngaged && (target.selected || target.secondarySelected);
+        this.helper.visible = target.selected || target.secondarySelected;
     }
 }

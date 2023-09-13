@@ -22,6 +22,7 @@ import {UI} from "./main";
 import {Spec} from "./spec";
 import BoxSelector from "./graphics/BoxSelector";
 import RaySelector from "./graphics/RaySelector";
+import SphereSelector from "./graphics/SphereSelector";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
@@ -190,7 +191,7 @@ class CanvasController{
                     scale[0].setValue(this.activeMesh.scale.x);
                     scale[1].setValue(this.activeMesh.scale.y);
                     scale[2].setValue(this.activeMesh.scale.z);
-                    this.updateBoxSizes(this.activeGeometry);
+                    this.updateSelectors(this.activeGeometry);
                     break;
             }
             this.pauseGeometryUpdate=false;
@@ -233,10 +234,10 @@ class CanvasController{
         }
     }
 
-    updateBoxSizes(geometrySpec: Spec){
+    updateSelectors(geometrySpec: Spec){
         let controllers = this.meshList[geometrySpec.query];
         controllers.forEach((value)=>{
-            value.updateBoxSizes();
+            value.updateSelectors();
         });
     }
 
@@ -286,15 +287,30 @@ class CanvasController{
             const subscribeBoxSelector = (boxSelectorSpec: Spec)=>{
                 for(let geometryController of geometryControllers){
                     let boxSelector = new BoxSelector(this, boxSelectorSpec, geometryController, geometryController.selectionCount++);
-                    surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
                     boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
                     (boxSelectorSpec.query,boxSelectorSpec,'v');
                     surfaceSelection.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
                 }
             };
-            let boxSelectorSpecs = surfaceSelection.matchChildren(...'/*/box'.split('/'));
-            for(let boxSelectorSpec of boxSelectorSpecs){
-               subscribeBoxSelector(boxSelectorSpec);
+            const subscribeSphereSelector = (sphereSelectorSpec: Spec)=>{
+                for(let geometryController of geometryControllers){
+                    let sphereSelector = new SphereSelector(this, sphereSelectorSpec, geometryController, geometryController.selectionCount++);
+                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                    sphereSelectorSpec.subscribeChangeService(sphereSelector.surfaceSelectionListener)
+                    (sphereSelectorSpec.query,sphereSelectorSpec,'v');
+                    surfaceSelection.parent.subscribeSelectionService(sphereSelector.parentSelectionListener, false);
+                }
+            };
+            let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
+            for(let selectorSpec of selectorSpecs){
+                if(selectorSpec.typename=='box'){
+                    subscribeBoxSelector(selectorSpec);
+                }else if(selectorSpec.typename=='sphere'){
+                    subscribeSphereSelector(selectorSpec);
+                }else if(selectorSpec.typename == 'axis'){
+
+                }
             }
             surfaceSelection.subscribeChangeService((query,target, event)=>{
                 if(event=='ca'&&query.split('/')[5]=='box'){
@@ -330,8 +346,8 @@ class CanvasController{
                 }
                 if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
                     child.scale.set(scale[0],scale[1],scale[2]);
-                for(let key in controller.boxSelectors){
-                    controller.boxSelectors[key].updateBoxSize();
+                for(let key in controller.selectors){
+                    controller.selectors[key].updateSelector();
                 }
             });
         }
