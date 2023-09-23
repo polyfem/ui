@@ -33,7 +33,7 @@ export default class BoxSelector implements Selector{
         this.canvas = canvasController.canvas;
         this.selectionIndex = selectionIndex;
         this.boxSelectionSpec = boxSelectionSpec;
-        this.boxBoundsSpec = boxSelectionSpec.findChild('box');
+        this.boxBoundsSpec = boxSelectionSpec.findChild('box',true);
         this.ui = this.canvasController.ui;
         let box = new THREE.Box3();
         box.setFromCenterAndSize(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1));
@@ -50,6 +50,8 @@ export default class BoxSelector implements Selector{
     }
 
     surfaceSelectionBoxListener(query: string, target: Spec, event: string) {
+        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
+        selectionSettings[this.selectionIndex * 3] = new Vector3(0, 0, 0);
         if (event == 'v') {
             if (this.boxBoundsSpec.subNodesCount >= 2) {//Need both center and size to be specified
                 let center = this.ui.specEngine.compile(this.boxBoundsSpec.children[0]);
@@ -65,8 +67,6 @@ export default class BoxSelector implements Selector{
                 this.helper.box.setFromCenterAndSize(centerVec,
                     sizeVec);
                 this.helper.updateMatrixWorld();
-                let selectionSettings = meshController.material.uniforms.selectionBoxes.value;
-                selectionSettings[this.selectionIndex * 3] = new Vector3(0, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = centerVec;
                 selectionSettings[this.selectionIndex * 3 + 2] = sizeVec;
                 //@ts-ignore

@@ -31,14 +31,12 @@ class EditorPane extends React.Component<{ui: UI, rootId: string, specRoot: Spec
             width: '100%',
             height: '100%',
             gridTemplateColumns: '25% 6px minmax(0,1fr)',
-            gridTemplateRows: '100%'}}>
-            <div style={{gridColumn:'1 / span 1'}}>
-                <SpecPane {...this.props} specRoot={this.props.specRoot}/>
-            </div>
-            <Divider orientation="vertical" style={{gridColumn:'2 / span 1', backgroundColor:'#555'}}>
+            gridTemplateRows: '45px 1fr'}}>
+            <SpecPane {...this.props} specRoot={this.props.specRoot}/>
+            <Divider orientation="vertical" style={{gridColumn:'2 / span 1',  gridRow:'1 / span 2', backgroundColor:'#555'}}>
                 <KeyboardDoubleArrowRightIcon/>
             </Divider>
-            <div style={{gridColumn:'3 / span 1'}}>
+            <div style={{gridColumn:'3 / span 1', gridRow:'1 / span 2'}}>
                 <TabPane {...this.props}/>
             </div>
         </div>;

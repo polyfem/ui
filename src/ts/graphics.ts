@@ -19,7 +19,7 @@ import {
 } from "three";
 import {UFile} from "./server";
 import {UI} from "./main";
-import {Spec} from "./spec";
+import {Spec, SpecEngine} from "./spec";
 import BoxSelector from "./graphics/BoxSelector";
 import RaySelector from "./graphics/RaySelector";
 import SphereSelector from "./graphics/SphereSelector";
@@ -313,9 +313,17 @@ class CanvasController{
                 }
             }
             surfaceSelection.subscribeChangeService((query,target, event)=>{
-                if(event=='ca'&&query.split('/')[5]=='box'){
-                    let boxSelectorSpec = this.fileControl.specRoot.findChild(query);
-                    subscribeBoxSelector(boxSelectorSpec);
+                if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection/*')){
+                    console.log(query);
+                    let selectorSpec = this.fileControl.specRoot.findChild(query);
+                    switch(selectorSpec.typename){
+                        case 'box':
+                            subscribeBoxSelector(selectorSpec);
+                            break;
+                        case 'sphere':
+                            subscribeSphereSelector(selectorSpec);
+                            break;
+                    }
                 }
             })
         }
@@ -413,6 +421,8 @@ class CanvasController{
      * @param index index of the geometry inside the parent spec
      */
     loadGeometry(geometry: GeometryJSONStruct, index: number){
+        if(geometry.mesh==undefined)
+            return;
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
         let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);

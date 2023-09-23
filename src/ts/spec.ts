@@ -11,12 +11,43 @@ class Spec{
     // Query gives precise location of the spec,
     // pointer permits * as wild cards
     query: string;
+    /**
+     * Updates query value and name of this and all subsequent
+     * queries recursively to reflect the children key-value structure;
+     * to be called duration deletion, or addition of nodes, or renaming
+     * should occur
+     */
+    updateQueries(parentQuery: string, thisName:string){
+        this.name = thisName;
+        this.query = `${parentQuery}/${thisName}`;
+        for(let key in this.children){
+            this.children[key].updateQueries(this.query, key);
+        }
+    }
     pointer: string;
     name: string;
     isLeaf: boolean = false;
     parent: Spec;
     //Tentative specs are disabled before they are confirmed
     tentative: boolean = false;
+    //Delete ready prepares the spec for deletion
+    deleteReady: boolean = false;
+    //Spec editing option
+    editing: boolean = false;
+    //Editing enables deletion tags for all fields
+    private deletingState: boolean = false;
+    //^| setters/getters
+    set deleting(deleting: boolean){
+        this.deletingState = deleting;
+        if(!this.isLeaf)
+            for(let key in this.children){
+                this.children[key].deleting = deleting;
+            }
+    }
+    get deleting(){
+        return this.deletingState;
+    }
+
     //Automatically populated by required
     children: {[key: string]:Spec} = {};
     //Records the size of the subNodes, immutable
@@ -27,6 +58,7 @@ class Spec{
     optional: string[] = [];
     //Currently populated value
     value: any;
+
     /**
      * Sets the value of this, excluded services are prevented from
      * being dispatched
@@ -80,7 +112,7 @@ class Spec{
         for(let service of this.changeServices){
             service(query, this,event);
         }
-        if(this.parent!=undefined)
+        if(this.parent!=undefined&&this.parent.children[this.name]!=undefined)
             this.parent.dispatchChange(query, event);
     }
 
@@ -93,10 +125,6 @@ class Spec{
     // For selecting the corresponding subset of type
     typeIndex = -1;
 
-    /**
-     * Operation variables
-     */
-    editing = false;
     private selectedStore = false;
     selectionServices:((target: Spec, selected:boolean)=>void)[]= [];
     private secondarySelectedStore = false;
@@ -190,13 +218,13 @@ class Spec{
     pushChild(child: Spec){
         if(child==undefined) // Ignore undefined requests
             return;
+        console.log(this);
         if(this.type == 'list'){
-            child.name=`${this.subNodesCount}`;
-            child.query = `${this.query}/${child.name}`;
+            child.updateQueries(this.query,`${this.subNodesCount}`);
             this.children[this.subNodesCount] = child;
         }else if(this.type=='object'){
             this.children[child.name] = child;
-            child.query = `${this.query}/${child.name}`;
+            child.updateQueries(this.query,`${child.name}`);
         }else return; // Only list or object accepts child
         child.parent = this;
         this.subNodesCount++;
@@ -204,9 +232,21 @@ class Spec{
     }
     removeChild(child: Spec){
         if(child.parent == this && child.name in this.children){
-            delete this.children[child.name];
-            this.subNodesCount--;
-            this.dispatchChange(child.query, 'cd');
+            if(this.type=='object'){
+                delete this.children[child.name];
+                this.subNodesCount--;
+                this.dispatchChange(child.query, 'cd');
+            }else if(this.type=='list'){
+                let index = Number(child.name);
+                this.subNodesCount--;
+                this.dispatchChange(child.query, 'cd');
+                while(index<this.subNodesCount){
+                    this.children[index] = this.children[index+1];
+                    this.children[index].updateQueries(this.query,`${index}`);
+                    index++;
+                }
+                delete this.children[this.subNodesCount];
+            }
         }
     }
 
@@ -221,7 +261,6 @@ class Spec{
         let keys = query.split('/');
         let child:Spec = this;
         while(keys.length>0){
-            child.isLeaf &&= !force;
             if(keys[0]==''||keys[0]=='.'){//Check for pseudo path
                 keys.shift();
             }
@@ -275,6 +314,42 @@ class Spec{
         for(let key in this.children){
             this.children[key].setTentative(tentative);
         }
+    }
+
+    /**
+     * Recursively sets this and all
+     * its subsequent children with false value of
+     * delete ready
+     */
+    cancelDelete(){
+        this.deleteReady = false;
+        for(let key in this.children){
+            this.children[key].cancelDelete();
+        }
+    }
+
+    /**
+     * Recursively delete all elements of this that are
+     * delete ready except self
+     */
+    confirmDelete(){
+        if(this.type == 'object')
+            for(let key in this.children){
+                if(this.children[key].deleteReady){
+                    this.removeChild(this.children[key]);
+                }else{
+                    this.children[key].confirmDelete();
+                }
+            }
+        else
+            for(let key = 0; key<this.subNodesCount; ){
+                if(this.children[key].deleteReady){
+                    this.removeChild(this.children[key]);
+                }else{
+                    this.children[key].confirmDelete();
+                    key++;
+                }
+            }
     }
 }
 
@@ -414,7 +489,7 @@ class SpecEngine {
             // console.log(original.children[key]);
             // console.log(this.validate(`${query}/${subNodeName}`, original.children[key]));
             //Populate the validated subNode
-            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key], parent));
+            spec.pushChild(this.validate(`${query}/${subNodeName}`, original.children[key], spec));
         }
         // console.log(raw);
         //Fill out all the required fields that haven't been included
@@ -423,7 +498,7 @@ class SpecEngine {
                 //Escape the subfields that are already included
                 if(included.indexOf(required)<0){
                     let newQuery = `${query}/${required}`;
-                    spec.pushChild(this.query(newQuery, parent));
+                    spec.pushChild(this.query(newQuery, spec));
                     spec.isLeaf = false;
                 }
             }
@@ -478,6 +553,21 @@ class SpecEngine {
             return rawSpecNode.subTree;
         }
         return {};
+    }
+
+    /**
+     * Determines if two queries / pointers are a match
+     */
+    static matchQueries(query1: string, query2:string){
+        let queryList1 = query1.split('/');
+        let queryList2 = query2.split('/');
+        if(queryList1.length != queryList2.length)
+            return false;
+        for(let i = 0; i< queryList1.length; i++){
+            if(queryList1[i]!=queryList2[i]&&query1[i]!='*'&&queryList2[i]!='*')
+                return false;
+        }
+        return true;
     }
 
     /**
