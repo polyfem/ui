@@ -12,7 +12,7 @@ export default class GeometryController{
      * Material that the geometry is rendered with
      */
     material: ShaderMaterial;
-    selectors: {[key:string]:Selector} = {};
+    selectors: {[key:number]:Selector} = {};
     constructor(mesh: THREE.Mesh){
         this.mesh = mesh;
         mesh.matrixWorldAutoUpdate = true;
@@ -81,6 +81,7 @@ export default class GeometryController{
          }
          vec3 center = selectionBoxes[i*3+1];
          vec3 size = selectionBoxes[i*3+2];
+         vec3 r = orgPosition-center;
          switch(int(selectionBoxes[i*3].x)){
             case 0:
                 vec3 ub = center+size/2.0;
@@ -93,8 +94,14 @@ export default class GeometryController{
                 }
                 break;
             case 1:
-                vec3 r = orgPosition-center;
                 if(r.x*r.x/size.x/size.x+r.y*r.y/size.y/size.y+r.z*r.z/size.z/size.z<1.0){
+                    Kd = Kd1;
+                    emissive = vec3(0.15, 0.33, 0.17);
+                    ambient = vec3(0.5,0.5,0.5);
+                }
+                break;
+            case 2:
+                if(r.x*size.x+r.y*size.y+r.z*size.z>0.0){
                     Kd = Kd1;
                     emissive = vec3(0.15, 0.33, 0.17);
                     ambient = vec3(0.5,0.5,0.5);
@@ -121,5 +128,9 @@ export default class GeometryController{
         for(let key in this.selectors){
             this.selectors[key].updateSelector();
         }
+    }
+
+    removeSelector(key:number){
+        delete this.selectors[key];
     }
 }

@@ -100,6 +100,11 @@ class Spec{
         this.changeServices.push(service);
         return service;
     }
+    unsubscribeChangeService(service:(query:string, target:Spec,event:string)=>void){
+        let index = this.changeServices.indexOf(service);
+        if(index!=-1)
+            this.changeServices.splice(index,1);
+    }
     /**
      * Dispatched any time value is changed if leaf, or children size/value
      * change if non-leaf. Dispatches self services first before propagating
@@ -174,6 +179,18 @@ class Spec{
         }
     }
 
+    unsubscribeSelectionService(service:(target:Spec, selected:boolean)=>void, primary:boolean){
+        if(primary){
+            let key = this.selectionServices.indexOf(service);
+            if(key!=-1)
+                this.selectionServices.push(service);
+        }else{
+            let key = this.secondarySelectionServices.indexOf(service);
+            if(key!=-1)
+                this.secondarySelectionServices.push(service);
+        }
+    }
+
     /**
      * Set to true after the spec has been newly
      * turned from tentative to added, this value being set to
@@ -233,13 +250,13 @@ class Spec{
     removeChild(child: Spec){
         if(child.parent == this && child.name in this.children){
             if(this.type=='object'){
+                child.dispatchChange(child.query, 'cd');
                 delete this.children[child.name];
                 this.subNodesCount--;
-                this.dispatchChange(child.query, 'cd');
             }else if(this.type=='list'){
                 let index = Number(child.name);
                 this.subNodesCount--;
-                this.dispatchChange(child.query, 'cd');
+                child.dispatchChange(child.query, 'cd');
                 while(index<this.subNodesCount){
                     this.children[index] = this.children[index+1];
                     this.children[index].updateQueries(this.query,`${index}`);

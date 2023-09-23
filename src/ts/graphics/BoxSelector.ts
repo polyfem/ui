@@ -29,7 +29,7 @@ export default class BoxSelector implements Selector{
     constructor(canvasController: CanvasController, boxSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
         this.canvasController = canvasController;
         this.meshController = geometryController;
-        this.meshController.selectors[boxSelectionSpec.query] = this;
+        this.meshController.selectors[selectionIndex] = this;
         this.canvas = canvasController.canvas;
         this.selectionIndex = selectionIndex;
         this.boxSelectionSpec = boxSelectionSpec;
@@ -91,5 +91,12 @@ export default class BoxSelector implements Selector{
     parentSelectionListener(target: Spec, selected: boolean) {
         this.parentSelectorEngaged = selected;
         this.helper.visible = target.selected || target.secondarySelected;
+    }
+
+    detach() {
+        this.meshController.mesh.remove(this.helper);
+        this.boxSelectionSpec.unsubscribeChangeService(this.surfaceSelectionBoxListener);
+        this.boxSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
+        this.meshController.removeSelector(this.selectionIndex);
     }
 }

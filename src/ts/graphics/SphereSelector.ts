@@ -1,10 +1,10 @@
 import {UI} from "../main";
-import * as THREE from "three";
 import {Spec} from "../spec";
-import {Mesh, MeshPhongMaterial, Vector2, Vector3} from "three";
+import THREE, {MeshPhongMaterial, Vector2, Vector3} from "three";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
 import Selector from "./Selector";
+import {event} from "jquery";
 
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
@@ -33,7 +33,7 @@ export default class SphereSelector implements Selector{
     constructor(canvasController: CanvasController, sphereSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
         this.canvasController = canvasController;
         this.meshController = geometryController;
-        this.meshController.selectors[sphereSelectionSpec.query] = this;
+        this.meshController.selectors[selectionIndex] = this;
         this.canvas = canvasController.canvas;
         this.selectionIndex = selectionIndex;
         this.sphereSelectionSpec = sphereSelectionSpec;
@@ -79,5 +79,12 @@ export default class SphereSelector implements Selector{
     parentSelectionListener(target: Spec, selected: boolean) {
         this.parentSelectorEngaged = selected;
         this.helper.visible = target.selected || target.secondarySelected;
+    }
+
+    detach(): void {
+        this.meshController.mesh.remove(this.helper);
+        this.sphereSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
+        this.sphereSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
+        this.meshController.removeSelector(this.selectionIndex);
     }
 }

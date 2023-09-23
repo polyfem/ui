@@ -23,6 +23,8 @@ import {Spec, SpecEngine} from "./spec";
 import BoxSelector from "./graphics/BoxSelector";
 import RaySelector from "./graphics/RaySelector";
 import SphereSelector from "./graphics/SphereSelector";
+import PlaneSelector from "./graphics/PlaneSelector";
+import AxisSelector from "./graphics/AxisSelector";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
@@ -252,10 +254,8 @@ class CanvasController{
                     controller.mesh.material = selectionMaterial2;
                 }
                 setTimeout( ()=>{
-                    if(!target.selected){
-                        for(let controller of this.meshList[target.query]){
-                            controller.mesh.material = controller.material;
-                        }
+                    for(let controller of this.meshList[target.query]){
+                        controller.mesh.material = controller.material;
                     }
                 }, 500);
             }else if(!selected&&!target.selected){
@@ -270,6 +270,11 @@ class CanvasController{
                     // previousMaterial = mesh.material;
                     controller.mesh.material = selectionMaterial;
                 }
+                setTimeout( ()=>{
+                    for(let controller of this.meshList[target.query]){
+                        controller.mesh.material = controller.material;
+                    }
+                }, 500);
             }else if(!selected&&!target.secondarySelected){
                 for(let controller of this.meshList[target.query]){
                     controller.mesh.material = controller.material;
@@ -290,7 +295,12 @@ class CanvasController{
                     // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
                     boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
                     (boxSelectorSpec.query,boxSelectorSpec,'v');
-                    surfaceSelection.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
+                    boxSelectorSpec.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
+                    boxSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                        if(event=='cd'){
+                            boxSelector.detach();
+                        }
+                    });
                 }
             };
             const subscribeSphereSelector = (sphereSelectorSpec: Spec)=>{
@@ -299,7 +309,40 @@ class CanvasController{
                     // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
                     sphereSelectorSpec.subscribeChangeService(sphereSelector.surfaceSelectionListener)
                     (sphereSelectorSpec.query,sphereSelectorSpec,'v');
-                    surfaceSelection.parent.subscribeSelectionService(sphereSelector.parentSelectionListener, false);
+                    sphereSelectorSpec.parent.subscribeSelectionService(sphereSelector.parentSelectionListener, false);
+                    sphereSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                        if(event=='cd'){
+                            sphereSelector.detach();
+                        }
+                    });
+                }
+            };
+            const subscribePlaneSelector = (planeSelectorSpec: Spec)=>{
+                for(let geometryController of geometryControllers){
+                    let planeSelector = new PlaneSelector(this, planeSelectorSpec, geometryController, geometryController.selectionCount++);
+                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                    planeSelectorSpec.subscribeChangeService(planeSelector.surfaceSelectionListener)
+                    (planeSelectorSpec.query,planeSelectorSpec,'v');
+                    planeSelectorSpec.parent.subscribeSelectionService(planeSelector.parentSelectionListener, false);
+                    planeSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                        if(event=='cd'){
+                            planeSelector.detach();
+                        }
+                    });
+                }
+            };
+            const subscribeAxisSelector = (axisSelectorSpec: Spec)=>{
+                for(let geometryController of geometryControllers){
+                    let axisSelector = new AxisSelector(this, axisSelectorSpec, geometryController, geometryController.selectionCount++);
+                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                    axisSelectorSpec.subscribeChangeService(axisSelector.surfaceSelectionListener)
+                    (axisSelectorSpec.query,axisSelectorSpec,'v');
+                    axisSelectorSpec.parent.subscribeSelectionService(axisSelector.parentSelectionListener, false);
+                    axisSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                        if(event=='cd'){
+                            axisSelector.detach();
+                        }
+                    });
                 }
             };
             let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
@@ -308,8 +351,10 @@ class CanvasController{
                     subscribeBoxSelector(selectorSpec);
                 }else if(selectorSpec.typename=='sphere'){
                     subscribeSphereSelector(selectorSpec);
+                }else if(selectorSpec.typename == 'plane'){
+                    subscribePlaneSelector(selectorSpec);
                 }else if(selectorSpec.typename == 'axis'){
-
+                    subscribeAxisSelector(selectorSpec);
                 }
             }
             surfaceSelection.subscribeChangeService((query,target, event)=>{
@@ -322,6 +367,12 @@ class CanvasController{
                             break;
                         case 'sphere':
                             subscribeSphereSelector(selectorSpec);
+                            break;
+                        case 'plane':
+                            subscribePlaneSelector(selectorSpec);
+                            break;
+                        case 'axis':
+                            subscribeAxisSelector(selectorSpec);
                             break;
                     }
                 }
@@ -354,9 +405,7 @@ class CanvasController{
                 }
                 if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
                     child.scale.set(scale[0],scale[1],scale[2]);
-                for(let key in controller.selectors){
-                    controller.selectors[key].updateSelector();
-                }
+                controller.updateSelectors();
             });
         }
         const rotationListener = (query:string, target:Spec)=>{
