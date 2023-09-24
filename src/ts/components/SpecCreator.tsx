@@ -137,7 +137,7 @@ const TypeSelector = function({ui, childTypeTree, parentEl, addTentativeChild}:
                             setOpen(false);
                         }}
                     >
-                        {(rawSpec.typename)?rawSpec.typename:`type: ${rawSpec.type}`}
+                        {(rawSpec.type_name)?rawSpec.type_name:`type: ${rawSpec.type}`}
                         <Tooltip placement="right"
                                  arrow title={docString}>
                             <IconButton aria-label="fingerprint" color="info"

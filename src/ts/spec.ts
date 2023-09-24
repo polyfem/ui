@@ -383,7 +383,7 @@ class SpecEngine {
     constructor(ui: UI) {
         this.ui = ui;
         for(let file of this.ui.fs.fileRoot.children){//Locate the spec file
-            if(file.name=='default_rules.json'){
+            if(file.name=='input_rules.json'){
                 this.specFile = file;
                 break;
             }
@@ -435,7 +435,7 @@ class SpecEngine {
         spec.query = query;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
-        spec.typename = raw.typename;
+        spec.typename = raw.type_name;
         spec.typeIndex = typeOverride;
         spec.doc = raw.doc;
         //Object type correspond to tree structures
@@ -485,7 +485,7 @@ class SpecEngine {
         spec.query = query;
         spec.pointer = raw.pointer;
         spec.type = raw.type;
-        spec.typename = raw.typename;
+        spec.typename = raw.type_name;
         spec.typeIndex = rawIndex;
         spec.doc = raw.doc;
         spec.optional = raw.optional;
@@ -625,7 +625,7 @@ interface RawSpec{
     "required":string[],
     "optional":string[];
     "doc": string,
-    "typename": string|undefined
+    "type_name": string|undefined
 }
 
 //Interface of rawSpecTree, an intermediate representation
@@ -718,7 +718,7 @@ class RawSpecTree{
                 }
             }
             // Criteria 2
-            else if (rawSpec.typename!=undefined && spec.typename === rawSpec.typename) {
+            else if (rawSpec.type_name!=undefined && spec.typename === rawSpec.type_name) {
                 if (maxPrecedence < 3) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 3;

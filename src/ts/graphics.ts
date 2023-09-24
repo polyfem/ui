@@ -247,6 +247,14 @@ class CanvasController{
      * Load listeners on a per geometry basis
      */
     addJSONListeners(geometrySpec: Spec){
+        geometrySpec.subscribeChangeService((query, target,event)=>{
+            if(event=='cd'&&query==geometrySpec.query){
+                let controllers = this.meshList[geometrySpec.query];
+                for(let key in controllers){
+                    this.canvas.scene.remove(controllers[key].mesh);
+                }
+            }
+        });
         const selection2Listener=(target: Spec, selected: boolean)=>{
             if(selected&&!target.selected){
                 for(let controller of this.meshList[target.query]){
@@ -285,99 +293,148 @@ class CanvasController{
         geometrySpec.subscribeSelectionService(selectionListener, true);
         geometrySpec.subscribeSelectionService(selection2Listener, false);
 
-        // Selection path geometryObject/surface_selection
-        let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
+
         let geometryControllers = this.meshList[geometrySpec.query];
-        for(let surfaceSelection of surfaceSelections){
-            const subscribeBoxSelector = (boxSelectorSpec: Spec)=>{
-                for(let geometryController of geometryControllers){
-                    let boxSelector = new BoxSelector(this, boxSelectorSpec, geometryController, geometryController.selectionCount++);
-                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
-                    boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionBoxListener)
-                    (boxSelectorSpec.query,boxSelectorSpec,'v');
-                    boxSelectorSpec.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
-                    boxSelectorSpec.subscribeChangeService((query, taret, event)=>{
-                        if(event=='cd'){
-                            boxSelector.detach();
-                        }
-                    });
-                }
-            };
-            const subscribeSphereSelector = (sphereSelectorSpec: Spec)=>{
-                for(let geometryController of geometryControllers){
-                    let sphereSelector = new SphereSelector(this, sphereSelectorSpec, geometryController, geometryController.selectionCount++);
-                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
-                    sphereSelectorSpec.subscribeChangeService(sphereSelector.surfaceSelectionListener)
-                    (sphereSelectorSpec.query,sphereSelectorSpec,'v');
-                    sphereSelectorSpec.parent.subscribeSelectionService(sphereSelector.parentSelectionListener, false);
-                    sphereSelectorSpec.subscribeChangeService((query, taret, event)=>{
-                        if(event=='cd'){
-                            sphereSelector.detach();
-                        }
-                    });
-                }
-            };
-            const subscribePlaneSelector = (planeSelectorSpec: Spec)=>{
-                for(let geometryController of geometryControllers){
-                    let planeSelector = new PlaneSelector(this, planeSelectorSpec, geometryController, geometryController.selectionCount++);
-                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
-                    planeSelectorSpec.subscribeChangeService(planeSelector.surfaceSelectionListener)
-                    (planeSelectorSpec.query,planeSelectorSpec,'v');
-                    planeSelectorSpec.parent.subscribeSelectionService(planeSelector.parentSelectionListener, false);
-                    planeSelectorSpec.subscribeChangeService((query, taret, event)=>{
-                        if(event=='cd'){
-                            planeSelector.detach();
-                        }
-                    });
-                }
-            };
-            const subscribeAxisSelector = (axisSelectorSpec: Spec)=>{
-                for(let geometryController of geometryControllers){
-                    let axisSelector = new AxisSelector(this, axisSelectorSpec, geometryController, geometryController.selectionCount++);
-                    // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
-                    axisSelectorSpec.subscribeChangeService(axisSelector.surfaceSelectionListener)
-                    (axisSelectorSpec.query,axisSelectorSpec,'v');
-                    axisSelectorSpec.parent.subscribeSelectionService(axisSelector.parentSelectionListener, false);
-                    axisSelectorSpec.subscribeChangeService((query, taret, event)=>{
-                        if(event=='cd'){
-                            axisSelector.detach();
-                        }
-                    });
-                }
-            };
-            let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
-            for(let selectorSpec of selectorSpecs){
-                if(selectorSpec.typename=='box'){
-                    subscribeBoxSelector(selectorSpec);
-                }else if(selectorSpec.typename=='sphere'){
-                    subscribeSphereSelector(selectorSpec);
-                }else if(selectorSpec.typename == 'plane'){
-                    subscribePlaneSelector(selectorSpec);
-                }else if(selectorSpec.typename == 'axis'){
-                    subscribeAxisSelector(selectorSpec);
-                }
+        const subscribeBoxSelector = (boxSelectorSpec: Spec, surface: boolean)=>{
+            for(let geometryController of geometryControllers){
+                let boxSelector = new BoxSelector(this, surface, boxSelectorSpec, geometryController, geometryController.selectionCount++);
+                // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                boxSelectorSpec.subscribeChangeService(boxSelector.surfaceSelectionListener)
+                (boxSelectorSpec.query,boxSelectorSpec,'v');
+                boxSelectorSpec.parent.subscribeSelectionService(boxSelector.parentSelectionListener, false);
+                boxSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                    if(event=='cd'&&query==boxSelectorSpec.query){
+                        boxSelector.detach();
+                    }
+                });
             }
-            surfaceSelection.subscribeChangeService((query,target, event)=>{
-                if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection/*')){
-                    console.log(query);
-                    let selectorSpec = this.fileControl.specRoot.findChild(query);
-                    switch(selectorSpec.typename){
-                        case 'box':
-                            subscribeBoxSelector(selectorSpec);
-                            break;
-                        case 'sphere':
-                            subscribeSphereSelector(selectorSpec);
-                            break;
-                        case 'plane':
-                            subscribePlaneSelector(selectorSpec);
-                            break;
-                        case 'axis':
-                            subscribeAxisSelector(selectorSpec);
-                            break;
+        };
+        const subscribeSphereSelector = (sphereSelectorSpec: Spec, surface: boolean)=>{
+            for(let geometryController of geometryControllers){
+                let sphereSelector = new SphereSelector(this, surface, sphereSelectorSpec, geometryController, geometryController.selectionCount++);
+                // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                sphereSelectorSpec.subscribeChangeService(sphereSelector.surfaceSelectionListener)
+                (sphereSelectorSpec.query,sphereSelectorSpec,'v');
+                sphereSelectorSpec.parent.subscribeSelectionService(sphereSelector.parentSelectionListener, false);
+                sphereSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                    if(event=='cd'&&query==sphereSelectorSpec.query){
+                        sphereSelector.detach();
+                    }
+                });
+            }
+        };
+        const subscribePlaneSelector = (planeSelectorSpec: Spec, surface: boolean)=>{
+            for(let geometryController of geometryControllers){
+                let planeSelector = new PlaneSelector(this, surface, planeSelectorSpec, geometryController, geometryController.selectionCount++);
+                // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                planeSelectorSpec.subscribeChangeService(planeSelector.surfaceSelectionListener)
+                (planeSelectorSpec.query,planeSelectorSpec,'v');
+                planeSelectorSpec.parent.subscribeSelectionService(planeSelector.parentSelectionListener, false);
+                planeSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                    if(event=='cd'&&query==planeSelectorSpec.query){
+                        planeSelector.detach();
+                    }
+                });
+            }
+        };
+        const subscribeAxisSelector = (axisSelectorSpec: Spec, surface: boolean)=>{
+            for(let geometryController of geometryControllers){
+                let axisSelector = new AxisSelector(this, surface, axisSelectorSpec, geometryController, geometryController.selectionCount++);
+                // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
+                axisSelectorSpec.subscribeChangeService(axisSelector.surfaceSelectionListener)
+                (axisSelectorSpec.query,axisSelectorSpec,'v');
+                axisSelectorSpec.parent.subscribeSelectionService(axisSelector.parentSelectionListener, false);
+                axisSelectorSpec.subscribeChangeService((query, taret, event)=>{
+                    if(event=='cd'&&query==axisSelectorSpec.query){
+                        axisSelector.detach();
+                    }
+                });
+            }
+        };
+        const subscribeSurfaceSelections = ()=>{
+            // Selection path geometryObject/surface_selection
+            let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
+            for(let surfaceSelection of surfaceSelections){
+                let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
+                for(let selectorSpec of selectorSpecs){
+                    if(selectorSpec.typename=='box'){
+                        subscribeBoxSelector(selectorSpec,true);
+                    }else if(selectorSpec.typename=='sphere'){
+                        subscribeSphereSelector(selectorSpec,true);
+                    }else if(selectorSpec.typename == 'plane'){
+                        subscribePlaneSelector(selectorSpec,true);
+                    }else if(selectorSpec.typename == 'axis'){
+                        subscribeAxisSelector(selectorSpec,true);
                     }
                 }
-            })
+                surfaceSelection.subscribeChangeService((query,target, event)=>{
+                    if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection/*')){
+                        let selectorSpec = this.fileControl.specRoot.findChild(query);
+                        switch(selectorSpec.typename){
+                            case 'box':
+                                subscribeBoxSelector(selectorSpec,true);
+                                break;
+                            case 'sphere':
+                                subscribeSphereSelector(selectorSpec,true);
+                                break;
+                            case 'plane':
+                                subscribePlaneSelector(selectorSpec,true);
+                                break;
+                            case 'axis':
+                                subscribeAxisSelector(selectorSpec,true);
+                                break;
+                        }
+                    }
+                });
+            }
         }
+        geometrySpec.subscribeChangeService((query, target, event)=>{
+            if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection'))
+                subscribeSurfaceSelections();
+        });
+        subscribeSurfaceSelections();
+
+        const subscribeVolumeSelections = ()=>{
+            let volumeSelections = geometrySpec.matchChildren(...'/volume_selection'.split('/'));
+            for(let volumeSelection of volumeSelections){
+                let selectorSpecs = volumeSelection.matchChildren(...'/*'.split('/'));
+                for(let selectorSpec of selectorSpecs){
+                    if(selectorSpec.typename=='box'){
+                        subscribeBoxSelector(selectorSpec,false);
+                    }else if(selectorSpec.typename=='sphere'){
+                        subscribeSphereSelector(selectorSpec,false);
+                    }else if(selectorSpec.typename == 'plane'){
+                        subscribePlaneSelector(selectorSpec,false);
+                    }else if(selectorSpec.typename == 'axis'){
+                        subscribeAxisSelector(selectorSpec,false);
+                    }
+                }
+                volumeSelection.subscribeChangeService((query,target, event)=>{
+                    if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/volume_selection/*')){
+                        let selectorSpec = this.fileControl.specRoot.findChild(query);
+                        switch(selectorSpec.typename){
+                            case 'box':
+                                subscribeBoxSelector(selectorSpec,false);
+                                break;
+                            case 'sphere':
+                                subscribeSphereSelector(selectorSpec,false);
+                                break;
+                            case 'plane':
+                                subscribePlaneSelector(selectorSpec,false);
+                                break;
+                            case 'axis':
+                                subscribeAxisSelector(selectorSpec,false);
+                                break;
+                        }
+                    }
+                });
+            }
+        }
+        geometrySpec.subscribeChangeService((query, target, event)=>{
+            if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/volume_selection'))
+                subscribeVolumeSelections();
+        });
+        subscribeVolumeSelections();
 
         const translationListener = (query:string, target:Spec)=>{
             let tr = this.ui.specEngine.compile(target);

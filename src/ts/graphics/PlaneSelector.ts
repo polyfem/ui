@@ -10,9 +10,13 @@ import Selector from "./Selector";
 const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     side: THREE.DoubleSide, opacity:0.2, transparent:true});
 
+const vselectionMaterial = new MeshPhongMaterial({color: 0xfbda6f, visible:true,
+    side: THREE.DoubleSide, opacity:0.2, transparent:true});
+
 export default class PlaneSelector implements Selector{
     canvas: Canvas;
     canvasController: CanvasController;
+    isSurfaceSelector: boolean
     ui: UI;
     planeBoundary: THREE.PlaneGeometry;
     helper: THREE.Mesh;
@@ -26,11 +30,13 @@ export default class PlaneSelector implements Selector{
     /**
      *
      * @param canvasController
+     * @param isSurfaceSelector
      * @param planeSelectionSpec
      * @param geometryController
      * @param selectionIndex specifies which selection this is controlling
      */
-    constructor(canvasController: CanvasController, planeSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
+    constructor(canvasController: CanvasController, isSurfaceSelector:boolean, planeSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
+        this.isSurfaceSelector = isSurfaceSelector;
         this.canvasController = canvasController;
         this.meshController = geometryController;
         this.meshController.selectors[selectionIndex] = this;
@@ -39,7 +45,7 @@ export default class PlaneSelector implements Selector{
         this.planeSelectionSpec = planeSelectionSpec;
         this.ui = this.canvasController.ui;
         this.planeBoundary = new THREE.PlaneGeometry(5,5,1,1)
-        this.helper = new THREE.Mesh(this.planeBoundary, selectionMaterial);
+        this.helper = new THREE.Mesh(this.planeBoundary, (isSurfaceSelector)?selectionMaterial:vselectionMaterial);
         this.helper.visible = true;
         this.helper.matrixAutoUpdate = false;
         this.meshController.mesh.add(this.helper);

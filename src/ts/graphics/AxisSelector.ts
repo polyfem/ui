@@ -11,7 +11,7 @@ export default class AxisSelector extends PlaneSelector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(2, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?2:5, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
                 let axis:number = this.ui.specEngine.compile(target.children['axis']);

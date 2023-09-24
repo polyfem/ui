@@ -10,9 +10,13 @@ import {event} from "jquery";
 const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     side: THREE.DoubleSide, opacity:0.2, transparent:true});
 
+const vselectionMaterial = new MeshPhongMaterial({color: 0xfbda6f, visible:true,
+    side: THREE.DoubleSide, opacity:0.2, transparent:true});
+
 export default class SphereSelector implements Selector{
     canvas: Canvas;
     canvasController: CanvasController;
+    isSurfaceSelector: boolean
     ui: UI;
     sphereBoundary: THREE.SphereGeometry;
     helper: THREE.Mesh;
@@ -26,12 +30,14 @@ export default class SphereSelector implements Selector{
     /**
      *
      * @param canvasController
+     * @param isSurfaceSelector
      * @param sphereSelectionSpec
      * @param geometryController
      * @param selectionIndex specifies which selection this is controlling
      */
-    constructor(canvasController: CanvasController, sphereSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
+    constructor(canvasController: CanvasController, isSurfaceSelector:boolean, sphereSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
         this.canvasController = canvasController;
+        this.isSurfaceSelector = isSurfaceSelector;
         this.meshController = geometryController;
         this.meshController.selectors[selectionIndex] = this;
         this.canvas = canvasController.canvas;
@@ -39,7 +45,7 @@ export default class SphereSelector implements Selector{
         this.sphereSelectionSpec = sphereSelectionSpec;
         this.ui = this.canvasController.ui;
         this.sphereBoundary = new THREE.SphereGeometry(1,100,100)
-        this.helper = new THREE.Mesh(this.sphereBoundary, selectionMaterial);
+        this.helper = new THREE.Mesh(this.sphereBoundary, (isSurfaceSelector)?selectionMaterial:vselectionMaterial);
         this.helper.visible = false;
         this.meshController.mesh.add(this.helper);
         this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
@@ -52,7 +58,7 @@ export default class SphereSelector implements Selector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(1, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?1:4, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
                 let center:number[] = this.ui.specEngine.compile(target.children['center']);

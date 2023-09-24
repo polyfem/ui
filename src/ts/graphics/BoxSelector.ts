@@ -9,6 +9,7 @@ import Selector from "./Selector";
 export default class BoxSelector implements Selector{
     canvas: Canvas;
     canvasController: CanvasController;
+    isSurfaceSelector: boolean
     ui: UI;
     helper: THREE.Box3Helper;
     selectionIndex = 0;
@@ -22,12 +23,14 @@ export default class BoxSelector implements Selector{
     /**
      *
      * @param canvasController
+     * @param isSurfaceSelector
      * @param boxSelectionSpec
      * @param geometryController
      * @param selectionIndex specifies which selection this is controlling
      */
-    constructor(canvasController: CanvasController, boxSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
+    constructor(canvasController: CanvasController, isSurfaceSelector:boolean, boxSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
         this.canvasController = canvasController;
+        this.isSurfaceSelector = isSurfaceSelector;
         this.meshController = geometryController;
         this.meshController.selectors[selectionIndex] = this;
         this.canvas = canvasController.canvas;
@@ -37,21 +40,21 @@ export default class BoxSelector implements Selector{
         this.ui = this.canvasController.ui;
         let box = new THREE.Box3();
         box.setFromCenterAndSize(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1));
-        this.helper = new THREE.Box3Helper(box, new THREE.Color(0xabcdef));
+        this.helper = new THREE.Box3Helper(box, new THREE.Color(isSurfaceSelector?0xabcdef:0xfbda6f));
         this.helper.visible = false;
         this.meshController.mesh.add(this.helper);
-        this.surfaceSelectionBoxListener = this.surfaceSelectionBoxListener.bind(this);
+        this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
         this.selectionListener = this.selectionListener.bind(this);
         this.parentSelectionListener = this.parentSelectionListener.bind(this);
     }
 
     updateSelector(){
-        this.surfaceSelectionBoxListener('',this.boxBoundsSpec,'v');
+        this.surfaceSelectionListener('',this.boxBoundsSpec,'v');
     }
 
-    surfaceSelectionBoxListener(query: string, target: Spec, event: string) {
+    surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(0, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?0:3, 0, 0);
         if (event == 'v') {
             if (this.boxBoundsSpec.subNodesCount >= 2) {//Need both center and size to be specified
                 let center = this.ui.specEngine.compile(this.boxBoundsSpec.children[0]);
@@ -95,7 +98,7 @@ export default class BoxSelector implements Selector{
 
     detach() {
         this.meshController.mesh.remove(this.helper);
-        this.boxSelectionSpec.unsubscribeChangeService(this.surfaceSelectionBoxListener);
+        this.boxSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
         this.boxSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
         this.meshController.removeSelector(this.selectionIndex);
     }

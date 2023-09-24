@@ -29,7 +29,8 @@ export default class GeometryController{
             uniforms: {
                 Ka: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
                 Kd0: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
-                Kd1: { value: new THREE.Vector3(0.15, 0.33, 0.17) },//When selected
+                Kd1: { value: new THREE.Vector3(0.15, 0.17, 0.33) },//When selected
+                Kd2: { value: new THREE.Vector3(0.49,0.42,0.21)},
                 Ks: { value: new THREE.Vector3(0.2, 0.2, 0.2) },
                 LightIntensity: { value: new THREE.Vector4(0.55, 0.55, 0.55, 1.0) },
                 LightPosition: { value: new THREE.Vector4(0.0, 0, 10.0, 1.0) },
@@ -59,6 +60,7 @@ export default class GeometryController{
       uniform vec3 Ka;
       uniform vec3 Kd0;
       uniform vec3 Kd1;
+      uniform vec3 Kd2;
       uniform vec3 Ks;
       uniform vec4 LightPosition;
       uniform vec3 LightIntensity;
@@ -82,28 +84,50 @@ export default class GeometryController{
          vec3 center = selectionBoxes[i*3+1];
          vec3 size = selectionBoxes[i*3+2];
          vec3 r = orgPosition-center;
+         vec3 ub = center+size/2.0;
+         vec3 lb = center-size/2.0;
          switch(int(selectionBoxes[i*3].x)){
             case 0:
-                vec3 ub = center+size/2.0;
-                vec3 lb = center-size/2.0;
                 if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
                     && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
                     Kd = Kd1;
-                    emissive = vec3(0.15, 0.33, 0.17);
+                    emissive = Kd1;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 1:
                 if(r.x*r.x/size.x/size.x+r.y*r.y/size.y/size.y+r.z*r.z/size.z/size.z<1.0){
                     Kd = Kd1;
-                    emissive = vec3(0.15, 0.33, 0.17);
+                    emissive = Kd1;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 2:
                 if(r.x*size.x+r.y*size.y+r.z*size.z>0.0){
                     Kd = Kd1;
-                    emissive = vec3(0.15, 0.33, 0.17);
+                    emissive = Kd1;
+                    ambient = vec3(0.5,0.5,0.5);
+                }
+                break;
+            case 3:
+                if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
+                    && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
+                    Kd = Kd2;
+                    emissive = Kd2;
+                    ambient = vec3(0.5,0.5,0.5);
+                }
+                break;
+            case 4:
+                if(r.x*r.x/size.x/size.x+r.y*r.y/size.y/size.y+r.z*r.z/size.z/size.z<1.0){
+                    Kd = Kd2;
+                    emissive = Kd2;
+                    ambient = vec3(0.5,0.5,0.5);
+                }
+                break;
+            case 5:
+                if(r.x*size.x+r.y*size.y+r.z*size.z>0.0){
+                    Kd = Kd2;
+                    emissive = Kd2;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
