@@ -197,7 +197,8 @@
 			},
 			"volume_selection": [
 				{
-					"id": null
+					"id": null,
+					"box": []
 				},
 				{
 					"id": null,
@@ -222,19 +223,17 @@
 			0,
 			null
 		],
-		"neumann_boundary": [
+		"pressure_boundary": [
 			{
-				"id": null,
-				"value": [
-					null,
-					null,
-					null,
-					null
-				]
+				"id": null
 			}
 		],
-		"pressure_boundary": [],
-		"obstacle_displacements": []
+		"obstacle_displacements": [
+			{
+				"id": null,
+				"value": []
+			}
+		]
 	},
 	"materials": [
 		{
