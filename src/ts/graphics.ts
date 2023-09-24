@@ -14,7 +14,7 @@ import {
     Mesh,
     MeshBasicMaterial,
     MeshNormalMaterial,
-    MeshPhongMaterial, ShaderMaterial, Vector2, Vector3,
+    MeshPhongMaterial, Quaternion, ShaderMaterial, Vector2, Vector3,
     WebGLRenderer
 } from "three";
 import {UFile} from "./server";
@@ -166,12 +166,18 @@ class CanvasController{
         }
         this.canvas.transformControl.addEventListener('objectChange', (e)=>{
             let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
+            let rotationMode = this.activeGeometry.findChild('transformation/rotation_mode').value;
+            rotationMode = rotationMode==undefined?'euler':rotationMode.toLowerCase();
             transformation.type = 'list';
-            if(transformation.subNodesCount==0){
+            if(transformation.subNodesCount<3){
                 for(let i = 0; i<3; i++){
                     transformation.pushChild(new Spec(`${i}`, transformation, true));
                 }
             }
+            if(this.activeEdit=='rotation'&&transformation.subNodesCount<4&&rotationMode=='quaternion')
+                while(transformation.subNodesCount<4){
+                    transformation.pushChild(new Spec('',transformation, true));
+                }
             // To avoid double-updating the graphics
             this.pauseGeometryUpdate=true;
             switch(this.activeEdit){
@@ -184,9 +190,17 @@ class CanvasController{
                 case 'rotation':
                     let rotations = transformation.children;
                     if(rotations)
-                    rotations[0].setValue(this.activeMesh.rotation.x);
-                    rotations[1].setValue(this.activeMesh.rotation.y);
-                    rotations[2].setValue(this.activeMesh.rotation.z);
+                        if(rotationMode=='euler'){
+                            rotations[0].setValue(this.activeMesh.rotation.x);
+                            rotations[1].setValue(this.activeMesh.rotation.y);
+                            rotations[2].setValue(this.activeMesh.rotation.z);
+                        }else if(rotationMode=='quaternion'){
+                            let quaternion = this.activeMesh.quaternion;
+                            rotations[0].setValue(quaternion.x);
+                            rotations[1].setValue(quaternion.y);
+                            rotations[2].setValue(quaternion.z);
+                            rotations[3].setValue(quaternion.w);
+                        }
                     break;
                 case 'scale':
                     let scale = transformation.children;
@@ -466,17 +480,25 @@ class CanvasController{
             });
         }
         const rotationListener = (query:string, target:Spec)=>{
-            let rt = this.ui.specEngine.compile(target);
-            if(rt instanceof Array&&rt.length<3)
+            if(target==undefined)
                 return;
-            let rotation = <number[]> ((rt instanceof Number)? [rt, rt, rt]: rt);
+            let rotation = this.ui.specEngine.compile(target);
+            let rotationMode = <string>this.ui.specEngine.compile(target.parent.findChild('rotation_mode'));
+            rotationMode = rotationMode==undefined?'euler':rotationMode.toLowerCase();
+            if(['quaternion','euler'].indexOf(rotationMode)<0
+                ||rotation instanceof  Number || rotation instanceof Array&&rotation.length<3)
+                return;
             this.meshList[geometrySpec.query].forEach( ( controller:GeometryController )=>{
                 let child = controller.mesh;
                 if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                     return;
                 }
                 if(!isNaN((rotation[0]))&&!isNaN(rotation[1])&&!isNaN(rotation[2]))
-                    child.rotation.set(rotation[0],rotation[1],rotation[2]);});
+                    if(rotationMode=='quaternion'&&!isNaN(rotation[3])){
+                        child.setRotationFromQuaternion(new Quaternion(rotation[0],rotation[1],rotation[2],rotation[3]))
+                    }
+                    else if(rotationMode=='euler')
+                        child.rotation.set(rotation[0],rotation[1],rotation[2]);});
         }
         //Here the parameter target will be the added children of transformation spec,
         //the listeners above are designed for each of the translation/rotation/scale updates
@@ -489,6 +511,11 @@ class CanvasController{
                         break;
                     case 'rotation':
                         target.subscribeChangeService(rotationListener);
+                        break;
+                    case 'rotation_mode':
+                        target.subscribeChangeService(()=>{
+                            rotationListener(query,target.parent.findChild('rotation'));
+                        });
                         break;
                     case 'scale':
                         target.subscribeChangeService(scaleListener);
@@ -510,6 +537,11 @@ class CanvasController{
                     case 'rotation':
                         target.subscribeChangeService
                         (rotationListener)(target.query,target,undefined);
+                        break;
+                    case 'rotation_mode':
+                        target.subscribeChangeService(()=>{
+                            rotationListener(target.query,target.parent.findChild('rotation'));
+                        });
                         break;
                     case 'scale':
                         target.subscribeChangeService

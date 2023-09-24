@@ -592,6 +592,8 @@ class SpecEngine {
      * @param spec
      */
     compile(spec: Spec):any{
+        if(spec==undefined)
+            return undefined;
         switch(spec.type){
             case 'list':
                 let list = [];
