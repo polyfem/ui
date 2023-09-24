@@ -58,7 +58,7 @@ export default class SphereSelector implements Selector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?1:4, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
                 let center:number[] = this.ui.specEngine.compile(target.children['center']);
@@ -74,6 +74,7 @@ export default class SphereSelector implements Selector{
                 this.helper.position.set(center[0]/mesh.scale.x, center[1]/mesh.scale.y, center[2]/mesh.scale.z);
                 this.helper.scale.set(Math.abs(radius/mesh.scale.x), Math.abs(radius/mesh.scale.y),Math.abs(radius/mesh.scale.z));
                 this.helper.updateMatrixWorld();
+                selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?1:4, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = centerVec;
                 selectionSettings[this.selectionIndex * 3 + 2] = sizeVec;
                 //@ts-ignore
@@ -88,6 +89,8 @@ export default class SphereSelector implements Selector{
     }
 
     detach(): void {
+        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         this.meshController.mesh.remove(this.helper);
         this.sphereSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
         this.sphereSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);

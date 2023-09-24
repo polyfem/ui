@@ -22,65 +22,6 @@
 				],
 				"rotation_mode": "euler"
 			},
-			"surface_selection": [
-				{
-					"box": [
-						[
-							0,
-							0,
-							0
-						],
-						[
-							0.5,
-							0.5,
-							0.5
-						]
-					],
-					"id": null
-				},
-				{
-					"box": [
-						[
-							0,
-							-2,
-							0
-						],
-						[
-							1,
-							1,
-							1
-						]
-					],
-					"id": null
-				},
-				{
-					"id": null,
-					"radius": 0.5,
-					"center": [
-						0,
-						0.56,
-						0
-					]
-				},
-				{
-					"id": 1,
-					"point": [
-						0,
-						0,
-						0
-					],
-					"normal": [
-						1,
-						1,
-						0
-					]
-				},
-				{
-					"id": 1,
-					"axis": 2,
-					"position": -1
-				}
-			],
 			"volume_selection": [
 				{
 					"id": 1,
@@ -254,36 +195,9 @@
 					3.0317962900075557
 				]
 			},
-			"surface_selection": [
-				{
-					"id": 2,
-					"box": [
-						[
-							0,
-							0,
-							0
-						],
-						[
-							1,
-							1,
-							1
-						]
-					]
-				},
-				{
-					"id": null,
-					"radius": 0.66,
-					"center": [
-						0,
-						0,
-						1
-					]
-				}
-			],
 			"volume_selection": [
 				{
-					"id": null,
-					"box": []
+					"id": null
 				},
 				{
 					"id": null,

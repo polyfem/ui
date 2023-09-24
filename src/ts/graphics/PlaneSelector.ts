@@ -46,7 +46,7 @@ export default class PlaneSelector implements Selector{
         this.ui = this.canvasController.ui;
         this.planeBoundary = new THREE.PlaneGeometry(5,5,1,1)
         this.helper = new THREE.Mesh(this.planeBoundary, (isSurfaceSelector)?selectionMaterial:vselectionMaterial);
-        this.helper.visible = true;
+        this.helper.visible = false;
         this.helper.matrixAutoUpdate = false;
         this.meshController.mesh.add(this.helper);
         this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
@@ -59,7 +59,8 @@ export default class PlaneSelector implements Selector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(2, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
+        this.helper.visible = false;
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
                 let point:number[] = this.ui.specEngine.compile(target.children['point']);
@@ -81,6 +82,7 @@ export default class PlaneSelector implements Selector{
                                         x.z/sz, y.z/sz, z.z/sz, p.z/sz,
                                         0,0,0,1);
                 this.helper.updateMatrixWorld();
+                selectionSettings[this.selectionIndex * 3] = new Vector3((this.isSurfaceSelector)?2:5, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = p;
                 z.multiply(meshController.mesh.scale);
                 selectionSettings[this.selectionIndex * 3 + 2] = z;
@@ -96,6 +98,8 @@ export default class PlaneSelector implements Selector{
     }
 
     detach() {
+        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         this.meshController.mesh.remove(this.helper);
         this.planeSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
         this.planeSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);

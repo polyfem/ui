@@ -17,7 +17,8 @@ export default class GeometryController{
         this.mesh = mesh;
         mesh.matrixWorldAutoUpdate = true;
         let vectorArray = [];//Alternate between specification type size and position,
-//type.x < 0 indicate the end of the array
+//type.x = -1 indicate the end of the array
+//type.x = -2 indicates deleted item, jumped item of array
 //type.x = 0 implies box selection type
         let emptyVector = new THREE.Vector3(-1, -1, -1);
         for (let i = 0; i < 120; i++) {
@@ -80,6 +81,9 @@ export default class GeometryController{
         for (int i = 0; i < 20; i++) {
          if (selectionBoxes[i*3].x == -1.0) {
            break; // Terminate the loop
+         }
+         if (selectionBoxes[i*3].x == -2.0) {
+           continue; // Continue the loop
          }
          vec3 center = selectionBoxes[i*3+1];
          vec3 size = selectionBoxes[i*3+2];

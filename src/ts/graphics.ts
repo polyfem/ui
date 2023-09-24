@@ -405,6 +405,16 @@ class CanvasController{
         geometrySpec.subscribeChangeService((query, target, event)=>{
             if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection'))
                 subscribeSurfaceSelections();
+            else if(event=='cd'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection')){
+                for(let key in geometryControllers){
+                    let controller = geometryControllers[key];
+                    for(let selectorKey in controller.selectors){
+                        let selector = controller.selectors[selectorKey];
+                        if(selector.isSurfaceSelector)
+                            selector.detach();
+                    }
+                }
+            }
         });
         subscribeSurfaceSelections();
 
@@ -447,6 +457,16 @@ class CanvasController{
         geometrySpec.subscribeChangeService((query, target, event)=>{
             if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/volume_selection'))
                 subscribeVolumeSelections();
+            else if(event=='cd'&&SpecEngine.matchQueries(query,'/geometry/*/volume_selection')){
+                for(let key in geometryControllers){
+                    let controller = geometryControllers[key];
+                    for(let selectorKey in controller.selectors){
+                        let selector = controller.selectors[selectorKey];
+                        if(!selector.isSurfaceSelector)
+                            selector.detach();
+                    }
+                }
+            }
         });
         subscribeVolumeSelections();
 

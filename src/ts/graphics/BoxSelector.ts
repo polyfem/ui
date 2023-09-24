@@ -54,7 +54,7 @@ export default class BoxSelector implements Selector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?0:3, 0, 0);
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         if (event == 'v') {
             if (this.boxBoundsSpec.subNodesCount >= 2) {//Need both center and size to be specified
                 let center = this.ui.specEngine.compile(this.boxBoundsSpec.children[0]);
@@ -70,6 +70,7 @@ export default class BoxSelector implements Selector{
                 this.helper.box.setFromCenterAndSize(centerVec,
                     sizeVec);
                 this.helper.updateMatrixWorld();
+                selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?0:3, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = centerVec;
                 selectionSettings[this.selectionIndex * 3 + 2] = sizeVec;
                 //@ts-ignore
@@ -97,6 +98,8 @@ export default class BoxSelector implements Selector{
     }
 
     detach() {
+        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         this.meshController.mesh.remove(this.helper);
         this.boxSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
         this.boxSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
