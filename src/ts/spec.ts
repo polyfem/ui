@@ -8,6 +8,14 @@ import {UFile} from "./server";
  * Implements a simple event tree
  */
 class Spec{
+    static sidGenerator = 0;
+    /**
+     * The sid of specs are unique and immutable
+     */
+    private sidStore = Spec.sidGenerator++;
+    get sid(){
+        return this.sidStore;
+    }
     // Query gives precise location of the spec,
     // pointer permits * as wild cards
     query: string;
@@ -135,6 +143,29 @@ class Spec{
     private secondarySelectedStore = false;
     secondarySelectionServices:((target: Spec, selected:boolean)=>void)[]= [];
 
+    private focusedStore = this.selectedStore;
+    /**
+     * Focus indicator enforce condition child.focused=>parent.focused,
+     * when parent focused, reflects selected||secondarySelected indicator, otherwise masked
+     * to false.
+     */
+    get focused(){
+        return this.focusedStore;
+    }
+    private set focused(focused: boolean){
+        if(focused){ // Update child to selected or secondary selected
+            this.focusedStore = focused;
+            for(let key in this.children){
+                let child = this.children[key];
+                child.focused = child.selectedStore||child.secondarySelectedStore;
+            }
+        }else{// Mask child to unfocused
+            for(let key in this.children){
+                let child = this.children[key];
+                child.focused = false;
+            }
+        }
+    }
     /**
      * Sets the value of primary selection,
      * dispatches the selection event
@@ -143,6 +174,7 @@ class Spec{
     set selected(selected:boolean){
         this.selectedStore = selected;
         this.dispatchSelection(selected);
+        this.focused = this.selectedStore||this.secondarySelectedStore;
     }
     get selected(){
         return this.selectedStore;
@@ -155,12 +187,14 @@ class Spec{
 
     /**
      * Sets the value of secondary selection,
-     * dispatches the selection event
+     * dispatches the selection event; secondary selection
+     * will imply first order selection
      * @param selected
      */
     set secondarySelected(selected:boolean){
         this.secondarySelectedStore = selected;
         this.dispatchSecondarySelection(selected);
+        this.focused = this.selectedStore||this.secondarySelectedStore;
     }
     get secondarySelected(){
         return this.secondarySelectedStore;

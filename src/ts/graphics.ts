@@ -45,7 +45,7 @@ class CanvasController{
     activeGeometry: Spec;
     activeMesh: Mesh;
     fileControl: GFileControl;
-    meshList: {[id: string]:GeometryController[]}={};
+    meshList: {[id: number]:GeometryController[]}={};
     meshArray: THREE.Mesh[]=[];
     constructor(ui: UI, hostId: string, fileControl: GFileControl) {
         this.ui = ui;
@@ -168,7 +168,7 @@ class CanvasController{
         }
         this.canvas.transformControl.addEventListener('objectChange', (e)=>{
             let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
-            let rotationMode = this.activeGeometry.findChild('transformation/rotation_mode').value;
+            let rotationMode = this.activeGeometry.findChild('transformation/rotation_mode')?.value;
             rotationMode = rotationMode==undefined?'euler':rotationMode.toLowerCase();
             transformation.type = 'list';
             if(transformation.subNodesCount<3){
@@ -253,7 +253,7 @@ class CanvasController{
     }
 
     updateSelectors(geometrySpec: Spec){
-        let controllers = this.meshList[geometrySpec.query];
+        let controllers = this.meshList[geometrySpec.sid];
         controllers.forEach((value)=>{
             value.updateSelectors();
         });
@@ -265,7 +265,7 @@ class CanvasController{
     addJSONListeners(geometrySpec: Spec){
         geometrySpec.subscribeChangeService((query, target,event)=>{
             if(event=='cd'&&query==geometrySpec.query){
-                let controllers = this.meshList[geometrySpec.query];
+                let controllers = this.meshList[geometrySpec.sid];
                 for(let key in controllers){
                     this.canvas.scene.remove(controllers[key].mesh);
                 }
@@ -273,34 +273,34 @@ class CanvasController{
         });
         const selection2Listener=(target: Spec, selected: boolean)=>{
             if(selected&&!target.selected){
-                for(let controller of this.meshList[target.query]){
+                for(let controller of this.meshList[target.sid]){
                     // previousMaterial = mesh.material;
                     controller.mesh.material = selectionMaterial2;
                 }
                 setTimeout( ()=>{
-                    for(let controller of this.meshList[target.query]){
+                    for(let controller of this.meshList[target.sid]){
                         controller.mesh.material = controller.material;
                     }
                 }, 500);
             }else if(!selected&&!target.selected){
-                for(let controller of this.meshList[target.query]){
+                for(let controller of this.meshList[target.sid]){
                     controller.mesh.material = controller.material;
                 }
             }
         }
         const selectionListener=(target: Spec, selected: boolean)=>{
             if(selected){
-                for(let controller of this.meshList[target.query]){
+                for(let controller of this.meshList[target.sid]){
                     // previousMaterial = mesh.material;
                     controller.mesh.material = selectionMaterial;
                 }
                 setTimeout( ()=>{
-                    for(let controller of this.meshList[target.query]){
+                    for(let controller of this.meshList[target.sid]){
                         controller.mesh.material = controller.material;
                     }
                 }, 500);
             }else if(!selected&&!target.secondarySelected){
-                for(let controller of this.meshList[target.query]){
+                for(let controller of this.meshList[target.sid]){
                     controller.mesh.material = controller.material;
                 }
             }
@@ -310,7 +310,7 @@ class CanvasController{
         geometrySpec.subscribeSelectionService(selection2Listener, false);
 
 
-        let geometryControllers = this.meshList[geometrySpec.query];
+        let geometryControllers = this.meshList[geometrySpec.sid];
         const subscribeBoxSelector = (boxSelectorSpec: Spec, surface: boolean)=>{
             for(let geometryController of geometryControllers){
                 let boxSelector = new BoxSelector(this, surface, boxSelectorSpec, geometryController, geometryController.selectionCount++);
@@ -477,7 +477,7 @@ class CanvasController{
             if(tr instanceof Array&&tr.length<3)
                 return;
             let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
-            this.meshList[geometrySpec.query].forEach( ( controller:GeometryController )=>{
+            this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
                 let child = controller.mesh;
                 if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                     return;
@@ -491,7 +491,7 @@ class CanvasController{
             if(sc instanceof Array&&sc.length<3)
                 return;
             let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
-            this.meshList[geometrySpec.query].forEach( ( controller:GeometryController )=>{
+            this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
                 let child = controller.mesh;
                 if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                     return;
@@ -510,7 +510,7 @@ class CanvasController{
             if(['quaternion','euler'].indexOf(rotationMode)<0
                 ||rotation instanceof  Number || rotation instanceof Array&&rotation.length<3)
                 return;
-            this.meshList[geometrySpec.query].forEach( ( controller:GeometryController )=>{
+            this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
                 let child = controller.mesh;
                 if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                     return;
@@ -594,10 +594,10 @@ class CanvasController{
                 let objLoader = new OBJLoader();
                 objLoader.load(file.accessURL(), (obj:any)=>{
                     obj.traverse( ( child:Mesh)=>{
-                        if(this.meshList[specRoot.query]==undefined)
-                            this.meshList[specRoot.query] = [];
+                        if(this.meshList[specRoot.sid]==undefined)
+                            this.meshList[specRoot.sid] = [];
                         let controller = new GeometryController(child);
-                        this.meshList[specRoot.query].push(controller);
+                        this.meshList[specRoot.sid].push(controller);
                         if(child instanceof THREE.Group){
                             return;
                         }

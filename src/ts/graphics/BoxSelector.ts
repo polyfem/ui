@@ -83,7 +83,7 @@ export default class BoxSelector implements Selector{
         this.surfaceSelectorEngaged = selected;
         this.helper.visible = this.surfaceSelectorEngaged && (target.selected || target.secondarySelected);
         if (selected) {
-            for (let controller of this.canvasController.meshList[target.parent.query]) {
+            for (let controller of this.canvasController.meshList[target.parent.sid]) {
                 controller.mesh.material = controller.material;
             }
         } else {// Force style update callbacks

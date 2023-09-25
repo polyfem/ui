@@ -2,6 +2,8 @@ import {MeshPhongMaterial, ShaderMaterial} from "three";
 import * as THREE from "three";
 import BoxSelector from "./BoxSelector";
 import Selector from "./Selector";
+import {BoundaryCondition} from "./BoundaryCondition";
+
 
 export default class GeometryController{
     mesh: THREE.Mesh;
@@ -13,6 +15,7 @@ export default class GeometryController{
      */
     material: ShaderMaterial;
     selectors: {[key:number]:Selector} = {};
+    boundaryConditions: {[key:number]:BoundaryCondition} = {};
     constructor(mesh: THREE.Mesh){
         this.mesh = mesh;
         mesh.matrixWorldAutoUpdate = true;
