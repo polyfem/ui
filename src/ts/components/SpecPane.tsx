@@ -283,20 +283,20 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                         Object.keys(specNode.children).map((key) => {
                             let index = parseInt(key);
                             return (!specNode.children[key].tentative) ?
-                                <SpecFieldV key={specNode.children[key].query} index={index} ui={ui}
+                                <SpecFieldV key={specNode.children[key].sid} index={index} ui={ui}
                                             selected={index == selection} select={selectChild}
                                             specNode={specNode.children[key]} level={level + 1}/>
                                 : undefined;
                         })
                         : Object.keys(specNode.children).map((key) =>
                             (!specNode.children[key].tentative) ?
-                                <SpecFieldV key={specNode.children[key].query} index={-1} ui={ui} selected={true}
+                                <SpecFieldV key={specNode.children[key].sid} index={-1} ui={ui} selected={true}
                                             select={() => {
                                             }} specNode={specNode.children[key]} level={level + 1}/>
                                 : undefined)
                     }
                 </List>
-                <SpecCreator ui={ui} key={specNode.pointer} specNode={specNode} level={level + 1}
+                <SpecCreator ui={ui} specNode={specNode} level={level + 1}
                              color={getColor(level + 1)}/>
                 {/*Tentative previews begin here*/}
                 <List component="div" disablePadding>
@@ -304,14 +304,14 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                         Object.keys(specNode.children).map((key) => {
                             let index = parseInt(key);
                             return (specNode.children[key].tentative) ?
-                                <SpecFieldV key={specNode.children[key].query} index={index} ui={ui}
+                                <SpecFieldV key={specNode.children[key].sid} index={index} ui={ui}
                                             selected={index == selection} select={selectChild}
                                             specNode={specNode.children[key]} level={level + 1}/>
                                 : undefined;
                         })
                         : Object.keys(specNode.children).map((key) =>
                             (specNode.children[key].tentative) ?
-                                (<SpecFieldV key={specNode.children[key].query} index={-1} ui={ui} selected={true}
+                                (<SpecFieldV key={specNode.children[key].sid} index={-1} ui={ui} selected={true}
                                              select={() => {
                                              }} specNode={specNode.children[key]} level={level + 1}/>)
                                 : undefined)

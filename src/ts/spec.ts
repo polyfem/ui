@@ -75,7 +75,7 @@ class Spec{
     setValue(newValue:any){
         this.value = newValue;
         this.dispatchValueChange();
-        this.dispatchChange(this.query,'v');
+        this.dispatchChange(this.query, this,'v');
     };
 
     //Value dispatcher
@@ -118,15 +118,17 @@ class Spec{
      * change if non-leaf. Dispatches self services first before propagating
      * upward
      * @param query
+     * @param target the original spec where the change occurred, ca and cd events point
+     * to the added/deleted spec
      * @param event `r` for recursive, `ca` for child add,
      * `cd` for child deletion, `i` for initialization, `v` for value change
      */
-    protected dispatchChange(query:string, event: string){
+    protected dispatchChange(query:string, target: Spec, event: string){
         for(let service of this.changeServices){
-            service(query, this,event);
+            service(query, target,event);
         }
         if(this.parent!=undefined&&this.parent.children[this.name]!=undefined)
-            this.parent.dispatchChange(query, event);
+            this.parent.dispatchChange(query, target, event);
     }
 
     /**
@@ -196,7 +198,6 @@ class Spec{
                 this.secondarySelectionServices.push(service);
         }
     }
-
 
     private selectedStore = false;
     selectionServices:((target: Spec, selected:boolean)=>void)[]= [];
@@ -273,7 +274,7 @@ class Spec{
             this.value = json;
             this.isLeaf = true;
         }
-        this.dispatchChange(this.query, 'i');
+        this.dispatchChange(this.query, this, 'i');
     }
     /**
      * Smart pushes a child to subNodes, uses
@@ -293,18 +294,18 @@ class Spec{
         }else return; // Only list or object accepts child
         child.parent = this;
         this.subNodesCount++;
-        this.dispatchChange(child.query, 'ca');
+        this.dispatchChange(child.query, child, 'ca');
     }
     removeChild(child: Spec){
         if(child.parent == this && child.name in this.children){
             if(this.type=='object'){
-                child.dispatchChange(child.query, 'cd');
+                child.dispatchChange(child.query, child, 'cd');
                 delete this.children[child.name];
                 this.subNodesCount--;
             }else if(this.type=='list'){
                 let index = Number(child.name);
                 this.subNodesCount--;
-                child.dispatchChange(child.query, 'cd');
+                child.dispatchChange(child.query, child, 'cd');
                 while(index<this.subNodesCount){
                     this.children[index] = this.children[index+1];
                     this.children[index].updateQueries(this.query,`${index}`);
@@ -329,6 +330,10 @@ class Spec{
             if(keys[0]==''||keys[0]=='.'){//Check for pseudo path
                 keys.shift();
             }
+            else if(keys[0]=='..'&&child.parent){
+                keys.shift();
+                child = child.parent;
+            }
             else if(child && !child.isLeaf) {
                 let key = keys.shift();
                 if(force && child.children[key]==undefined){
@@ -336,7 +341,7 @@ class Spec{
                     child.query = `${this.query}/${child.name}`;
                     child.parent = this;
                     this.isLeaf = false;
-                    this.dispatchChange(this.query,'ca');
+                    this.dispatchChange(child.query, child,'ca');
                 }
                 child = child.children[key];
             }
@@ -347,7 +352,8 @@ class Spec{
     }
 
     /**
-     * Matches all children satisfying the pointer criteria
+     * Matches all children satisfying the pointer criteria, column
+     * represents type selector, : specifies matching types
      * @param keys
      */
     matchChildren(...keys: string[]):Spec[]{
@@ -356,16 +362,22 @@ class Spec{
             keys.shift();
         if(keys.length==0||keys[0]=='.'||keys[0]=='')
             return [this];
-        else if(keys[0]=='*'){
+        else if(keys[0].split(':')[0]=='*'){
             let matchedChildren:Spec[] = [];
+            let typename = keys[0].split(':')[1];
             keys.shift();
             for(let key in this.children){
-                matchedChildren.push(...this.children[key].matchChildren(...keys));
+                if(typename==undefined||this.children[key].typename==typename)
+                    matchedChildren.push(...this.children[key].matchChildren(...keys));
             }
             return matchedChildren;
         }
-        else return (this.children!=undefined&&this.children[keys[0]]!=undefined)?
+        else {
+            let [childKey, typename] = keys[0].split(':');
+            return (this.children!=undefined&&this.children[childKey]!=undefined
+                &&(typename==undefined||typename==this.children[childKey].typename))?
                 this.children[keys.shift()].matchChildren(...keys):[];
+        }
     }
 
     /**

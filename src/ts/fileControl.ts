@@ -1,9 +1,16 @@
 import {UFile} from "./server";
 import {Canvas, CanvasController} from "./graphics";
-import {Spec} from "./spec";
+import {Spec, SpecEngine} from "./spec";
 import {ReactElement} from "react";
 import {UI} from "./main";
-import Service from "./Service";
+import {Service, ServiceEngine, ServiceTemplate} from "./service";
+import GeometryController from "./graphics/GeometryController";
+import Selector from "./graphics/Selector";
+import BoxSelector from "./graphics/BoxSelector";
+import SphereSelector from "./graphics/SphereSelector";
+import PlaneSelector from "./graphics/PlaneSelector";
+import AxisSelector from "./graphics/AxisSelector";
+import {temp} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -54,6 +61,11 @@ interface Transformation{
     //Expressed in euler
     rotation: number[];
 }
+
+
+const selectorMapping:{[key:string]: new (c:CanvasController,g:GeometryController)=>Selector} =
+    {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector}
+
 /**
  * A file that is contains geometries being visualized
  */
@@ -61,8 +73,10 @@ class GFileControl extends FileControl{
     canvasController: CanvasController;
     autoSave: boolean = true;
     services: Service[] = [];
+    serviceEngine: ServiceEngine;
     constructor(ui: UI,fileName: string, fileReference: UFile){
         super(ui,fileName, fileReference);
+        this.serviceEngine = new ServiceEngine(ui);
     }
 
     loadFile(){
@@ -73,25 +87,74 @@ class GFileControl extends FileControl{
                 this.ui.setSpec(this.specRoot);
                 let geometries:GeometryJSONStruct[] = json['geometry'];
                 geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index));
-                // Following method times for 0.5 seconds of inactivity
-                // New requests increment the waiting key
-                // successful update resets it
-                let waitingKey = 0;
-                this.specRoot.subscribeChangeService(()=>{
-                    let key = ++waitingKey;
-                    setTimeout(()=>{
-                        if(this.autoSave&&key==waitingKey){
-                            //Auto save after 0.5 seconds of inactivity
-                            this.saveSpec();
-                            waitingKey = 0;
-                        }
-                    }, 500);
-                })
-            })
+            });
+            // Following method times for 0.5 seconds of inactivity
+            // New requests increment the waiting key
+            // successful update resets it
+            let waitingKey = 0;
+            this.specRoot.subscribeChangeService(()=>{
+                let key = ++waitingKey;
+                setTimeout(()=>{
+                    if(this.autoSave&&key==waitingKey){
+                        //Auto save after 0.5 seconds of inactivity
+                        this.saveSpec();
+                        waitingKey = 0;
+                    }
+                }, 500);
+            });
         }
         else
             this.canvasController.loadFile(this.fileReference);
     }
+
+    bindServices(){
+        for(let query in this.serviceEngine.serviceTemplates){ // Iterate through service templates
+            let specs = this.specRoot.matchChildren(...query.split('/'));
+            let template = this.serviceEngine.serviceTemplates[query];
+            for(let spec of specs){ // Find all matching specs
+                this.createService(spec, template);// Create corresponding specs
+            }
+        }
+        this.specRoot.subscribeChangeService((query, target, event)=>{
+            if(event=='ca'){// ca events attach matching services to spec site,
+                            // attaching automatically subscribes detaching actions up to their effective depth.
+                for(let serviceQuery in this.serviceEngine.serviceTemplates){
+                    if(SpecEngine.matchQueries(query,serviceQuery)){
+                        let template = this.serviceEngine.serviceTemplates[serviceQuery];
+                        this.createService(target, template);
+                    }
+                }
+            }
+        });
+    }
+
+    createService(spec: Spec, template: ServiceTemplate){
+        let [serviceName, variant] = template.service.split(':');
+        switch(serviceName){ // Apply the corresponding services
+            case 'selector':
+                this.subscribeSelector(spec,template, selectorMapping[variant]);
+                break;
+            case 'crossReference':
+
+        }
+
+    }
+
+    subscribeSelector(selectorSpec:Spec, template: ServiceTemplate,
+                      T:new (c:CanvasController,g:GeometryController)=>Selector){
+        if(T==undefined)
+            return;
+        let target = selectorSpec.findChild(<string> template.target);
+        let geometryControllers = this.canvasController.meshList[target.sid];
+        for(let geometryController of geometryControllers){
+            let selector = new T(this.canvasController, geometryController);
+            selector.attach(selectorSpec,template.effectiveDepth,template.layer,template.referencer);
+            if(template.color==undefined)
+                selector.setColor(0.6706,0.8039, 0.9373);
+            else
+                selector.setColor(...template.color);
+        }
+    };
 
     saveSpec(){
         console.log("Saving spec");

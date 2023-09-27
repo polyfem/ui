@@ -1,4 +1,4 @@
-import Service from "../Service";
+import {Service} from "../service";
 import {Spec} from "../spec";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
@@ -43,11 +43,6 @@ export default abstract class Selector extends Service{
         // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
         spec.subscribeChangeService(this.surfaceSelectionListener)
         (spec.query,spec,'v');
-        spec.subscribeChangeService((query, taret, event)=>{
-            if(event=='cd'&&query==spec.query){
-                this.detach();
-            }
-        });
     }
 
     detach(){
