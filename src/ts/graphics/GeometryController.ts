@@ -1,4 +1,4 @@
-import {MeshPhongMaterial, ShaderMaterial} from "three";
+import {MeshPhongMaterial, ShaderMaterial, Vector3} from "three";
 import * as THREE from "three";
 import BoxSelector from "./BoxSelector";
 import Selector from "./Selector";
@@ -16,6 +16,14 @@ export default class GeometryController{
     material: ShaderMaterial;
     selectors: {[key:number]:Selector} = {};
     boundaryConditions: {[key:number]:BoundaryCondition} = {};
+    /**
+     * Selector settings that impact the rendered shaders.
+     * Comes in groups of 4, first vec3 sets rendered selector type,
+     * second vec3 usually sets the center of the selector object,
+     * third vec3 gives size/orientation related information,
+     * fourth vec3 sets color.
+     */
+    selectorSettings:Vector3[];
     constructor(mesh: THREE.Mesh){
         this.mesh = mesh;
         mesh.matrixWorldAutoUpdate = true;
@@ -69,7 +77,7 @@ export default class GeometryController{
       uniform vec4 LightPosition;
       uniform vec3 LightIntensity;
       uniform float Shininess;
-      uniform vec3 selectionBoxes[60];
+      uniform vec3 selectionBoxes[120];
 
       vec3 phong() {
         vec3 n = normalize(Normal);
@@ -81,60 +89,61 @@ export default class GeometryController{
         vec3 ambient = Ka;
         
         //Check for box intersections
-        for (int i = 0; i < 20; i++) {
-         if (selectionBoxes[i*3].x == -1.0) {
+        for (int i = 0; i < 30; i++) {
+         if (selectionBoxes[i*4].x == -1.0) {
            break; // Terminate the loop
          }
-         if (selectionBoxes[i*3].x == -2.0) {
+         if (selectionBoxes[i*4].x == -2.0) {
            continue; // Continue the loop
          }
-         vec3 center = selectionBoxes[i*3+1];
-         vec3 size = selectionBoxes[i*3+2];
+         vec3 center = selectionBoxes[i*4+1];
+         vec3 size = selectionBoxes[i*4+2];
+         vec3 color = selectionBoxes[i*4+3]/2.0;
          vec3 r = orgPosition-center;
          vec3 ub = center+size/2.0;
          vec3 lb = center-size/2.0;
-         switch(int(selectionBoxes[i*3].x)){
+         switch(int(selectionBoxes[i*4].x)){
             case 0:
                 if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
                     && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
-                    Kd = Kd1;
-                    emissive = Kd1;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 1:
                 if(r.x*r.x/size.x/size.x+r.y*r.y/size.y/size.y+r.z*r.z/size.z/size.z<1.0){
-                    Kd = Kd1;
-                    emissive = Kd1;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 2:
                 if(r.x*size.x+r.y*size.y+r.z*size.z>0.0){
-                    Kd = Kd1;
-                    emissive = Kd1;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 3:
                 if(ub.x>=orgPosition.x && ub.y>=orgPosition.y && ub.z>=orgPosition.z
                     && lb.x<=orgPosition.x&&lb.y<=orgPosition.y&&lb.z<=orgPosition.z){
-                    Kd = Kd2;
-                    emissive = Kd2;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 4:
                 if(r.x*r.x/size.x/size.x+r.y*r.y/size.y/size.y+r.z*r.z/size.z/size.z<1.0){
-                    Kd = Kd2;
-                    emissive = Kd2;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
             case 5:
                 if(r.x*size.x+r.y*size.y+r.z*size.z>0.0){
-                    Kd = Kd2;
-                    emissive = Kd2;
+                    Kd = color;
+                    emissive = color;
                     ambient = vec3(0.5,0.5,0.5);
                 }
                 break;
@@ -152,8 +161,8 @@ export default class GeometryController{
       void main() {
         gl_FragColor = vec4(phong(), 1.0);
       }
-    `
-        });
+    `});
+        this.selectorSettings=this.material.uniforms.selectionBoxes.value;
     }
     updateSelectors(){
         for(let key in this.selectors){

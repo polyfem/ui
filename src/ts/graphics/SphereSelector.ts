@@ -1,68 +1,36 @@
-import {UI} from "../main";
 import {Spec} from "../spec";
 import THREE, {MeshPhongMaterial, Vector2, Vector3} from "three";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
 import Selector from "./Selector";
-import {event} from "jquery";
 
-
-const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
-    side: THREE.DoubleSide, opacity:0.2, transparent:true});
 
 const vselectionMaterial = new MeshPhongMaterial({color: 0xfbda6f, visible:true,
     side: THREE.DoubleSide, opacity:0.2, transparent:true});
 
-export default class SphereSelector implements Selector{
-    canvas: Canvas;
-    canvasController: CanvasController;
-    isSurfaceSelector: boolean
-    ui: UI;
-    sphereBoundary: THREE.SphereGeometry;
+export default class SphereSelector extends Selector{
     helper: THREE.Mesh;
-    selectionIndex = 0;
-    surfaceSelectorEngaged = false;
-    //Tests for secondary selection of parents
-    parentSelectorEngaged = false;
-    meshController: GeometryController;
-    sphereSelectionSpec: Spec;
-
+    sphereBoundary: THREE.SphereGeometry;
     /**
      *
      * @param canvasController
-     * @param isSurfaceSelector
-     * @param sphereSelectionSpec
      * @param geometryController
-     * @param selectionIndex specifies which selection this is controlling
      */
-    constructor(canvasController: CanvasController, isSurfaceSelector:boolean, sphereSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
-        this.canvasController = canvasController;
-        this.isSurfaceSelector = isSurfaceSelector;
-        this.meshController = geometryController;
-        this.meshController.selectors[selectionIndex] = this;
-        this.canvas = canvasController.canvas;
-        this.selectionIndex = selectionIndex;
-        this.sphereSelectionSpec = sphereSelectionSpec;
-        this.ui = this.canvasController.ui;
+    constructor(canvasController: CanvasController, geometryController: GeometryController) {
+        super(canvasController, geometryController);
         this.sphereBoundary = new THREE.SphereGeometry(1,100,100)
-        this.helper = new THREE.Mesh(this.sphereBoundary, (isSurfaceSelector)?selectionMaterial:vselectionMaterial);
+        this.helper = new THREE.Mesh(this.sphereBoundary, this.selectionMaterial);
         this.helper.visible = false;
         this.meshController.mesh.add(this.helper);
-        this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
-        this.parentSelectionListener = this.parentSelectionListener.bind(this);
-    }
-
-    updateSelector(){
-        this.surfaceSelectionListener('',this.sphereSelectionSpec,'v');
     }
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
+        selectionSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
-                let center:number[] = this.ui.specEngine.compile(target.children['center']);
-                let radius:number = this.ui.specEngine.compile(target.children['radius']);
+                let center:number[] = target.children['center'].compile();
+                let radius:number = target.children['radius'].compile();
                 if (center == undefined || radius == undefined || center.length < 3
                     || isNaN(center[0]) || isNaN(radius) || isNaN(center[1])
                     || isNaN(center[2]))
@@ -74,26 +42,24 @@ export default class SphereSelector implements Selector{
                 this.helper.position.set(center[0]/mesh.scale.x, center[1]/mesh.scale.y, center[2]/mesh.scale.z);
                 this.helper.scale.set(Math.abs(radius/mesh.scale.x), Math.abs(radius/mesh.scale.y),Math.abs(radius/mesh.scale.z));
                 this.helper.updateMatrixWorld();
-                selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?1:4, 0, 0);
-                selectionSettings[this.selectionIndex * 3 + 1] = centerVec;
-                selectionSettings[this.selectionIndex * 3 + 2] = sizeVec;
+                selectionSettings[this.selectionIndex * 4] = new Vector3((this.focused)?1:-2, 0, 0);
+                selectionSettings[this.selectionIndex * 4 + 1] = centerVec;
+                selectionSettings[this.selectionIndex * 4 + 2] = sizeVec;
                 //@ts-ignore
                 meshController.material.uniforms.selectionBoxes.needsUpdate = true;
             }
         }
     }
-
-    parentSelectionListener(target: Spec, selected: boolean) {
-        this.parentSelectorEngaged = selected;
-        this.helper.visible = target.selected || target.secondarySelected;
-    }
-
     detach(): void {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
+        selectionSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
         this.meshController.mesh.remove(this.helper);
-        this.sphereSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
-        this.sphereSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
-        this.meshController.removeSelector(this.selectionIndex);
+    }
+
+    focused: boolean = false;
+    onFocusChanged(spec: Spec, focused:boolean): void {
+        this.focused = focused;
+        this.helper.visible = this.focused;
+        this.meshController.selectorSettings[this.selectionIndex * 4] = new Vector3((focused)?1:-2, 0, 0);
     }
 }

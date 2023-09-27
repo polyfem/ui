@@ -1,7 +1,6 @@
 import {UI} from "../main";
-import * as THREE from "three";
-import {Spec} from "../spec";
-import {Mesh, MeshPhongMaterial, Vector2, Vector3} from "three";
+import {Spec, SpecEngine} from "../spec";
+import THREE, {Mesh, MeshPhongMaterial, Vector2, Vector3} from "three";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
 import Selector from "./Selector";
@@ -13,58 +12,41 @@ const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
 const vselectionMaterial = new MeshPhongMaterial({color: 0xfbda6f, visible:true,
     side: THREE.DoubleSide, opacity:0.2, transparent:true});
 
-export default class PlaneSelector implements Selector{
+export default class PlaneSelector extends Selector{
     canvas: Canvas;
-    canvasController: CanvasController;
-    isSurfaceSelector: boolean
-    ui: UI;
     planeBoundary: THREE.PlaneGeometry;
     helper: THREE.Mesh;
-    selectionIndex = 0;
     surfaceSelectorEngaged = false;
-    //Tests for secondary selection of parents
-    parentSelectorEngaged = false;
     meshController: GeometryController;
-    planeSelectionSpec: Spec;
+    focused: boolean = false;
 
     /**
      *
      * @param canvasController
-     * @param isSurfaceSelector
-     * @param planeSelectionSpec
      * @param geometryController
-     * @param selectionIndex specifies which selection this is controlling
      */
-    constructor(canvasController: CanvasController, isSurfaceSelector:boolean, planeSelectionSpec: Spec, geometryController: GeometryController, selectionIndex: number) {
-        this.isSurfaceSelector = isSurfaceSelector;
-        this.canvasController = canvasController;
-        this.meshController = geometryController;
-        this.meshController.selectors[selectionIndex] = this;
-        this.canvas = canvasController.canvas;
-        this.selectionIndex = selectionIndex;
-        this.planeSelectionSpec = planeSelectionSpec;
-        this.ui = this.canvasController.ui;
+    constructor(canvasController: CanvasController, geometryController: GeometryController) {
+        super(canvasController,geometryController);
         this.planeBoundary = new THREE.PlaneGeometry(5,5,1,1)
-        this.helper = new THREE.Mesh(this.planeBoundary, (isSurfaceSelector)?selectionMaterial:vselectionMaterial);
+        this.helper = new THREE.Mesh(this.planeBoundary, selectionMaterial);
         this.helper.visible = false;
         this.helper.matrixAutoUpdate = false;
         this.meshController.mesh.add(this.helper);
         this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
-        this.parentSelectionListener = this.parentSelectionListener.bind(this);
     }
 
     updateSelector(){
-        this.surfaceSelectionListener('',this.planeSelectionSpec,'v');
+        this.surfaceSelectionListener('',this.spec,'v');
     }
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
-        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
-        this.helper.visible = false;
         if (event == 'v') {
+            let selectorSettings = this.meshController.selectorSettings;
+            selectorSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
+            this.helper.visible = false;
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
-                let point:number[] = this.ui.specEngine.compile(target.children['point']);
-                let normal:number[] = this.ui.specEngine.compile(target.children['normal']);
+                let point:number[] = target.children['point'].compile();
+                let normal:number[] = target.children['normal'].compile();
                 if (point == undefined || normal == undefined || point.length < 3 || normal.length < 3
                     || isNaN(point[0]) || isNaN(normal[0]) || isNaN(point[1]) || isNaN(normal[1])
                     || isNaN(point[2]) || isNaN(normal[2]))
@@ -77,32 +59,33 @@ export default class PlaneSelector implements Selector{
                 x = (x.length()==0)?new Vector3(1,0,0):x.normalize();
                 let y = new Vector3().crossVectors(z,x);
                 let sx = mesh.scale.x, sy = mesh.scale.y, sz = mesh.scale.z;
-                this.helper.matrix.set( x.x/sx, y.x/sx, z.x/sx, p.x/sx,
-                                        x.y/sy, y.y/sy, z.y/sy, p.y/sy,
-                                        x.z/sz, y.z/sz, z.z/sz, p.z/sz,
+                this.helper.matrix.set( x.x/sx, y.x/sx, z.x/sx, p.x,
+                                        x.y/sy, y.y/sy, z.y/sy, p.y,
+                                        x.z/sz, y.z/sz, z.z/sz, p.z,
                                         0,0,0,1);
                 this.helper.updateMatrixWorld();
-                selectionSettings[this.selectionIndex * 3] = new Vector3((this.isSurfaceSelector)?2:5, 0, 0);
-                selectionSettings[this.selectionIndex * 3 + 1] = p;
+                selectorSettings[this.selectionIndex * 4] = new Vector3((this.focused)?2:-2, 0, 0);
+                selectorSettings[this.selectionIndex * 4 + 1] = p;
                 z.multiply(meshController.mesh.scale);
-                selectionSettings[this.selectionIndex * 3 + 2] = z;
+                selectorSettings[this.selectionIndex * 4 + 2] = z;
                 //@ts-ignore
                 meshController.material.uniforms.selectionBoxes.needsUpdate = true;
             }
         }
     }
 
-    parentSelectionListener(target: Spec, selected: boolean) {
-        this.parentSelectorEngaged = selected;
-        this.helper.visible = target.selected || target.secondarySelected;
+    detach() {
+        super.detach();
+        this.meshController.mesh.remove(this.helper);
     }
 
-    detach() {
-        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
-        this.meshController.mesh.remove(this.helper);
-        this.planeSelectionSpec.unsubscribeChangeService(this.surfaceSelectionListener);
-        this.planeSelectionSpec.parent.unsubscribeSelectionService(this.parentSelectionListener, false);
-        this.meshController.removeSelector(this.selectionIndex);
+    effectiveDepth: number;
+    layer: number;
+    id: number;
+
+    onFocusChanged(spec: Spec, focused: boolean): void {
+        this.focused = focused;
+        this.helper.visible = this.focused;
+        this.meshController.selectorSettings[this.selectionIndex * 4] = new Vector3((this.focused)?2:-2, 0, 0);
     }
 }

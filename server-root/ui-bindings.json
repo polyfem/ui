@@ -1,60 +1,70 @@
 {
   "/geometry/*/volume_selection/*:box": {
       "service": "selector.box",
+    "referencer": "id",
       "color": [0.49,0.42,0.21],
       "effective depth": 2,
       "layer": 0
   },
   "/geometry/*/volume_selection/*:sphere": {
     "service": "selector.sphere",
+    "referencer": "id",
     "color": [0.49,0.42,0.21],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/volume_selection/*:cylinder": {
     "service": "selector.cylinder",
+    "referencer": "id",
     "color": [0.49,0.42,0.21],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/volume_selection/*:plane": {
   "service": "selector.plane",
-  "color": [0.49,0.42,0.21],
+    "referencer": "id",
+     "color": [0.49,0.42,0.21],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/volume_selection/*:axis": {
     "service": "selector.axis",
+    "referencer": "id",
     "color": [0.49,0.42,0.21],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/surface_selection/*:box": {
     "service": "selector.box",
+    "referencer": "id",
     "color": [0.15, 0.17, 0.33],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/surface_selection/*:sphere": {
     "service": "selector.sphere",
+    "referencer": "id",
     "color": [0.15, 0.17, 0.33],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/surface_selection/*:cylinder": {
     "service": "selector.cylinder",
+    "referencer": "id",
     "color": [0.15, 0.17, 0.33],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/surface_selection/*:plane": {
     "service": "selector.plane",
+    "referencer": "id",
     "color": [0.15, 0.17, 0.33],
     "effective depth": 2,
     "layer": 0
   },
   "/geometry/*/surface_selection/*:axis": {
     "service": "selector.axis",
+    "referencer": "id",
     "color": [0.15, 0.17, 0.33],
     "effective depth": 2,
     "layer": 0

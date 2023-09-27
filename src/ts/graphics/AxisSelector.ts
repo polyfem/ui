@@ -2,7 +2,7 @@ import {MeshPhongMaterial, Vector3} from "three";
 import * as THREE from "three";
 import Selector from "./Selector";
 import PlaneSelector from "./PlaneSelector";
-import {Spec} from "../spec";
+import {Spec, SpecEngine} from "../spec";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     side: THREE.DoubleSide, opacity:0.2, transparent:true});
@@ -10,12 +10,12 @@ const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
 export default class AxisSelector extends PlaneSelector{
 
     surfaceSelectionListener(query: string, target: Spec, event: string) {
-        let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
-        selectionSettings[this.selectionIndex * 3] = new Vector3(this.isSurfaceSelector?2:5, 0, 0);
+        let selectionSettings = this.meshController.selectorSettings;
+        selectionSettings[this.selectionIndex * 3] = new Vector3(-2, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified
-                let axis:number = this.ui.specEngine.compile(target.children['axis']);
-                let position:number = this.ui.specEngine.compile(target.children['position']);
+                let axis:number = target.children['axis'].compile();
+                let position:number = target.children['position'].compile();
                 if (axis == undefined || position == undefined|| [0,1,2].indexOf(axis)<0 || isNaN(position))
                     return;
                 let meshController = this.meshController;
@@ -33,6 +33,7 @@ export default class AxisSelector extends PlaneSelector{
                     x.z/sz, y.z/sz, z.z/sz, p.z/sz,
                     0,0,0,1);
                 this.helper.updateMatrixWorld();
+                selectionSettings[this.selectionIndex * 3] = new Vector3(2, 0, 0);
                 selectionSettings[this.selectionIndex * 3 + 1] = p;
                 z.multiply(meshController.mesh.scale);
                 selectionSettings[this.selectionIndex * 3 + 2] = z;

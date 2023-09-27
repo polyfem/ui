@@ -3,6 +3,7 @@ import {Canvas, CanvasController} from "./graphics";
 import {Spec} from "./spec";
 import {ReactElement} from "react";
 import {UI} from "./main";
+import Service from "./Service";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -59,6 +60,7 @@ interface Transformation{
 class GFileControl extends FileControl{
     canvasController: CanvasController;
     autoSave: boolean = true;
+    services: Service[] = [];
     constructor(ui: UI,fileName: string, fileReference: UFile){
         super(ui,fileName, fileReference);
     }
@@ -93,7 +95,7 @@ class GFileControl extends FileControl{
 
     saveSpec(){
         console.log("Saving spec");
-        let json = this.ui.specEngine.compile(this.specRoot);
+        let json = this.specRoot.compile();
         this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
     }
 }

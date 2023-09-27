@@ -138,34 +138,6 @@ class Spec{
     // For selecting the corresponding subset of type
     typeIndex = -1;
 
-    private selectedStore = false;
-    selectionServices:((target: Spec, selected:boolean)=>void)[]= [];
-    private secondarySelectedStore = false;
-    secondarySelectionServices:((target: Spec, selected:boolean)=>void)[]= [];
-
-    private focusedStore = this.selectedStore;
-    /**
-     * Focus indicator enforce condition child.focused=>parent.focused,
-     * when parent focused, reflects selected||secondarySelected indicator, otherwise masked
-     * to false.
-     */
-    get focused(){
-        return this.focusedStore;
-    }
-    private set focused(focused: boolean){
-        if(focused){ // Update child to selected or secondary selected
-            this.focusedStore = focused;
-            for(let key in this.children){
-                let child = this.children[key];
-                child.focused = child.selectedStore||child.secondarySelectedStore;
-            }
-        }else{// Mask child to unfocused
-            for(let key in this.children){
-                let child = this.children[key];
-                child.focused = false;
-            }
-        }
-    }
     /**
      * Sets the value of primary selection,
      * dispatches the selection event
@@ -223,6 +195,48 @@ class Spec{
             if(key!=-1)
                 this.secondarySelectionServices.push(service);
         }
+    }
+
+
+    private selectedStore = false;
+    selectionServices:((target: Spec, selected:boolean)=>void)[]= [];
+    private secondarySelectedStore = false;
+    secondarySelectionServices:((target: Spec, selected:boolean)=>void)[]= [];
+
+    private focusedStore = this.selectedStore;
+    focusServices:((target: Spec, selected:boolean)=>void)[]= [];
+    /**
+     * Focus indicator enforce condition child.focused=>parent.focused,
+     * when parent focused, reflects selected||secondarySelected indicator, otherwise masked
+     * to false.
+     */
+    get focused(){
+        return this.focusedStore;
+    }
+    private set focused(focused: boolean){
+        this.focusedStore = focused;
+        if(focused){ // Update child to selected or secondary selected
+            for(let key in this.children){
+                let child = this.children[key];
+                child.focused = child.selectedStore||child.secondarySelectedStore;
+            }
+        }else{// Mask child to unfocused
+            for(let key in this.children){
+                let child = this.children[key];
+                child.focused = false;
+            }
+        }
+        for(let service of this.focusServices)
+            service(this,this.focusedStore);
+    }
+    subscribeFocusService(service:(target:Spec, selected:boolean)=>void){
+        this.focusServices.push(service)
+    }
+
+    unsubscribeFocusService(service:(target:Spec, selected:boolean)=>void){
+        let key = this.focusServices.indexOf(service);
+        if(key!=-1)
+            this.focusServices.push(service);
     }
 
     /**
@@ -401,6 +415,34 @@ class Spec{
                     key++;
                 }
             }
+    }
+
+    /**
+     * Compiles a Spec into an JSON object
+     */
+    compile():any{
+        switch(this.type){
+            case 'list':
+                let list = [];
+                let index = 0;
+                while(index in this.children){
+                    list.push(this.children[index].compile());
+                    index++;
+                }
+                return list;
+            case 'object':
+                let obj:{[key:string]:any} = {};
+                for(let key in this.children){
+                    obj[key] = this.children[key].compile();
+                }
+                return obj;
+            case 'float':
+                return parseFloat(this.value);
+            case 'int':
+                return parseInt(this.value);
+            default:
+                return this.value;
+        }
     }
 }
 
@@ -621,36 +663,6 @@ class SpecEngine {
         return true;
     }
 
-    /**
-     * Compiles a Spec into an JSON object
-     * @param spec
-     */
-    compile(spec: Spec):any{
-        if(spec==undefined)
-            return undefined;
-        switch(spec.type){
-            case 'list':
-                let list = [];
-                let index = 0;
-                while(index in spec.children){
-                    list.push(this.compile(spec.children[index]));
-                    index++;
-                }
-                return list;
-            case 'object':
-                let obj:{[key:string]:any} = {};
-                for(let key in spec.children){
-                    obj[key] = this.compile(spec.children[key]);
-                }
-                return obj;
-            case 'float':
-                return parseFloat(spec.value);
-            case 'int':
-                return parseInt(spec.value);
-            default:
-                return spec.value;
-        }
-    }
 }
 
 //Interface of a raw specification
