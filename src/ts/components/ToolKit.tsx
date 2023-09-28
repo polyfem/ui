@@ -78,8 +78,9 @@ class ToolKitItem extends React.Component<{ui: UI, visual: Visual, target: strin
     handleClick () {
         if(this.props.target == this.props.open)
             this.visual.closeSpec();
-        else
+        else{
             this.visual.openSpec(this.props.target);
+        }
     };
     toRenderedText(original:string) {
          let stringArray:string[]=original.split('_');

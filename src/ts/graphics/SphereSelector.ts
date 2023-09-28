@@ -56,7 +56,6 @@ export default class SphereSelector extends Selector{
         this.meshController.mesh.remove(this.helper);
     }
 
-    focused: boolean = false;
     onFocusChanged(spec: Spec, focused:boolean): void {
         this.focused = focused;
         this.helper.visible = this.focused;

@@ -311,50 +311,50 @@ class CanvasController{
         geometrySpec.subscribeSelectionService(selectionListener, true);
         geometrySpec.subscribeSelectionService(selection2Listener, false);
 
-        let geometryControllers = this.meshList[geometrySpec.sid];
-        const subscribeSelector = <T>(selectorSpec:Spec, T:new (c:CanvasController,g:GeometryController)=>Selector)=>{
-            if(T==undefined)
-                return;
-            for(let geometryController of geometryControllers){
-                let selector = new T(this,geometryController);
-                selector.attach(selectorSpec,2,0,'id');
-                selector.setColor(0.6706,0.8039, 0.9373);
-            }
-        };
-        const selectorMapping:{[key:string]: new (c:CanvasController,g:GeometryController)=>Selector} =
-            {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector}
-        const subscribeSurfaceSelections = ()=>{
-            // Selection path geometryObject/surface_selection
-            let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
-            for(let surfaceSelection of surfaceSelections){
-                let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
-                for(let selectorSpec of selectorSpecs){
-                    console.log(`subscribing ${selectorSpec.query}`);
-                    subscribeSelector(selectorSpec, selectorMapping[selectorSpec.typename]);
-                    console.log(`subscribed ${selectorSpec.query}`);
-                }
-                surfaceSelection.subscribeChangeService((query,target, event)=>{
-                    if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection/*')){
-                        let selectorSpec = this.fileControl.specRoot.findChild(query);
-                        subscribeSelector(selectorSpec, selectorMapping[selectorSpec.typename]);
-                    }
-                });
-            }
-        }
-        geometrySpec.subscribeChangeService((query, target, event)=>{
-            if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection'))
-                subscribeSurfaceSelections();
-            else if(event=='cd'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection')){
-                for(let key in geometryControllers){
-                    let controller = geometryControllers[key];
-                    for(let selectorKey in controller.selectors){
-                        let selector = controller.selectors[selectorKey];
-                        selector.detach();
-                    }
-                }
-            }
-        });
-        subscribeSurfaceSelections();
+        // let geometryControllers = this.meshList[geometrySpec.sid];
+        // const subscribeSelector = <T>(selectorSpec:Spec, T:new (c:CanvasController,g:GeometryController)=>Selector)=>{
+        //     if(T==undefined)
+        //         return;
+        //     for(let geometryController of geometryControllers){
+        //         let selector = new T(this,geometryController);
+        //         selector.attach(selectorSpec,2,0,'id');
+        //         selector.setColor(0.6706,0.8039, 0.9373);
+        //     }
+        // };
+        // const selectorMapping:{[key:string]: new (c:CanvasController,g:GeometryController)=>Selector} =
+        //     {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector}
+        // const subscribeSurfaceSelections = ()=>{
+        //     // Selection path geometryObject/surface_selection
+        //     let surfaceSelections = geometrySpec.matchChildren(...'/surface_selection'.split('/'));
+        //     for(let surfaceSelection of surfaceSelections){
+        //         let selectorSpecs = surfaceSelection.matchChildren(...'/*'.split('/'));
+        //         for(let selectorSpec of selectorSpecs){
+        //             console.log(`subscribing ${selectorSpec.query}`);
+        //             subscribeSelector(selectorSpec, selectorMapping[selectorSpec.typename]);
+        //             console.log(`subscribed ${selectorSpec.query}`);
+        //         }
+        //         surfaceSelection.subscribeChangeService((query,target, event)=>{
+        //             if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection/*')){
+        //                 let selectorSpec = this.fileControl.specRoot.findChild(query);
+        //                 subscribeSelector(selectorSpec, selectorMapping[selectorSpec.typename]);
+        //             }
+        //         });
+        //     }
+        // }
+        // geometrySpec.subscribeChangeService((query, target, event)=>{
+        //     if(event=='ca'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection'))
+        //         subscribeSurfaceSelections();
+        //     else if(event=='cd'&&SpecEngine.matchQueries(query,'/geometry/*/surface_selection')){
+        //         for(let key in geometryControllers){
+        //             let controller = geometryControllers[key];
+        //             for(let selectorKey in controller.selectors){
+        //                 let selector = controller.selectors[selectorKey];
+        //                 selector.detach();
+        //             }
+        //         }
+        //     }
+        // });
+        // subscribeSurfaceSelections();
 
         const translationListener = (query:string, target:Spec)=>{
             let tr = target?.compile();
@@ -464,9 +464,11 @@ class CanvasController{
      * @param geometry
      * @param index index of the geometry inside the parent spec
      */
-    loadGeometry(geometry: GeometryJSONStruct, index: number){
-        if(geometry.mesh==undefined)
+    loadGeometry(geometry: GeometryJSONStruct, index: number, onLoad:()=>void){
+        if(geometry.mesh==undefined){
+            onLoad();
             return;
+        }
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
         let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
@@ -493,6 +495,7 @@ class CanvasController{
                         this.meshArray.push(child);
                     } );
                     this.addJSONListeners(specRoot);
+                    onLoad();
                 })
                 break;
         }

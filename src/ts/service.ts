@@ -2,19 +2,23 @@ import {Spec, SpecEngine} from "./spec";
 import {GFileControl} from "./fileControl";
 import {UI} from "./main";
 import {UFile} from "./server";
+import CrossReference from "./graphics/CrossReference";
 
 abstract class Service{
     fileControl: GFileControl;
     effectiveDepth: number;
     layer: number;
-    id: number;
+    rid: number;
     spec: Spec;
     focusRoot: Spec;
     serviceEngine: ServiceEngine;
+    referencable = false;
     constructor(fileControl:GFileControl){
         this.fileControl = fileControl;
         this.serviceEngine = fileControl.serviceEngine;
         this.onFocusChanged = this.onFocusChanged.bind(this);
+        console.log(`Service initiated:`);
+        console.log(this);
     }
 
     /**
@@ -22,17 +26,17 @@ abstract class Service{
      * @param spec
      * @param effectiveDepth
      * @param layer
-     * @param reference
+     * @param referencer
      */
-    attach(spec: Spec, effectiveDepth: number, layer: number, reference: string): void {
+    attach(spec: Spec, effectiveDepth: number, layer: number, referencer: string): void {
         this.spec = spec;
         this.serviceEngine.activeServices[spec.sid]=this;
         this.effectiveDepth = effectiveDepth;
         this.layer = layer;
-        this.id = spec.findChild(reference)?.compile();
+        this.rid = spec.findChild(referencer)?.compile();
         spec.subscribeChangeService((query, target, event)=>{
-            if(query==`${spec.query}/${reference}`&&event=='v'){
-                this.id = target.value;
+            if(query==`${spec.query}/${referencer}`&&event=='v'){
+                this.rid = target.value;
             }
         })
         this.fileControl.services.push(this);
@@ -51,14 +55,23 @@ abstract class Service{
         });
         focusRoot.subscribeFocusService(this.onFocusChanged);
     }
+
+    /**
+     * Must be idempotent
+     * @param referencer
+     */
+    reference(referencer: CrossReference){}
+
+    /**
+     * Must be idempotent
+     */
+    dereference(){};
     detach(){
         delete this.serviceEngine.activeServices[this.spec.sid];
         this.focusRoot.unsubscribeFocusService(this.onFocusChanged);
     }
     abstract onFocusChanged(spec: Spec, focused:boolean):void;
 }
-
-
 
 interface ServiceTemplate{
     service: string;
@@ -80,9 +93,11 @@ class ServiceEngine {
     serviceConfig: UFile;
     jsonText: string;
     activeServices: {[sid: number]:Service} = {};
+    fileControl: GFileControl;
     //Preliminary load, generates the service templates based on the service configs
-    constructor(ui: UI) {
+    constructor(ui: UI, fileControl: GFileControl) {
         this.ui = ui;
+        this.fileControl= fileControl;
         for (let file of this.ui.fs.fileRoot.children) {//Locate the spec file
             if (file.name == 'ui-bindings.json') {
                 this.serviceConfig = file;
@@ -100,8 +115,26 @@ class ServiceEngine {
                 this.serviceTemplates[query] = {...prototype,...template};
             }
         }
+        console.log(this.serviceTemplates);
     }
 
-
+    getTargetServices(target:string|string[], rid: number){
+        let matchedSpecs = [];
+        let matchedServices = []
+        if(target instanceof Array){
+            for(let t of target){
+                matchedSpecs.push(...this.fileControl.specRoot.matchChildren(...t.split('/')));
+            }
+        }else{
+            matchedSpecs = this.fileControl.specRoot.matchChildren(...target.split('/'));
+        }
+        for(let spec of matchedSpecs){
+            let service = this.activeServices[spec.sid];
+            if(service.rid == rid && service.referencable){
+                matchedServices.push(service);
+            }
+        }
+        return matchedServices;
+    }
 }
 export {Service, ServiceTemplate, ServiceEngine};

@@ -20,7 +20,6 @@ const darkTheme = createTheme({
     },
 });
 
-
 const drawerWidth = 300;
 
 class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, activeSpec: Spec,
@@ -39,10 +38,17 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
             this.closeSpec();
             return;
         }
+        if(this.ui.activeSpec!=undefined){
+            this.ui.activeSpec.selected = false;
+        }
+        specNode.selected = true;
         this.ui.activeSpec = specNode;
         this.setState({activeSpec: specNode});
     }
     closeSpec(){
+        if(this.ui.activeSpec!=undefined){
+            this.ui.activeSpec.selected = false;
+        }
         this.ui.activeSpec = this.ui.emptySpec;
         this.setState({activeSpec: this.ui.activeSpec});
     }

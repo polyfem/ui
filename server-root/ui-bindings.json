@@ -3,7 +3,7 @@
     "service": "selector",
     "target": "../../",
     "referencer": "id",
-    "color": [0.49,0.42,0.21],
+    "color":[0.98,0.84,0.42],
     "effectiveDepth": 2,
     "layer": 0
   },
@@ -31,7 +31,7 @@
     "service": "selector",
     "target": "../../",
     "referencer": "id",
-    "color":  [0.15, 0.17, 0.33],
+    "color":  [0.30, 0.34, 0.66],
     "effectiveDepth": 2,
     "layer": 0
   },
@@ -55,37 +55,25 @@
     "service": "selector.axis",
     "extends": "$surface_selection"
   },
-  "/boundary_conditions/pressure_boundary/*": {
+  "$boundary_condition": {
     "service": "cross reference",
     "referencer": "id",
     "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
     "color": [],
-    "effectiveDepth": 2,
+    "effectiveDepth": 1,
     "layer": 0
+  },
+  "/boundary_conditions/pressure_boundary/*": {
+    "extends": "$boundary_condition"
   },
   "/boundary_conditions/obstacle_displacements/*": {
-    "service": "cross reference",
-    "referencer": "id",
-    "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
-    "color": [],
-    "effectiveDepth": 2,
-    "layer": 0
+    "extends": "$boundary_condition"
   },
   "/boundary_conditions/dirichlet_boundary/*": {
-    "service": "cross reference",
-    "referencer": "id",
-    "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
-    "color": [],
-    "effectiveDepth": 2,
-    "layer": 0
+    "extends": "$boundary_condition"
   },
   "/boundary_conditions/neumann_boundary/*": {
-    "service": "cross reference",
-    "referencer": "id",
-    "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
-    "color": [],
-    "effectiveDepth": 2,
-    "layer": 0
+    "extends": "$boundary_condition"
   },
   "/geometry/*/volume_selection/*,/geometry/*/surface_selection/*": {
     "service": "group",

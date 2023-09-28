@@ -4,6 +4,7 @@ import THREE, {Mesh, MeshPhongMaterial, Vector2, Vector3} from "three";
 import {Canvas, CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
 import Selector from "./Selector";
+import CrossReference from "./CrossReference";
 
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xabcdef, visible:true,
@@ -18,7 +19,6 @@ export default class PlaneSelector extends Selector{
     helper: THREE.Mesh;
     surfaceSelectorEngaged = false;
     meshController: GeometryController;
-    focused: boolean = false;
 
     /**
      *
@@ -78,10 +78,6 @@ export default class PlaneSelector extends Selector{
         super.detach();
         this.meshController.mesh.remove(this.helper);
     }
-
-    effectiveDepth: number;
-    layer: number;
-    id: number;
 
     onFocusChanged(spec: Spec, focused: boolean): void {
         this.focused = focused;

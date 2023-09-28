@@ -11,6 +11,8 @@ import SphereSelector from "./graphics/SphereSelector";
 import PlaneSelector from "./graphics/PlaneSelector";
 import AxisSelector from "./graphics/AxisSelector";
 import {temp} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
+import CrossReference from "./graphics/CrossReference";
+import generateBrightMutedColor from "./graphics/RandomColor";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -76,7 +78,7 @@ class GFileControl extends FileControl{
     serviceEngine: ServiceEngine;
     constructor(ui: UI,fileName: string, fileReference: UFile){
         super(ui,fileName, fileReference);
-        this.serviceEngine = new ServiceEngine(ui);
+        this.serviceEngine = new ServiceEngine(ui, this);
     }
 
     loadFile(){
@@ -86,7 +88,13 @@ class GFileControl extends FileControl{
                 this.specRoot = this.ui.specEngine.loadAndValidate(json);
                 this.ui.setSpec(this.specRoot);
                 let geometries:GeometryJSONStruct[] = json['geometry'];
-                geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index));
+                let count = 0;
+                geometries.forEach((geometry, index) => this.canvasController.loadGeometry(geometry,index, ()=>{
+                    count++;
+                    if(count==geometries.length){ // Only way to ensure that bind services gets called after all geometries loaded
+                        this.bindServices();
+                    }
+                }));
             });
             // Following method times for 0.5 seconds of inactivity
             // New requests increment the waiting key
@@ -108,7 +116,7 @@ class GFileControl extends FileControl{
     }
 
     bindServices(){
-        for(let query in this.serviceEngine.serviceTemplates){ // Iterate through service templates
+        for(let query in this.serviceEngine.serviceTemplates){ // Iterate through service template
             let specs = this.specRoot.matchChildren(...query.split('/'));
             let template = this.serviceEngine.serviceTemplates[query];
             for(let spec of specs){ // Find all matching specs
@@ -129,13 +137,18 @@ class GFileControl extends FileControl{
     }
 
     createService(spec: Spec, template: ServiceTemplate){
-        let [serviceName, variant] = template.service.split(':');
+        let [serviceName, variant] = template.service.split('.');
         switch(serviceName){ // Apply the corresponding services
             case 'selector':
                 this.subscribeSelector(spec,template, selectorMapping[variant]);
                 break;
-            case 'crossReference':
-
+            case 'cross reference':
+                let cr = new CrossReference(this, template.target);
+                cr.attach(spec,template.effectiveDepth,template.layer,template.referencer);
+                let color
+                    = template.color.length==3?template.color:generateBrightMutedColor();
+                cr.setColor(...color);
+                break;
         }
 
     }
@@ -146,6 +159,8 @@ class GFileControl extends FileControl{
             return;
         let target = selectorSpec.findChild(<string> template.target);
         let geometryControllers = this.canvasController.meshList[target.sid];
+        if(geometryControllers==undefined)
+            return;
         for(let geometryController of geometryControllers){
             let selector = new T(this.canvasController, geometryController);
             selector.attach(selectorSpec,template.effectiveDepth,template.layer,template.referencer);

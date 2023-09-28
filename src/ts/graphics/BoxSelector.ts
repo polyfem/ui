@@ -52,6 +52,7 @@ export default class BoxSelector extends Selector{
         super.setColor(r, g, b);
         // @ts-ignore
         this.helper.material.color.setRGB(r,g,b);
+        this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
     }
 
     detach() {
@@ -59,7 +60,6 @@ export default class BoxSelector extends Selector{
         this.meshController.mesh.remove(this.helper);
     }
 
-    focused = false;
     onFocusChanged(spec: Spec, focused: boolean): void {
         this.focused = focused;
         this.helper.visible = focused;

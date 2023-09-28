@@ -284,7 +284,6 @@ class Spec{
     pushChild(child: Spec){
         if(child==undefined) // Ignore undefined requests
             return;
-        console.log(this);
         if(this.type == 'list'){
             child.updateQueries(this.query,`${this.subNodesCount}`);
             this.children[this.subNodesCount] = child;

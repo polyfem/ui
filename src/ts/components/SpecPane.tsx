@@ -11,12 +11,9 @@ import {
     Box,
     TextField,
     Tooltip,
-    tooltipClasses,
     TooltipProps,
-    Typography,
     IconButton,
     Divider,
-    Button
 } from "@mui/material";
 import {ChangeEvent, Fragment, useEffect, useState} from "react";
 import List from "@mui/material/List";
@@ -30,7 +27,6 @@ import {styled} from "@mui/material/styles";
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
-import ClickEvent = JQuery.ClickEvent;
 
 const HtmlTooltip = styled(({className, ...props}: TooltipProps) => (
     <Tooltip {...props} classes={{popper: className}}/>
@@ -296,7 +292,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                                 : undefined)
                     }
                 </List>
-                <SpecCreator ui={ui} specNode={specNode} level={level + 1}
+                <SpecCreator key={specNode.sid} ui={ui} specNode={specNode} level={level + 1}
                              color={getColor(level + 1)}/>
                 {/*Tentative previews begin here*/}
                 <List component="div" disablePadding>
