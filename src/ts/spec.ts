@@ -379,6 +379,29 @@ class Spec{
         }
     }
 
+    matchesQuery(...keys:string[]):boolean{
+        let l = keys.length;
+        //Skip redundant pseudo path
+        while(keys.length>1&&(keys[l-1]=='.'||keys[l-1]==''))
+            keys.pop();
+        if(keys.length==0||keys[l-1]=='.'||keys[l-1]=='')
+            return true;
+        else if(keys[l-1].split(':')[0]=='*'){
+            let typename = keys[l-1].split(':')[1];
+            if(typename!=undefined&&this.typename!=typename)
+                return false;
+            keys.pop();
+            return this.parent.matchesQuery(...keys);
+        }
+        else {
+            let [childKey, typename] = keys[l-1].split(':');
+            if(!(this.name==childKey&&(typename==undefined||this.typename==typename)))
+                return false;
+            keys.pop();
+            return this.parent.matchesQuery(...keys);
+        }
+    }
+
     /**
      * Recursively sets this and all
      * its subsequent children with the assigned value of

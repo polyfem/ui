@@ -38,6 +38,7 @@ abstract class Service{
             if(query==`${spec.query}/${referencer}`&&event=='v'){
                 this.rid = target.value;
             }
+            this.onFocusChanged(focusRoot, focusRoot.focused);
         })
         this.fileControl.services.push(this);
         let focusRoot = spec;
@@ -54,6 +55,7 @@ abstract class Service{
             }
         });
         focusRoot.subscribeFocusService(this.onFocusChanged);
+        this.onFocusChanged(focusRoot,focusRoot.focused);
     }
 
     /**
@@ -69,6 +71,7 @@ abstract class Service{
     detach(){
         delete this.serviceEngine.activeServices[this.spec.sid];
         this.focusRoot.unsubscribeFocusService(this.onFocusChanged);
+        this.onFocusChanged(this.focusRoot, false);
     }
     abstract onFocusChanged(spec: Spec, focused:boolean):void;
 }
@@ -115,7 +118,6 @@ class ServiceEngine {
                 this.serviceTemplates[query] = {...prototype,...template};
             }
         }
-        console.log(this.serviceTemplates);
     }
 
     getTargetServices(target:string|string[], rid: number){

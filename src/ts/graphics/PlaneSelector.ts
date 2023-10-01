@@ -28,7 +28,7 @@ export default class PlaneSelector extends Selector{
     constructor(canvasController: CanvasController, geometryController: GeometryController) {
         super(canvasController,geometryController);
         this.planeBoundary = new THREE.PlaneGeometry(5,5,1,1)
-        this.helper = new THREE.Mesh(this.planeBoundary, selectionMaterial);
+        this.helper = new THREE.Mesh(this.planeBoundary, this.selectionMaterial);
         this.helper.visible = false;
         this.helper.matrixAutoUpdate = false;
         this.meshController.mesh.add(this.helper);

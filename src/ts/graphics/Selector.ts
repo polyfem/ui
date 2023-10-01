@@ -59,7 +59,7 @@ export default abstract class Selector extends Service{
 
     reference(referencer: CrossReference) {
         let [r,g,b] = (referencer.focused?referencer:this).color;
-        this.selectionMaterial.color.setRGB(r,g,b);
+        // this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
         this.onFocusChanged(this.focusRoot,referencer.focused);
     }

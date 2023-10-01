@@ -127,7 +127,7 @@ class GFileControl extends FileControl{
             if(event=='ca'){// ca events attach matching services to spec site,
                             // attaching automatically subscribes detaching actions up to their effective depth.
                 for(let serviceQuery in this.serviceEngine.serviceTemplates){
-                    if(SpecEngine.matchQueries(query,serviceQuery)){
+                    if(target.matchesQuery(...serviceQuery.split('/'))){
                         let template = this.serviceEngine.serviceTemplates[serviceQuery];
                         this.createService(target, template);
                     }
