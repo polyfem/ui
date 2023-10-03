@@ -5,9 +5,9 @@
 			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					-0.032314297426222716,
-					1.9404070750230642,
-					1.1211638560740842
+					1.0371420676733347,
+					1.7816931443966637,
+					0.36420759342469555
 				],
 				"scale": [
 					0.6962533593177795,
@@ -42,9 +42,9 @@
 			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					0.21060486847295912,
-					-0.4824085455089866,
-					2.8593596000923878
+					1.0913356408517363,
+					-0.5493734695801251,
+					1.4579413669549244
 				],
 				"scale": [
 					1.5916951278529867,
@@ -100,9 +100,9 @@
 			"mesh": "sol.vtu",
 			"transformation": {
 				"translation": [
-					-1.0948877649758706,
-					0.671015069185906,
-					0.3913199150487664
+					0.5957088902803306,
+					0.4341489564254135,
+					-0.3915690594259855
 				],
 				"scale": [
 					19.081816530210585,
@@ -154,8 +154,8 @@
 			"mesh": "creature.msh",
 			"transformation": {
 				"translation": [
-					-3.0546954544724905,
-					0.0026234264414424224,
+					2.1888514137271757,
+					0.721669415942198,
 					-0.35478389185044773
 				],
 				"scale": [
@@ -233,7 +233,7 @@
 			0,
 			9.81,
 			0,
-			null
+			21
 		],
 		"pressure_boundary": [
 			{
@@ -257,22 +257,32 @@
 		],
 		"dirichlet_boundary": [
 			{
-				"id": 5,
-				"value": []
+				"id": 3,
+				"value": [
+					null,
+					null
+				]
 			},
 			{
-				"id": 4,
+				"id": 1,
 				"value": []
 			}
 		]
 	},
 	"materials": [
 		{
-			"id": 1,
-			"E": 100000,
-			"nu": 0.4,
-			"rho": 1000,
-			"type": "NeoHookean"
+			"c1": null,
+			"c2": null,
+			"k": null,
+			"E": {
+				"value": null
+			}
+		},
+		{
+			"viscosity": null,
+			"E": {
+				"value": null
+			}
 		}
 	],
 	"output": {
@@ -283,5 +293,16 @@
 				"acceleration": true
 			}
 		}
-	}
+	},
+	"solver": {
+		"max_threads": 2,
+		"augmented_lagrangian": {
+			"initial_weight": null,
+			"scaling": null,
+			"max_weight": null,
+			"eta": null,
+			"max_solver_iters": null
+		}
+	},
+	"space": {}
 }

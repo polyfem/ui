@@ -533,6 +533,7 @@ class Canvas {
     public gridHelper: GridHelper[] = [];
     public axesHelper: AxesHelper;
     public canvasController: CanvasController;
+    public gui: GUI;
     constructor(canvasController: CanvasController, camera: THREE.Camera, scene: THREE.Scene,
                 renderer: THREE.WebGLRenderer, config: { perspective: boolean, dpp: number }, htmlElement: HTMLElement) {
         this.canvasController = canvasController;
@@ -543,39 +544,11 @@ class Canvas {
         this.config = config;
         htmlElement.appendChild(renderer.domElement);
         window.addEventListener("resize", this.onResize.bind(this));
-        const gui = new GUI({container:htmlElement});
-        gui.domElement.style.position='absolute';
-        gui.domElement.style.top = '0';
-        gui.domElement.style.left = '0';
-        const folder = gui.addFolder( 'Folder' );
 
-        const folderParams = {
-            number: 0.5,
-            boolean: false,
-            color: '#0cf',
-            function() { console.log( 'hi' ) }
-        };
-
-        folder.add( folderParams, 'number', 0, 1 );
-        folder.add( folderParams, 'boolean' );
-        folder.addColor( folderParams, 'color' );
-        folder.add( folderParams, 'function' );
-
-        const params = {
-            options: 10,
-            boolean: true,
-            string: 'lil-gui',
-            number: 0,
-            color: '#aa00ff',
-            function() { console.log( 'hi' ) }
-        };
-
-        gui.add( params, 'options', { Small: 1, Medium: 10, Large: 100 } );
-        gui.add( params, 'boolean' );
-        gui.add( params, 'string' );
-        gui.add( params, 'number' );
-        gui.addColor( params, 'color' );
-        gui.add( params, 'function' ).name( 'Custom Name' );
+        this.gui = new GUI({container:htmlElement});
+        this.gui.domElement.style.position='absolute';
+        this.gui.domElement.style.top = '0';
+        this.gui.domElement.style.left = '0';
 
         let orbitControl = new OrbitControls(camera, renderer.domElement);
         this.controlsGizmo = new  OrbitControlsGizmo(orbitControl, { size:  100, padding:  8 });
@@ -634,9 +607,11 @@ class Canvas {
 
     setNewHost(element: HTMLElement) {
         this.htmlElement.removeChild(this.renderer.domElement);
+        this.htmlElement.removeChild(this.gui.domElement);
         this.htmlElement.removeChild(this.controlsGizmo.domElement);
         element.appendChild(this.renderer.domElement);
         element.appendChild(this.controlsGizmo.domElement);
+        element.appendChild(this.gui.domElement);
         this.htmlElement = element;
         this.onResize();
     }

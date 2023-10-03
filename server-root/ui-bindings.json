@@ -5,7 +5,7 @@
     "referencer": "id",
     "color":[0.98,0.84,0.42],
     "effectiveDepth": 2,
-    "layer": 0
+    "layer": "specification"
   },
   "/geometry/*/volume_selection/*:box": {
       "service": "selector.box",
@@ -33,7 +33,7 @@
     "referencer": "id",
     "color":  [0.30, 0.34, 0.66],
     "effectiveDepth": 2,
-    "layer": 0
+    "layer": "specification"
   },
   "/geometry/*/surface_selection/*:box": {
     "service": "selector.box",
@@ -59,9 +59,8 @@
     "service": "cross reference",
     "referencer": "id",
     "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
-    "color": [],
     "effectiveDepth": 1,
-    "layer": 0
+    "layer": "specification"
   },
   "/boundary_conditions/pressure_boundary/*": {
     "extends": "$boundary_condition"
@@ -79,6 +78,6 @@
     "service": "group",
     "referencer": "id",
     "colorSet": "auto",
-    "layer": 1
+    "layer": "id"
   }
 }

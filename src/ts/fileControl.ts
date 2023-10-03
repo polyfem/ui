@@ -113,6 +113,7 @@ class GFileControl extends FileControl{
         }
         else
             this.canvasController.loadFile(this.fileReference);
+        this.serviceEngine.intGUI(this.canvasController.canvas.gui);
     }
 
     bindServices(){
@@ -146,11 +147,15 @@ class GFileControl extends FileControl{
                 let cr = new CrossReference(this, template.target);
                 cr.attach(spec,template.effectiveDepth,template.layer,template.referencer);
                 let color
-                    = template.color.length==3?template.color:generateBrightMutedColor();
+                    = template.color&&template.color.length==3?template.color:generateBrightMutedColor();
                 cr.setColor(...color);
+                if(template.extends){
+                    this.serviceEngine.extendsMapping[template.extends].push(cr);
+                }
+                break;
+            case 'group':
                 break;
         }
-
     }
 
     subscribeSelector(selectorSpec:Spec, template: ServiceTemplate,
@@ -168,6 +173,9 @@ class GFileControl extends FileControl{
                 selector.setColor(0.6706,0.8039, 0.9373);
             else
                 selector.setColor(...template.color);
+            if(template.extends){
+                this.serviceEngine.extendsMapping[template.extends].push(selector);
+            }
         }
     };
 

@@ -7,14 +7,10 @@ export default class CrossReference extends Service{
         super(fileControl);
         this.target = target;
     }
-    attach(spec: Spec, effectiveDepth: number, layer: number, referencer: string) {
+    attach(spec: Spec, effectiveDepth: number, layer: string, referencer: string) {
         super.attach(spec, effectiveDepth, layer, referencer);
     }
 
-    color: number[];
-    setColor(r:number,g:number,b:number){
-        this.color=[r,g,b];
-    }
     focused: boolean = false;
     /**
      * Query string for referenced targets

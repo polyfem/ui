@@ -35,14 +35,13 @@ export default abstract class Selector extends Service{
     }
 
     abstract surfaceSelectionListener(query: string, target: Spec, event: string):void;
-    color = [0.6706,0.8039, 0.9373];
     setColor(r: number, g: number, b: number): void {
-        this.color = [r,g,b];
+        super.setColor(r,g,b);
         this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
     }
 
-    attach(spec: Spec, effectiveDepth: number, layer: number, reference: string): void {
+    attach(spec: Spec, effectiveDepth: number, layer: string, reference: string): void {
         super.attach(spec, effectiveDepth, layer, reference);
         // surfaceSelection.subscribeSelectionService(boxSelector.selectionListener, false);
         spec.subscribeChangeService(this.surfaceSelectionListener)
@@ -58,9 +57,10 @@ export default abstract class Selector extends Service{
     }
 
     reference(referencer: CrossReference) {
+        super.reference(referencer);
         let [r,g,b] = (referencer.focused?referencer:this).color;
         // this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
-        this.onFocusChanged(this.focusRoot,referencer.focused);
+        this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
     }
 }

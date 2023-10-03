@@ -35,8 +35,10 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
     openSpec(target: string){
         let specNode = this.ui.specRoot.children[target];
         if(specNode==undefined){
-            this.closeSpec();
-            return;
+            // this.closeSpec();
+            // return;
+            specNode = this.ui.specEngine.query(`/${target}`,this.ui.specRoot);
+            this.ui.specRoot.children[target] = specNode;
         }
         if(this.ui.activeSpec!=undefined){
             this.ui.activeSpec.selected = false;

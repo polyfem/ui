@@ -54,7 +54,6 @@ export default class BoxSelector extends Selector{
         this.helper.material.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
     }
-
     detach() {
         super.detach();
         this.meshController.mesh.remove(this.helper);
