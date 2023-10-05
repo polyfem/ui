@@ -10,6 +10,15 @@ abstract class Service{
     effectiveDepth: number;
     layer: string;
     rid: number;
+    static vidGenerator = 0;
+    /**
+     * The sid of specs are unique and immutable
+     */
+    private vidStore = Service.vidGenerator++;
+    // Service ID
+    get vid(){
+        return this.vidStore;
+    }
     spec: Spec;
     focusRoot: Spec;
     serviceEngine: ServiceEngine;
@@ -71,14 +80,14 @@ abstract class Service{
      * @param referencer
      */
     reference(referencer: CrossReference){
-        this.referencer[referencer.rid] = referencer;
+        this.referencer[referencer.vid] = referencer;
     }
 
     /**
      * Must be idempotent
      */
     dereference(referencer: CrossReference){
-        delete this.referencer[referencer.rid];
+        delete this.referencer[referencer.vid];
     };
     detach(){
         delete this.serviceEngine.activeServices[this.spec.sid];
@@ -107,6 +116,8 @@ abstract class Service{
     getFocusProxy(focused:boolean):boolean{
         let referenced = false;
         for(let key in this.referencer){
+            console.log(this.referencer[key].spec.query);
+            console.log(this.referencer[key].focused);
             referenced||=this.referencer[key].getFocusProxy(this.referencer[key].focused);
         }
         return (referenced||this.visibilityOverrideStore||focused)&&this.layer==this.serviceEngine.layer;

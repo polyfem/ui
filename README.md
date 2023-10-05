@@ -138,5 +138,8 @@ var mtime = stats.mtime;
 console.log(mtime);
 ```
 
+## Architectural Diagram
+![img.png](./assets/architecture.png)
+
 ## Debugging
 ~~* `npm` commands now needs to be run with `--force` due to unknown versioning issues in React.~~
