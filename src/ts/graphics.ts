@@ -356,36 +356,40 @@ class CanvasController{
         // });
         // subscribeSurfaceSelections();
 
-        const translationListener = (query:string, target:Spec)=>{
-            let tr = target?.compile();
-            if(tr instanceof Array&&tr.length<3)
-                return;
-            let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
-            this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
-                let child = controller.mesh;
-                if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+        const translationListenerFactory = (target: Spec)=>{
+            return (query:string)=>{
+                let tr = target?.compile();
+                if(tr instanceof Array&&tr.length<3)
                     return;
-                }
-                if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
-                    child.position.set(translation[0],translation[1],translation[2]);});
-
+                let translation = <number[]>((tr instanceof Number)? [tr, tr, tr]: tr);
+                this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
+                    let child = controller.mesh;
+                    if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                        return;
+                    }
+                    if(!isNaN((translation[0]))&&!isNaN(translation[1])&&!isNaN(translation[2]))
+                        child.position.set(translation[0],translation[1],translation[2]);});
+            };
         }
-        const scaleListener = (query:string, target:Spec)=>{
-            let sc = target?.compile();
-            if(sc instanceof Array&&sc.length<3)
-                return;
-            let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
-            this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
-                let child = controller.mesh;
-                if(this.pauseGeometryUpdate||child instanceof THREE.Group){
-                    return;
-                }
-                if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
-                    child.scale.set(scale[0],scale[1],scale[2]);
-                controller.updateSelectors();
-            });
-        }
-        const rotationListener = (query:string, target:Spec)=>{
+        const scaleListenerFactory = (target:Spec)=>{
+           return (query:string)=>{
+               let sc = target?.compile();
+               if(sc instanceof Array&&sc.length<3)
+                   return;
+               let scale = <number[]>((sc instanceof Number)? [sc, sc, sc]: sc);
+               this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
+                   let child = controller.mesh;
+                   if(this.pauseGeometryUpdate||child instanceof THREE.Group){
+                       return;
+                   }
+                   if(!isNaN((scale[0]))&&!isNaN(scale[1])&&!isNaN(scale[2]))
+                       child.scale.set(scale[0],scale[1],scale[2]);
+                   controller.updateSelectors();
+               });
+           };
+       }
+        const rotationListenerFactory = (target:Spec)=>{
+            return (query:string)=>{
             if(target==undefined)
                 return;
             let rotation = target.compile();
@@ -396,6 +400,7 @@ class CanvasController{
                 return;
             this.meshList[geometrySpec.sid].forEach( ( controller:GeometryController )=>{
                 let child = controller.mesh;
+                console.log(child);
                 if(this.pauseGeometryUpdate||child instanceof THREE.Group){
                     return;
                 }
@@ -403,8 +408,11 @@ class CanvasController{
                     if(rotationMode=='quaternion'&&!isNaN(rotation[3])){
                         child.setRotationFromQuaternion(new Quaternion(rotation[0],rotation[1],rotation[2],rotation[3]))
                     }
-                    else if(rotationMode=='euler')
-                        child.rotation.set(rotation[0],rotation[1],rotation[2]);});
+                    else if(rotationMode=='euler'){
+                        console.log("setting euler");
+                        child.rotation.set(rotation[0],rotation[1],rotation[2]);}
+            });
+                };
         }
         //Here the parameter target will be the added children of transformation spec,
         //the listeners above are designed for each of the translation/rotation/scale updates
@@ -413,18 +421,16 @@ class CanvasController{
                 let target = this.fileControl.specRoot.findChild(query);
                 switch(target.name){
                     case 'translation':
-                        target.subscribeChangeService(translationListener);
+                        target.subscribeChangeService(translationListenerFactory(target));
                         break;
                     case 'rotation':
-                        target.subscribeChangeService(rotationListener);
+                        target.subscribeChangeService(rotationListenerFactory(target));
                         break;
                     case 'rotation_mode':
-                        target.subscribeChangeService(()=>{
-                            rotationListener(query,target.parent.findChild('rotation'));
-                        });
+                        target.subscribeChangeService(rotationListenerFactory(target.parent.findChild('rotation')));
                         break;
                     case 'scale':
-                        target.subscribeChangeService(scaleListener);
+                        target.subscribeChangeService(scaleListenerFactory(target));
                         break;
                     default: //Yet to be implemented: rotation_mode, dimension
                 }
@@ -438,20 +444,18 @@ class CanvasController{
                 switch(key){
                     case 'translation':
                         target.subscribeChangeService
-                        (translationListener)(target.query,target,undefined);
+                        (translationListenerFactory(target))(target.query,target,undefined);
                         break;
                     case 'rotation':
                         target.subscribeChangeService
-                        (rotationListener)(target.query,target,undefined);
+                        (rotationListenerFactory(target))(target.query,target,undefined);
                         break;
                     case 'rotation_mode':
-                        target.subscribeChangeService(()=>{
-                            rotationListener(target.query,target.parent.findChild('rotation'));
-                        });
+                        target.subscribeChangeService(rotationListenerFactory(target.parent.findChild('rotation')));
                         break;
                     case 'scale':
                         target.subscribeChangeService
-                        (scaleListener)(target.query,target,undefined);
+                        (scaleListenerFactory(target))(target.query,target,undefined);
                         break;
                     default: //Yet to be implemented: rotation_mode, dimension
                 }
