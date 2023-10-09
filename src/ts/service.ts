@@ -4,12 +4,13 @@ import {UI} from "./main";
 import {UFile} from "./server";
 import CrossReference from "./graphics/CrossReference";
 import GUI from "lil-gui";
+import Group from "./graphics/Group";
 
 abstract class Service{
     fileControl: GFileControl;
     effectiveDepth: number;
     layer: string;
-    rid: number;
+    rid: string;
     static vidGenerator = 0;
     /**
      * The sid of specs are unique and immutable
@@ -32,7 +33,7 @@ abstract class Service{
         console.log(this);
     }
 
-    color = [0.6706,0.8039, 0.9373];
+    color:[number,number,number] = [0.6706,0.8039, 0.9373];
     setColor(r: number, g: number, b: number): void {
         this.color = [r, g, b];
     }
@@ -46,13 +47,20 @@ abstract class Service{
      */
     attach(spec: Spec, effectiveDepth: number, layer: string, referencer: string): void {
         this.spec = spec;
-        this.serviceEngine.activeServices[spec.sid]=this;
+        if(this.serviceEngine.activeServices[spec.sid]==undefined){
+            this.serviceEngine.activeServices[spec.sid] = [];
+        }
+        this.serviceEngine.activeServices[spec.sid].push(this);
         this.effectiveDepth = effectiveDepth;
         this.layer = layer;
         this.rid = spec.findChild(referencer)?.compile();
         spec.subscribeChangeService((query, target, event)=>{
             if(query==`${spec.query}/${referencer}`&&event=='v'){
+                let prevRid = this.rid;
                 this.rid = target.value;
+                if(prevRid!=this.rid){
+                    this.onRidChanged(prevRid, this.rid);
+                }
             }
             this.onFocusChangedProxy(focusRoot, focusRoot.focused);
         })
@@ -89,11 +97,13 @@ abstract class Service{
     dereference(referencer: CrossReference){
         delete this.referencer[referencer.vid];
     };
+
     detach(){
         delete this.serviceEngine.activeServices[this.spec.sid];
         this.focusRoot.unsubscribeFocusService(this.onFocusChangedProxy);
         this.onFocusChangedProxy(this.focusRoot, false);
     }
+
     abstract onFocusChanged(spec: Spec, focused:boolean):void;
 
     /**
@@ -113,14 +123,14 @@ abstract class Service{
         this.onFocusChanged(spec, this.getFocusProxy(focused));
     }
 
+    abstract onRidChanged(oId: string, nId:string):void;
+
     getFocusProxy(focused:boolean):boolean{
         let referenced = false;
         for(let key in this.referencer){
-            console.log(this.referencer[key].spec.query);
-            console.log(this.referencer[key].focused);
             referenced||=this.referencer[key].getFocusProxy(this.referencer[key].focused);
         }
-        return (referenced||this.visibilityOverrideStore||focused)&&this.layer==this.serviceEngine.layer;
+        return (referenced||this.layer==this.serviceEngine.layer&&focused)||this.visibilityOverrideStore;
     }
 }
 
@@ -144,9 +154,10 @@ class ServiceEngine {
     extendsMapping:{[query: string]:Service[]}={};
     serviceConfig: UFile;
     jsonText: string;
-    activeServices: {[sid: number]:Service} = {};
+    activeServices: {[sid: number]:Service[]} = {};
     fileControl: GFileControl;
     gui:GUI;
+    groups: {[key:string]:Group[]}={};
     //Preliminary load, generates the service templates based on the service configs
     constructor(ui: UI, fileControl: GFileControl) {
         this.ui = ui;
@@ -173,11 +184,20 @@ class ServiceEngine {
         }
     }
 
+    refreshServices(){
+        for(let key in this.activeServices){
+            let services = this.activeServices[key];
+            for(let service of services){
+                service.onFocusChangedProxy(service.focusRoot,service.focusRoot.focused);
+            }
+        }
+    }
+
     /**
      * Controlled values
      */
     layer:string;
-    intGUI(gui:GUI){
+    initGUI(gui:GUI){
         this.gui = this.fileControl.canvasController.canvas.gui;
         const serviceFolder = this.gui.addFolder( 'Services' );
         serviceFolder.close();
@@ -240,13 +260,25 @@ class ServiceEngine {
         layer.onChange((layer:string)=>{
             this.layer = layer;
             for(let key in this.activeServices){
-                let service = this.activeServices[key];
-                service.onFocusChangedProxy(service.spec, service.spec.focused);
+                let services = this.activeServices[key];
+                for(let service of services){
+                    service.onFocusChangedProxy(service.focusRoot, service.focusRoot.focused);
+                }
             }
-        })
+        });
+
+        const idGroupFolder = this.gui.addFolder( 'Reference groups' );
+        const groupParams:{[key:string]:boolean} = {};
+        for(let id in this.groups){
+            let group = this.groups[id];
+            let service = group[0];
+            console.log(`${service.referencer}: ${service.rid}`);
+            groupParams[`${service.referencer}: ${service.rid}`] = false;
+            idGroupFolder.add(groupParams,`${service.referencer}: ${service.rid}`);
+        }
     }
 
-    getTargetServices(target:string|string[], rid: number){
+    getTargetServices(target:string|string[], rid: string){
         let matchedSpecs = [];
         let matchedServices = []
         if(target instanceof Array){
@@ -257,9 +289,11 @@ class ServiceEngine {
             matchedSpecs = this.fileControl.specRoot.matchChildren(...target.split('/'));
         }
         for(let spec of matchedSpecs){
-            let service = this.activeServices[spec.sid];
-            if(service.rid == rid && service.referencable){
-                matchedServices.push(service);
+            let services = this.activeServices[spec.sid];
+            for(let service of services){
+                if(service.rid == rid && service.referencable){
+                    matchedServices.push(service);
+                }
             }
         }
         return matchedServices;

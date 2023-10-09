@@ -22,4 +22,17 @@ export default class CrossReference extends Service{
             service.reference(this);
         }
     }
+    setColor(r:number,g:number,b:number){
+        super.setColor(r,g,b);
+        this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
+    }
+
+    onRidChanged(oId: string, nId: string) {
+        for(let service of this.serviceEngine.getTargetServices(this.target, oId)){
+            service.dereference(this);
+        }
+        for(let service of this.serviceEngine.getTargetServices(this.target, nId)){
+            service.reference(this);
+        }
+    }
 }

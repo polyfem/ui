@@ -39,5 +39,18 @@ function generateBrightMutedColor(): [number, number, number] {
 
     return hslToRgb(hue, saturation, lightness);
 }
+function generateHighContrastColor(): [number, number, number] {
+    // Random hue between 0 and 1
+    const hue = Math.random();
 
-export default generateBrightMutedColor;
+    // Random saturation between 70% and 90%
+    const saturation = Math.floor(Math.random() * (91 - 70) + 70);
+
+    // Random lightness between 10% and 90% but favoring extremes
+    let lightness: number;
+    lightness = 50;
+
+    return hslToRgb(hue, saturation, lightness);
+}
+
+export {generateBrightMutedColor,generateHighContrastColor};

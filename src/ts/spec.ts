@@ -212,23 +212,16 @@ class Spec{
      * to false.
      */
     get focused(){
-        return this.focusedStore;
+        return this.focusedStore&&(this.parent==undefined||this.parent.focused);
     }
     private set focused(focused: boolean){
         this.focusedStore = focused;
-        if(focused){ // Update child to selected or secondary selected
-            for(let key in this.children){
-                let child = this.children[key];
-                child.focused = child.selectedStore||child.secondarySelectedStore;
-            }
-        }else{// Mask child to unfocused
-            for(let key in this.children){
-                let child = this.children[key];
-                child.focused = false;
-            }
+        for(let key in this.children){
+            let child = this.children[key];
+            child.focused = child.selectedStore||child.secondarySelectedStore;
         }
         for(let service of this.focusServices)
-            service(this,this.focusedStore);
+            service(this,this.focusedStore&&(this.parent==undefined||this.parent.focused));
     }
     subscribeFocusService(service:(target:Spec, selected:boolean)=>void){
         this.focusServices.push(service)

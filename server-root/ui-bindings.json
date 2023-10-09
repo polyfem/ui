@@ -74,10 +74,18 @@
   "/boundary_conditions/neumann_boundary/*": {
     "extends": "$boundary_condition"
   },
-  "/geometry/*/volume_selection/*,/geometry/*/surface_selection/*": {
+  "$groups": {
     "service": "group",
     "referencer": "id",
     "colorSet": "auto",
-    "layer": "id"
+    "layer": "id",
+    "target": ["/geometry/*/volume_selection/*","/geometry/*/surface_selection/*"],
+    "effectiveDepth": 0
+  },
+  "/geometry/*/volume_selection/*": {
+    "extends": "$groups"
+  },
+  "/geometry/*/surface_selection/*": {
+    "extends": "$groups"
   }
 }

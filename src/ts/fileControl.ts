@@ -12,7 +12,8 @@ import PlaneSelector from "./graphics/PlaneSelector";
 import AxisSelector from "./graphics/AxisSelector";
 import {temp} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
 import CrossReference from "./graphics/CrossReference";
-import generateBrightMutedColor from "./graphics/RandomColor";
+import {generateBrightMutedColor,generateHighContrastColor} from "./graphics/RandomColor";
+import Group from "./graphics/Group";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -86,6 +87,7 @@ class GFileControl extends FileControl{
             this.fileReference.syncRead((data:string)=>{
                 let json = JSON.parse(data);
                 this.specRoot = this.ui.specEngine.loadAndValidate(json);
+                this.specRoot.selected = true;
                 this.ui.setSpec(this.specRoot);
                 let geometries:GeometryJSONStruct[] = json['geometry'];
                 let count = 0;
@@ -113,14 +115,17 @@ class GFileControl extends FileControl{
         }
         else
             this.canvasController.loadFile(this.fileReference);
-        this.serviceEngine.intGUI(this.canvasController.canvas.gui);
+        this.serviceEngine.initGUI(this.canvasController.canvas.gui);
     }
 
     bindServices(){
         for(let query in this.serviceEngine.serviceTemplates){ // Iterate through service template
+            console.log(query);
             let specs = this.specRoot.matchChildren(...query.split('/'));
             let template = this.serviceEngine.serviceTemplates[query];
+            console.log(template);
             for(let spec of specs){ // Find all matching specs
+                console.log(spec);
                 this.createService(spec, template);// Create corresponding specs
             }
         }
@@ -154,6 +159,18 @@ class GFileControl extends FileControl{
                 }
                 break;
             case 'group':
+                let group = new Group(this, template.target instanceof Array?template.target:[template.target]);
+                let grColor:[number,number,number];
+                if(this.serviceEngine.groups[group.rid]==undefined)
+                    grColor = template.color&&template.color.length==3?template.color:generateHighContrastColor();
+                else{
+                    grColor =this.serviceEngine.groups[group.rid][0].color;
+                }
+                group.attach(spec,template.effectiveDepth,template.layer,template.referencer);
+                group.setColor(...grColor);
+                if(template.extends){
+                    this.serviceEngine.extendsMapping[template.extends].push(group);
+                }
                 break;
         }
     }

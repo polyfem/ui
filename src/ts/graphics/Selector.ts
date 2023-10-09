@@ -58,7 +58,29 @@ export default abstract class Selector extends Service{
 
     reference(referencer: CrossReference) {
         super.reference(referencer);
-        let [r,g,b] = (referencer.focused?referencer:this).color;
+        if(referencer.focused){
+            console.log('referenced by: ')
+            console.log(referencer);
+            console.log(referencer.focused);
+        }
+        let [r,g,b] = this.color;
+        for(let key in this.referencer){
+            if(this.referencer[key].getFocusProxy(this.referencer[key].focused)){
+                [r,g,b] = this.referencer[key].color;
+            }
+        }
+        // this.selectionMaterial.color.setRGB(r,g,b);
+        this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
+        this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
+    }
+
+    onRidChanged() {
+        this.serviceEngine.refreshServices();
+    }
+
+    dereference(referencer: CrossReference) {
+        super.dereference(referencer);
+        let [r, g, b] = this.color;
         // this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
         this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
