@@ -268,6 +268,7 @@ class Spec{
             this.isLeaf = true;
         }
         this.dispatchChange(this.query, this, 'i');
+        return this;
     }
     /**
      * Smart pushes a child to subNodes, uses

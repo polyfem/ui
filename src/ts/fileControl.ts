@@ -95,6 +95,7 @@ class GFileControl extends FileControl{
                     count++;
                     if(count==geometries.length){ // Only way to ensure that bind services gets called after all geometries loaded
                         this.bindServices();
+                        this.serviceEngine.initGUI(this.canvasController.canvas.gui);
                     }
                 }));
             });
@@ -115,17 +116,13 @@ class GFileControl extends FileControl{
         }
         else
             this.canvasController.loadFile(this.fileReference);
-        this.serviceEngine.initGUI(this.canvasController.canvas.gui);
     }
 
     bindServices(){
         for(let query in this.serviceEngine.serviceTemplates){ // Iterate through service template
-            console.log(query);
             let specs = this.specRoot.matchChildren(...query.split('/'));
             let template = this.serviceEngine.serviceTemplates[query];
-            console.log(template);
             for(let spec of specs){ // Find all matching specs
-                console.log(spec);
                 this.createService(spec, template);// Create corresponding specs
             }
         }

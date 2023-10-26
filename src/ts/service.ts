@@ -29,14 +29,16 @@ abstract class Service{
         this.serviceEngine = fileControl.serviceEngine;
         this.onFocusChanged = this.onFocusChanged.bind(this);
         this.onFocusChangedProxy = this.onFocusChangedProxy.bind(this);
-        console.log(`Service initiated:`);
-        console.log(this);
+        // console.log(`Service initiated:`);
+        // console.log(this);
     }
 
     color:[number,number,number] = [0.6706,0.8039, 0.9373];
     setColor(r: number, g: number, b: number): void {
         this.color = [r, g, b];
     }
+
+    referencer: string;
 
     /**
      * All services should subscribe their own detachment listeners when initialized
@@ -47,6 +49,7 @@ abstract class Service{
      */
     attach(spec: Spec, effectiveDepth: number, layer: string, referencer: string): void {
         this.spec = spec;
+        this.referencer = referencer;
         if(this.serviceEngine.activeServices[spec.sid]==undefined){
             this.serviceEngine.activeServices[spec.sid] = [];
         }
@@ -82,20 +85,20 @@ abstract class Service{
         this.onFocusChangedProxy(focusRoot,focusRoot.focused);
     }
 
-    referencer:{[rid:number]:CrossReference}={};
+    crossReferences:{[rid:number]:CrossReference}={};
     /**
      * Must be idempotent
      * @param referencer
      */
     reference(referencer: CrossReference){
-        this.referencer[referencer.vid] = referencer;
+        this.crossReferences[referencer.vid] = referencer;
     }
 
     /**
      * Must be idempotent
      */
     dereference(referencer: CrossReference){
-        delete this.referencer[referencer.vid];
+        delete this.crossReferences[referencer.vid];
     };
 
     detach(){
@@ -127,8 +130,8 @@ abstract class Service{
 
     getFocusProxy(focused:boolean):boolean{
         let referenced = false;
-        for(let key in this.referencer){
-            referenced||=this.referencer[key].getFocusProxy(this.referencer[key].focused);
+        for(let key in this.crossReferences){
+            referenced||=this.crossReferences[key].getFocusProxy(this.crossReferences[key].focused);
         }
         return (referenced||this.layer==this.serviceEngine.layer&&focused)||this.visibilityOverrideStore;
     }
@@ -215,7 +218,7 @@ class ServiceEngine {
             // Convert decimal to float (between 0 and 1)
             return [r / 255.0, g / 255.0, b / 255.0];
         }
-
+        // Services
         const services:{[key:string]:any} = {};
         for(let key in this.serviceTemplates){
             if(key[0]=='$'){
@@ -244,7 +247,7 @@ class ServiceEngine {
                 });
             }
         }
-
+        //Layers
         const layers:string[] = [];
         for(let key in this.serviceTemplates){
             let template = this.serviceTemplates[key];
@@ -266,15 +269,26 @@ class ServiceEngine {
                 }
             }
         });
-
+        //Id groups
         const idGroupFolder = this.gui.addFolder( 'Reference groups' );
-        const groupParams:{[key:string]:boolean} = {};
+        const groupParams:{[key:string]:boolean|string} = {};
         for(let id in this.groups){
             let group = this.groups[id];
             let service = group[0];
-            console.log(`${service.referencer}: ${service.rid}`);
-            groupParams[`${service.referencer}: ${service.rid}`] = false;
-            idGroupFolder.add(groupParams,`${service.referencer}: ${service.rid}`);
+            let gKey = `${service.referencer}: ${service.rid}`;
+            groupParams[gKey] = false;
+            // let idDef = idGroupFolder.add(groupParams,gKey);
+            if(service.color){
+                let color = service.color;
+                groupParams[`${gKey}-c`] = `rgb(${Math.floor(color[0]*255)},${Math.floor(color[1]*255)},${Math.floor(color[2]*255)})`;
+                let colorDef = idGroupFolder.addColor(groupParams,`${gKey}-c`);
+                colorDef.onChange((hex:string)=>{
+                    let color = hexToRgbFloat(hex);
+                    if(color){
+                        service.setColor(color[0],color[1],color[2]);
+                    }
+                })
+            }
         }
     }
 

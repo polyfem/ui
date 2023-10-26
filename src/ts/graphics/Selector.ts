@@ -58,15 +58,10 @@ export default abstract class Selector extends Service{
 
     reference(referencer: CrossReference) {
         super.reference(referencer);
-        if(referencer.focused){
-            console.log('referenced by: ')
-            console.log(referencer);
-            console.log(referencer.focused);
-        }
         let [r,g,b] = this.color;
-        for(let key in this.referencer){
-            if(this.referencer[key].getFocusProxy(this.referencer[key].focused)){
-                [r,g,b] = this.referencer[key].color;
+        for(let key in this.crossReferences){
+            if(this.crossReferences[key].getFocusProxy(this.crossReferences[key].focused)){
+                [r,g,b] = this.crossReferences[key].color;
             }
         }
         // this.selectionMaterial.color.setRGB(r,g,b);

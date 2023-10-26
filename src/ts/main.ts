@@ -4,7 +4,8 @@ import {Spec, SpecEngine} from "./spec";
 import * as React from "react";
 import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
-import {FileControl, GFileControl} from "./fileControl";
+import {FileControl, GeometryJSONStruct, GFileControl} from "./fileControl";
+import {act} from "react-dom/test-utils";
 
 class UI{
     fs: UFileSystem;
@@ -108,7 +109,24 @@ class UI{
             this.vs.openSpec(this.activeSpec.name);
         return spec;
     }
-
+    addGeometryToSpec(file:UFile){
+        let activeFile = this.openedFiles[this.activeFile];
+        console.log(activeFile);
+        if(activeFile == undefined||! (activeFile instanceof GFileControl))
+            return false;
+        let geometryJSON:GeometryJSONStruct = {
+            mesh: file.url,
+            transformation: undefined
+        };
+        let geometries = activeFile.specRoot.findChild('geometry');
+        let geoSpec = new Spec(undefined,undefined,false).loadFromJSON(geometryJSON);
+        geometries.pushChild(geoSpec);
+        activeFile.canvasController.loadGeometry(geometryJSON, Number(geoSpec.name), ()=>{
+            (<GFileControl>activeFile).bindServices();
+            (<GFileControl>activeFile).serviceEngine.initGUI((<GFileControl>activeFile).canvasController.canvas.gui);
+        });
+        return true;
+    }
     /**
      * Highlights the corresponding geometry spec being highlighted
      */
