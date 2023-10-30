@@ -67,11 +67,47 @@ class UFile{
     isDir: boolean = false;
     children: UFile[] = [];
     extension: string;
+    parent: UFile;
     constructor(url: string, name: string, isDir: boolean){
         this.url = url;
         this.extension = this.url.split('.').pop();
         this.name = name;
         this.isDir = isDir;
+    }
+    getDirectory(){
+        if(this.parent!=undefined)
+            return this.parent.url;
+        else{
+            let disjoint = this.url.split('/');
+            disjoint.pop();
+            return disjoint.join('/');
+        }
+    }
+
+    /**
+     * Performs a "subtraction" to calculate the path needed to navigate
+     * from the parent directory to self
+     * @param directory
+     */
+    urlFrom(directory:UFile){
+        //@ts-ignore
+        let dPath = directory.url.replaceAll('\\','/').split('/').reverse();
+        //@ts-ignore
+        let selfPath = this.url.replaceAll("\\",'/').split('/').reverse();
+        let diff = [];
+        let index = 0
+        while(dPath&&selfPath){
+            if(dPath[dPath.length-1]==selfPath[selfPath.length-1]){
+                dPath.pop();
+                selfPath.pop();
+            }else
+                break;
+        }
+        for(let i = 0; i<dPath.length; i++)
+            diff.push('..');
+        while(selfPath.length>0)
+            diff.push(selfPath.pop());
+        return diff.join('/');
     }
     ls(){
         if(!this.isDir)
@@ -86,7 +122,9 @@ class UFile{
             let dirList:UInf[] = data;
             this.children = [];
             for(let dir of dirList){
-                this.children.push(new UFile(dir.url, dir.name, dir.isDir))
+                let file = new UFile(dir.url, dir.name, dir.isDir);
+                file.parent = this
+                this.children.push(file)
             }
             success = true;
         });

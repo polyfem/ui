@@ -59,8 +59,8 @@ class CanvasController{
             this.canvas.transformControl.attach(mesh);
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected=true;
-            geoSpec.findChild(`/transformation`, true).editing = true;
-            geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = true;
+            geoSpec.findChild(`/transformation`, true, this.ui.specEngine).editing = true;
+            geoSpec.findChild(`/transformation/${this.activeEdit}`, true, this.ui.specEngine).editing = true;
             geoSpec.findChild(`/transformation`).secondarySelected = true;
             this.activeGeometry = geoSpec;
             this.ui.updateSpecPane();
@@ -71,7 +71,7 @@ class CanvasController{
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected = false;
             this.activeGeometry.findChild(`/transformation`).editing = false;
-            geoSpec.findChild(`/transformation/${this.activeEdit}`, true).editing = false;
+            geoSpec.findChild(`/transformation/${this.activeEdit}`, true, this.ui.specEngine).editing = false;
             geoSpec.findChild(`/transformation`).secondarySelected = false;
             this.activeGeometry = undefined;
             this.ui.updateSpecPane();
@@ -123,9 +123,9 @@ class CanvasController{
      * @private
      */
     private switchActiveEdit(activeEdit: string){
-        this.activeGeometry.findChild(`/transformation/${this.activeEdit}`, true).editing = false;
+        this.activeGeometry.findChild(`/transformation/${this.activeEdit}`, true, this.ui.specEngine).editing = false;
         this.activeEdit = activeEdit;
-        this.activeGeometry.findChild(`/transformation/${activeEdit}`, true).editing = true;
+        this.activeGeometry.findChild(`/transformation/${activeEdit}`, true, this.ui.specEngine).editing = true;
         this.ui.updateSpecPane();
     }
     addRaySelector(){
@@ -169,7 +169,7 @@ class CanvasController{
             }
         }
         this.canvas.transformControl.addEventListener('objectChange', (e)=>{
-            let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`);
+            let transformation = this.activeGeometry.findChild(`transformation/${this.activeEdit}`, true, this.ui.specEngine);
             let rotationMode = this.activeGeometry.findChild('transformation/rotation_mode')?.value;
             rotationMode = rotationMode==undefined?'euler':rotationMode.toLowerCase();
             transformation.type = 'list';
@@ -437,27 +437,29 @@ class CanvasController{
             }
         }
         let transformation = geometrySpec.findChild('/transformation');
-        transformation.subscribeChangeService(transformationChildListener);
-        if(transformation.children!=undefined){//Initialize existing listeners
-            for(let key in transformation.children){
-                let target = transformation.children[key];
-                switch(key){
-                    case 'translation':
-                        target.subscribeChangeService
-                        (translationListenerFactory(target))(target.query,target,undefined);
-                        break;
-                    case 'rotation':
-                        target.subscribeChangeService
-                        (rotationListenerFactory(target))(target.query,target,undefined);
-                        break;
-                    case 'rotation_mode':
-                        target.subscribeChangeService(rotationListenerFactory(target.parent.findChild('rotation')));
-                        break;
-                    case 'scale':
-                        target.subscribeChangeService
-                        (scaleListenerFactory(target))(target.query,target,undefined);
-                        break;
-                    default: //Yet to be implemented: rotation_mode, dimension
+        if(transformation!=undefined){
+            transformation.subscribeChangeService(transformationChildListener);
+            if(transformation.children!=undefined){//Initialize existing listeners
+                for(let key in transformation.children){
+                    let target = transformation.children[key];
+                    switch(key){
+                        case 'translation':
+                            target.subscribeChangeService
+                            (translationListenerFactory(target))(target.query,target,undefined);
+                            break;
+                        case 'rotation':
+                            target.subscribeChangeService
+                            (rotationListenerFactory(target))(target.query,target,undefined);
+                            break;
+                        case 'rotation_mode':
+                            target.subscribeChangeService(rotationListenerFactory(target.parent.findChild('rotation')));
+                            break;
+                        case 'scale':
+                            target.subscribeChangeService
+                            (scaleListenerFactory(target))(target.query,target,undefined);
+                            break;
+                        default: //Yet to be implemented: rotation_mode, dimension
+                    }
                 }
             }
         }

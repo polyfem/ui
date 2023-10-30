@@ -8,7 +8,6 @@ export default function ThreePane({ui,rootId, fileControl}: {ui: UI, rootId: str
     const hostId = `graphics-${fileControl.id}`;
     const loadGraphics = ()=>{
         if(fileControl.canvasController==undefined){
-            fileControl.canvasController = new CanvasController(ui,hostId, fileControl);
             fileControl.loadFile();
         }else{
             fileControl.canvasController.setNewHost(document.getElementById(hostId));

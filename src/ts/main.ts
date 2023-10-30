@@ -111,11 +111,10 @@ class UI{
     }
     addGeometryToSpec(file:UFile){
         let activeFile = this.openedFiles[this.activeFile];
-        console.log(activeFile);
         if(activeFile == undefined||! (activeFile instanceof GFileControl))
             return false;
         let geometryJSON:GeometryJSONStruct = {
-            mesh: file.url,
+            mesh: file.urlFrom(activeFile.fileReference.parent),
             transformation: undefined
         };
         let geometries = activeFile.specRoot.findChild('geometry');

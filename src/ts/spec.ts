@@ -127,6 +127,14 @@ class Spec{
         for(let service of this.changeServices){
             service(query, target,event);
         }
+        console.log(`dispatching change from ${query}`);
+        console.trace();
+        console.log(this);
+        if(this.parent!=undefined){
+            console.log(this.name);
+            console.log(this.parent.children);
+            console.log(this.parent.children[this.name]);
+        }
         if(this.parent!=undefined&&this.parent.children[this.name]!=undefined)
             this.parent.dispatchChange(query, target, event);
     }
@@ -316,7 +324,7 @@ class Spec{
      * @param force if force query, then all missing children will be added,
      *    isLeaf will always be set to false to ensure the correct returned value
      */
-    findChild(query: string, force = false){
+    findChild(query: string, force = false, specEngine: SpecEngine=undefined){
         let keys = query.split('/');
         let child:Spec = this;
         while(keys.length>0){
@@ -330,11 +338,14 @@ class Spec{
             else if(child && !child.isLeaf) {
                 let key = keys.shift();
                 if(force && child.children[key]==undefined){
-                    child.children[key] = new Spec(key, this);
-                    child.query = `${this.query}/${child.name}`;
-                    child.parent = this;
-                    this.isLeaf = false;
-                    this.dispatchChange(child.query, child,'ca');
+                    let newChild = new Spec(key, this);
+                    newChild.updateQueries(child.query,newChild.name);
+                    if(specEngine)//Auto validation for force added children
+                        newChild = specEngine.validate(newChild.query,newChild,child);
+                    child.children[key] = newChild;
+                    newChild.parent = child;
+                    child.isLeaf = false;
+                    child.dispatchChange(newChild.query, newChild,'ca');
                 }
                 child = child.children[key];
             }

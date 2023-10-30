@@ -83,6 +83,8 @@ class GFileControl extends FileControl{
     }
 
     loadFile(){
+        const hostId = `graphics-${this.id}`;
+        this.canvasController = new CanvasController(this.ui,hostId, this);
         if(this.fileReference.extension=='json'){
             this.fileReference.syncRead((data:string)=>{
                 let json = JSON.parse(data);
@@ -103,8 +105,10 @@ class GFileControl extends FileControl{
             // New requests increment the waiting key
             // successful update resets it
             let waitingKey = 0;
+            console.log(this.specRoot);
             this.specRoot.subscribeChangeService(()=>{
                 let key = ++waitingKey;
+                console.log(key);
                 setTimeout(()=>{
                     if(this.autoSave&&key==waitingKey){
                         //Auto save after 0.5 seconds of inactivity
@@ -196,6 +200,7 @@ class GFileControl extends FileControl{
     saveSpec(){
         console.log("Saving spec");
         let json = this.specRoot.compile();
+        console.log(json);
         this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
     }
 }
