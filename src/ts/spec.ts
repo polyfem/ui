@@ -127,14 +127,6 @@ class Spec{
         for(let service of this.changeServices){
             service(query, target,event);
         }
-        console.log(`dispatching change from ${query}`);
-        console.trace();
-        console.log(this);
-        if(this.parent!=undefined){
-            console.log(this.name);
-            console.log(this.parent.children);
-            console.log(this.parent.children[this.name]);
-        }
         if(this.parent!=undefined&&this.parent.children[this.name]!=undefined)
             this.parent.dispatchChange(query, target, event);
     }

@@ -39,7 +39,8 @@ export default class PlaneSelector extends Selector{
         this.surfaceSelectionListener('',this.spec,'v');
     }
 
-    surfaceSelectionListener(query: string, target: Spec, event: string) {
+    surfaceSelectionListener(query: string, _: Spec, event: string) {
+        let target = this.spec;
         if (event == 'v') {
             let selectorSettings = this.meshController.selectorSettings;
             selectorSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);

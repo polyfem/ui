@@ -57,27 +57,38 @@ export default abstract class Selector extends Service{
     }
 
     reference(referencer: CrossReference) {
-        super.reference(referencer);
+        this.crossReferences[referencer.vid] = referencer;
+        this.updateReferences();
+        this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
+    }
+
+    private updateReferences(){
         let [r,g,b] = this.color;
         for(let key in this.crossReferences){
             if(this.crossReferences[key].getFocusProxy(this.crossReferences[key].focused)){
                 [r,g,b] = this.crossReferences[key].color;
+                if(this.spec.sid==372){
+                    console.log(this.crossReferences[key]);
+                    console.log(this.crossReferences[key].spec);
+                    console.log(this.crossReferences[key].color);
+                    let color = this.crossReferences[key].color;
+                    console.log('%c ', `background: rgb(${color[0]*256},${color[1]*256},${color[2]*256})`);
+                }
             }
         }
+        // console.log(`%ccolor changed to: ${[r,g,b]}`,`background: rgb(${r*256},${g*256},${b*256})`);
         // this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
-        this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
     }
 
-    onRidChanged() {
+    onRidChanged(oId: string, nId: string) {
+        this.crossReferences = {};
         this.serviceEngine.refreshServices();
     }
 
     dereference(referencer: CrossReference) {
-        super.dereference(referencer);
-        let [r, g, b] = this.color;
-        // this.selectionMaterial.color.setRGB(r,g,b);
-        this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
+        delete this.crossReferences[referencer.vid];
+        this.updateReferences();
         this.onFocusChangedProxy(this.focusRoot,this.focusRoot.focused);
     }
 }

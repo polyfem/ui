@@ -21,7 +21,7 @@ export default class BoxSelector extends Selector{
         this.meshController.mesh.add(this.helper);
         this.surfaceSelectionListener = this.surfaceSelectionListener.bind(this);
     }
-    surfaceSelectionListener(query: string, target: Spec, event: string) {
+    surfaceSelectionListener(query: string, _: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
         selectionSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
         let boxBoundsSpec = this.spec.findChild('box',true);

@@ -24,8 +24,9 @@ export default class SphereSelector extends Selector{
         this.meshController.mesh.add(this.helper);
     }
 
-    surfaceSelectionListener(query: string, target: Spec, event: string) {
+    surfaceSelectionListener(query: string, _: Spec, event: string) {
         let selectionSettings = this.meshController.material.uniforms.selectionBoxes.value;
+        let target = this.spec;
         selectionSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
         if (event == 'v') {
             if (target.subNodesCount >= 2) {//Need both center and size to be specified

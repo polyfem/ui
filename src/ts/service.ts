@@ -6,6 +6,7 @@ import CrossReference from "./graphics/CrossReference";
 import GUI from "lil-gui";
 import Group from "./graphics/Group";
 
+export const COLOR_DEFAULT:[number,number,number] = [0.6706,0.8039, 0.9373];
 abstract class Service{
     fileControl: GFileControl;
     effectiveDepth: number;
@@ -33,7 +34,7 @@ abstract class Service{
         // console.log(this);
     }
 
-    color:[number,number,number] = [0.6706,0.8039, 0.9373];
+    color:[number,number,number] = COLOR_DEFAULT;
     setColor(r: number, g: number, b: number): void {
         this.color = [r, g, b];
     }
@@ -56,16 +57,16 @@ abstract class Service{
         this.serviceEngine.activeServices[spec.sid].push(this);
         this.effectiveDepth = effectiveDepth;
         this.layer = layer;
-        this.rid = spec.findChild(referencer)?.compile();
+        this.rid = `${spec.findChild(referencer)?.compile()}`;
         spec.subscribeChangeService((query, target, event)=>{
             if(query==`${spec.query}/${referencer}`&&event=='v'){
                 let prevRid = this.rid;
-                this.rid = target.value;
+                this.rid = `${parseInt(target.value)}`;
                 if(prevRid!=this.rid){
                     this.onRidChanged(prevRid, this.rid);
+                    this.onFocusChangedProxy(focusRoot, focusRoot.focused);
                 }
             }
-            this.onFocusChangedProxy(focusRoot, focusRoot.focused);
         })
         this.fileControl.services.push(this);
         let focusRoot = spec;
@@ -86,20 +87,6 @@ abstract class Service{
     }
 
     crossReferences:{[rid:number]:CrossReference}={};
-    /**
-     * Must be idempotent
-     * @param referencer
-     */
-    reference(referencer: CrossReference){
-        this.crossReferences[referencer.vid] = referencer;
-    }
-
-    /**
-     * Must be idempotent
-     */
-    dereference(referencer: CrossReference){
-        delete this.crossReferences[referencer.vid];
-    };
 
     detach(){
         delete this.serviceEngine.activeServices[this.spec.sid];
@@ -133,7 +120,7 @@ abstract class Service{
         for(let key in this.crossReferences){
             referenced||=this.crossReferences[key].getFocusProxy(this.crossReferences[key].focused);
         }
-        return (referenced||this.layer==this.serviceEngine.layer&&focused)||this.visibilityOverrideStore;
+        return (referenced||(this.layer==this.serviceEngine.layer&&focused))||this.visibilityOverrideStore;
     }
 }
 

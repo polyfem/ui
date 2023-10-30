@@ -122,7 +122,6 @@ class UI{
         geometries.pushChild(geoSpec);
         activeFile.canvasController.loadGeometry(geometryJSON, Number(geoSpec.name), ()=>{
             (<GFileControl>activeFile).bindServices();
-            (<GFileControl>activeFile).serviceEngine.initGUI((<GFileControl>activeFile).canvasController.canvas.gui);
         });
         return true;
     }

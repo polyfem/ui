@@ -59,7 +59,10 @@ class CanvasController{
             this.canvas.transformControl.attach(mesh);
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected=true;
-            geoSpec.findChild(`/transformation`, true, this.ui.specEngine).editing = true;
+            let transformation = geoSpec.findChild(`/transformation`, true, this.ui.specEngine);
+            transformation.type="object";
+            transformation.isLeaf = false;
+            transformation.editing = true;
             geoSpec.findChild(`/transformation/${this.activeEdit}`, true, this.ui.specEngine).editing = true;
             geoSpec.findChild(`/transformation`).secondarySelected = true;
             this.activeGeometry = geoSpec;
@@ -70,9 +73,12 @@ class CanvasController{
             this.canvas.transformControl.detach();
             let geoSpec = this.meshToSpec.get(mesh);
             geoSpec.selected = false;
-            this.activeGeometry.findChild(`/transformation`).editing = false;
+            let transformation = geoSpec.findChild(`/transformation`, true, this.ui.specEngine);
+            transformation.type="object";
+            transformation.isLeaf = false;
+            transformation.editing = false;
             geoSpec.findChild(`/transformation/${this.activeEdit}`, true, this.ui.specEngine).editing = false;
-            geoSpec.findChild(`/transformation`).secondarySelected = false;
+            transformation.secondarySelected = false;
             this.activeGeometry = undefined;
             this.ui.updateSpecPane();
         }
@@ -477,7 +483,7 @@ class CanvasController{
         }
         let extension = geometry.mesh.split('.').pop();
         let fileName = geometry.mesh.split('/').pop();
-        let file = new UFile(`${this.ui.fs.rootURL}/${geometry.mesh}`,fileName, false);
+        let file = new UFile(`${this.fileControl.fileReference.getDirectory()}/${geometry.mesh}`,fileName, false);
         let specRoot = this.fileControl.specRoot.findChild(`/geometry/${index}`);
         switch (extension) {
             case 'msh':
@@ -496,6 +502,7 @@ class CanvasController{
                         child.geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new Vector3(0,1,0), new Vector3(0,0,1)));
                         child.material = controller.material;
                         this.canvas.scene.add(child);
+                        child.visible = true;
                         this.meshToSpec.set(child, specRoot);
                         controller.mesh = child;
                         this.meshArray.push(child);
