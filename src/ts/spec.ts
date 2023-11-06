@@ -367,19 +367,21 @@ class Spec{
             return [this];
         else if(keys[0].split(':')[0]=='*'){
             let matchedChildren:Spec[] = [];
-            let typename = keys[0].split(':')[1];
+            let [_,typename,type] = keys[0].split(':');
             keys.shift();
             for(let key in this.children){
-                if(typename==undefined||this.children[key].typename==typename)
+                if((typename==undefined||typename==''||this.children[key].typename==typename)
+                    &&(type==undefined||type==''||this.children[key].type==type))
                     matchedChildren.push(...this.children[key].matchChildren(...keys));
             }
             return matchedChildren;
         }
         else {
-            let [childKey, typename] = keys[0].split(':');
+            let [childKey, typename,type] = keys.shift().split(':');
             return (this.children!=undefined&&this.children[childKey]!=undefined
-                &&(typename==undefined||typename==this.children[childKey].typename))?
-                this.children[keys.shift()].matchChildren(...keys):[];
+                &&(typename==undefined||typename==''||typename==this.children[childKey].typename)
+                &&(type==undefined||type==''||type==this.children[childKey].type))?
+                this.children[childKey].matchChildren(...keys):[];
         }
     }
 
@@ -391,15 +393,16 @@ class Spec{
         if(keys.length==0||keys[l-1]=='.'||keys[l-1]=='')
             return true;
         else if(keys[l-1].split(':')[0]=='*'){
-            let typename = keys[l-1].split(':')[1];
-            if(typename!=undefined&&this.typename!=typename)
+            let [_, typename,type] = keys[l-1].split(':');
+            if(typename!=undefined&&type!=''&&this.typename!=typename||type!=undefined&&type!=''&&this.type!=type)
                 return false;
             keys.pop();
             return this.parent.matchesQuery(...keys);
         }
         else {
-            let [childKey, typename] = keys[l-1].split(':');
-            if(!(this.name==childKey&&(typename==undefined||this.typename==typename)))
+            let [childKey, typename,type] = keys[l-1].split(':');
+            if(!(this.name==childKey&&(typename==undefined||typename==''||this.typename==typename)
+                                    &&(type==undefined||type==''||this.type==type)))
                 return false;
             keys.pop();
             return this.parent.matchesQuery(...keys);
