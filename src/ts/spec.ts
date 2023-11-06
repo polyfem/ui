@@ -810,10 +810,17 @@ class RawSpecTree{
                     maxPrecedence = 3;
                 }
             }// Criteria 3
-            else if (rawSpec.type!=undefined && spec.type === rawSpec.type) {
+            else if (rawSpec.type!=undefined && (spec.type === rawSpec.type)) {
                 if (maxPrecedence < 2) {
                     matchedRaw = rawSpec;
                     maxPrecedence = 2;
+                }
+            }
+            // Criteria 3.1
+            else if (rawSpec.type!=undefined && (spec.type=='string' && rawSpec.type=='file')) {
+                if (maxPrecedence < 2) {
+                    matchedRaw = rawSpec;
+                    maxPrecedence = 1.9; // Slightly less precedence than direct match
                 }
             }
             // Criteria 1.2
