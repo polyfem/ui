@@ -22,13 +22,9 @@ import {
 import {UFile} from "./server";
 import {UI} from "./main";
 import {Spec, SpecEngine} from "./spec";
-import BoxSelector from "./graphics/BoxSelector";
 import RaySelector from "./graphics/RaySelector";
-import SphereSelector from "./graphics/SphereSelector";
-import PlaneSelector from "./graphics/PlaneSelector";
-import AxisSelector from "./graphics/AxisSelector";
-import {symlink} from "fs";
-import Selector from './graphics/Selector';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, MeshBVHVisualizer } from 'three-mesh-bvh';
+import {BVHRaycaster} from "./graphics/WildSelector";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
@@ -36,10 +32,18 @@ const selectionMaterial2 = new MeshPhongMaterial({color: 0xabcdef, visible:true,
     emissive:0x00ffff, emissiveIntensity:0.2, side: THREE.DoubleSide});
 // const regularMaterial = new MeshPhongMaterial({side: THREE.DoubleSide});
 
+
+// Add the extension functions
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+const pointer = new Vector2();
+
 class CanvasController{
     canvas: Canvas;
     ui: UI;
     raySelector: RaySelector;
+    bvhRaycaster: BVHRaycaster;
     meshToSpec: Map<Mesh, Spec>;
     //Active aspect of geometry being edited
     //One of translation, rotation, or scale
@@ -54,6 +58,7 @@ class CanvasController{
         this.fileControl = fileControl;
         this.canvas = this.initiate(hostId);
         this.addRaySelector();
+        this.addBVHRaycaster();
         this.raySelector.selectionCallback = (mesh)=>{
             this.activeMesh = mesh;
             this.canvas.transformControl.attach(mesh);
@@ -155,6 +160,20 @@ class CanvasController{
             }
         };
         htmlElement.addEventListener('mouseup', upListener);
+    }
+    addBVHRaycaster(){
+        let htmlElement = this.canvas.renderer.domElement;
+        this.bvhRaycaster = new BVHRaycaster(this.canvas.camera);
+        const pointer = new Vector2();
+        const pointAndCast=(e: DragEvent)=>{
+            let rect = htmlElement.getBoundingClientRect();
+            let X = e.clientX - rect.left; //x position within the element.
+            let Y = e.clientY - rect.top;
+            pointer.x = ( X / rect.width ) * 2 - 1;
+            pointer.y = - ( Y / rect.height ) * 2 + 1;
+            this.bvhRaycaster.cast(pointer);
+        }
+        htmlElement.addEventListener('drag', pointAndCast);
     }
     configureTransformControl(){
         document.onkeydown = (e)=>{
@@ -271,7 +290,7 @@ class CanvasController{
      * Load listeners on a per geometry basis
      */
     addJSONListeners(geometrySpec: Spec){
-        geometrySpec.subscribeChangeService((query, target,event)=>{
+        geometrySpec.parent.subscribeChangeService((query, target,event)=>{
             if(event=='cd'&&query==geometrySpec.query){
                 let controllers = this.meshList[geometrySpec.sid];
                 for(let key in controllers){
@@ -492,13 +511,13 @@ class CanvasController{
                 let objLoader = new OBJLoader();
                 objLoader.load(file.accessURL(), (obj:any)=>{
                     obj.traverse( ( child:Mesh)=>{
+                        if(child instanceof THREE.Group){
+                            return;
+                        }
                         if(this.meshList[specRoot.sid]==undefined)
                             this.meshList[specRoot.sid] = [];
                         let controller = new GeometryController(child);
                         this.meshList[specRoot.sid].push(controller);
-                        if(child instanceof THREE.Group){
-                            return;
-                        }
                         child.geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new Vector3(0,1,0), new Vector3(0,0,1)));
                         child.material = controller.material;
                         this.canvas.scene.add(child);

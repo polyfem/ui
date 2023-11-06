@@ -1,4 +1,4 @@
-import {MeshPhongMaterial, ShaderMaterial, Vector3} from "three";
+import {Matrix3, MeshPhongMaterial, ShaderMaterial, Vector3} from "three";
 import * as THREE from "three";
 import BoxSelector from "./BoxSelector";
 import Selector from "./Selector";
@@ -27,7 +27,7 @@ export default class GeometryController{
     constructor(mesh: THREE.Mesh){
         this.mesh = mesh;
         mesh.matrixWorldAutoUpdate = true;
-        let vectorArray = [];//Alternate between specification type size and position,
+        const vectorArray = [];//Alternate between specification type size and position,
 //type.x = -1 indicate the end of the array
 //type.x = -2 indicates deleted item, jumped item of array
 //type.x = 0 implies box selection type
@@ -35,6 +35,11 @@ export default class GeometryController{
         for (let i = 0; i < 120; i++) {
             vectorArray.push(emptyVector);
         }
+        // path cache[0][0] = -1 ==> inactive path
+        const pathCache = [];
+        for(let i  = 0; i<300; i++)
+            pathCache.push(new Matrix3().multiplyScalar(-1));
+
 //Standard model of shader material
         this.material = new THREE.ShaderMaterial({
             side: THREE.DoubleSide,
@@ -48,7 +53,8 @@ export default class GeometryController{
                 LightPosition: { value: new THREE.Vector4(0.0, 0, 10.0, 1.0) },
                 Shininess: { value: 200.0 },
                 selectionBoxes: {value: vectorArray},
-                matrixWorld: { value: mesh.matrixWorld }
+                matrixWorld: { value: mesh.matrixWorld },
+
             },
             vertexShader: `
       varying vec3 Normal;

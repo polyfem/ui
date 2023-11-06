@@ -39,13 +39,13 @@ class Group extends CrossReference{
         if(nId!='NaN'){// Locate self in new group
             if(this.serviceEngine.groups[nId]==undefined||this.serviceEngine.groups[nId].length==0){
                 this.serviceEngine.groups[nId] = [];
-                this.color = generateHighContrastColor(); // Generate new color for new group(s)
+                super.setColor(...generateHighContrastColor()); // Generate new color for new group(s)
             }else{
-                this.color = this.serviceEngine.groups[nId][0].color // Otherwise use color of the group
+                super.setColor(...this.serviceEngine.groups[nId][0].color); // Otherwise use color of the group
             }
             this.serviceEngine.groups[nId].push(this);
         }else{ // If no ID defined, use color default
-            this.color = COLOR_DEFAULT;
+            super.setColor(...COLOR_DEFAULT);
         }
     }
     setColor(r: number, g: number, b: number) {
@@ -54,6 +54,7 @@ class Group extends CrossReference{
         }
         for(let group of this.serviceEngine.groups[this.rid]){
             group.color=[r,g,b];
+            group.spec.colors[group.vid] = [r,g,b];
             group.onFocusChangedProxy(group.focusRoot,group.focusRoot.focused);
         }
     }

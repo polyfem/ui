@@ -39,6 +39,7 @@ export default abstract class Selector extends Service{
         super.setColor(r,g,b);
         this.selectionMaterial.color.setRGB(r,g,b);
         this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
+        console.log(this);
     }
 
     attach(spec: Spec, effectiveDepth: number, layer: string, reference: string): void {
@@ -82,7 +83,7 @@ export default abstract class Selector extends Service{
     }
 
     onRidChanged(oId: string, nId: string) {
-        this.crossReferences = {};
+        this.crossReferences = {}; // Dereference all existing CrossReferences
         this.serviceEngine.refreshServices();
     }
 

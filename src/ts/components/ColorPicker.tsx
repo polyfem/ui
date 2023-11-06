@@ -4,22 +4,18 @@ import { SketchPicker } from 'react-color'
 /**
  * From https://casesandberg.github.io/react-color/#about
  */
-class ColorBox extends React.Component {
-    state = {
-        displayColorPicker: false,
-        color: {
-            r: '241',
-            g: '112',
-            b: '19',
-            a: '1',
-        },
+class ColorBox extends React.Component<{color:[number,number,number]},
+    {displayColorPicker:boolean,color: {r: string, g: string, b: string, a:string}}>{
+
+    handleClick = (e:React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        // this.setState({ displayColorPicker: !this.state.displayColorPicker })
     };
 
-    handleClick = () => {
-        this.setState({ displayColorPicker: !this.state.displayColorPicker })
-    };
-
-    handleClose = () => {
+    handleClose = (e:React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         this.setState({ displayColorPicker: false })
     };
 
@@ -27,45 +23,60 @@ class ColorBox extends React.Component {
         this.setState({ color: color.rgb })
     };
 
-    render() {
+    constructor(props:{color:[number,number,number]}){
+        super(props);
+        this.state = {
+            displayColorPicker: false,
+            color: {
+                r: `${props.color[0]*255}`,
+                g: `${props.color[1]*255}`,
+                b: `${props.color[2]*255}`,
+                a:'1'
+            },
+        };
+    }
 
+    render() {
         const styles = {
                 color: {
-                    width: '36px',
-                    height: '14px',
+                    width: '14pt',
+                    height: '14pt',
+                    marginTop:'auto',
+                    marginBottom: 'auto',
                     borderRadius: '2px',
                     background: `rgba(${ this.state.color.r }, ${ this.state.color.g }, ${ this.state.color.b }, ${ this.state.color.a })`,
                 },
                 swatch: {
-                    padding: '5px',
                     background: '#fff',
-                    borderRadius: '1px',
+                    borderRadius: '2px',
                     boxShadow: '0 0 0 1px rgba(0,0,0,.1)',
                     display: 'inline-block',
                     cursor: 'pointer',
+                    width: '14pt',
+                    height: '14pt',
+                    marginTop:'auto',
+                    marginBottom: 'auto',
+                    marginRight:'5pt'
                 },
         };
 
         return (
-            <div>
-                <div style={ styles.swatch } onClick={ this.handleClick }>
-        <div style={ styles.color } />
-        </div>
-        { this.state.displayColorPicker ? <div style={ {
-            position: 'absolute',
-            zIndex: '2',} }>
-        <div style={ {
-            position: 'fixed',
-            top: '0px',
-            right: '0px',
-            bottom: '0px',
-            left: '0px',}} onClick={ this.handleClose }/>
-        {/* @ts-ignore */}
-        <SketchPicker color={ this.state.color } onChange={ this.handleChange } />
-        </div> : null }
-
-        </div>
-        )
+            <div style={styles.swatch} onClick={this.handleClick}>
+                <div style={ styles.color } />
+                { this.state.displayColorPicker ? <div style={ {
+                    position: 'absolute',
+                    right:0,
+                    zIndex: '2',} }>
+                <div style={{
+                    position: 'fixed',
+                    top: '0px',
+                    right: '0px',
+                    bottom: '0px',
+                    left: '0px',}} onClick={ this.handleClose }/>
+                {/* @ts-ignore */}
+                <SketchPicker color={ this.state.color } onChange={ this.handleChange } />
+                </div> : null }
+            </div>)
         }
     }
 

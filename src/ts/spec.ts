@@ -36,6 +36,24 @@ class Spec{
     name: string;
     isLeaf: boolean = false;
     parent: Spec;
+    //Automatically populated by required
+    children: {[key: string]:Spec} = {};
+    //Records the size of the subNodes, immutable
+    subNodesCount = 0;
+    //Remaining fields are only informational
+    doc: string;
+    //Optional subfields
+    optional: string[] = [];
+    //Currently populated value
+    value: any;
+
+    //Service sites: (For services to control the UI)
+    colors:{[vid:string]:[number,number,number]} = {};
+    //Services can determine whether a spec node points to a file
+    isFile: boolean;
+    drawable: boolean;
+    setDrawing: (drawing: boolean)=>void;
+
     //Tentative specs are disabled before they are confirmed
     tentative: boolean = false;
     //Delete ready prepares the spec for deletion
@@ -55,17 +73,6 @@ class Spec{
     get deleting(){
         return this.deletingState;
     }
-
-    //Automatically populated by required
-    children: {[key: string]:Spec} = {};
-    //Records the size of the subNodes, immutable
-    subNodesCount = 0;
-    //Remaining fields are only informational
-    doc: string;
-    //Optional subfields
-    optional: string[] = [];
-    //Currently populated value
-    value: any;
 
     /**
      * Sets the value of this, excluded services are prevented from

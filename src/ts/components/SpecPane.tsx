@@ -27,6 +27,7 @@ import {styled} from "@mui/material/styles";
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
+import ColorPicker from "./ColorPicker";
 
 const HtmlTooltip = styled(({className, ...props}: TooltipProps) => (
     <Tooltip {...props} classes={{popper: className}}/>
@@ -251,6 +252,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
             enumeration = enumeration.substring(0, 17);
             primary += `:   ${specNode.type == 'list' ? '[' : '{'}${enumeration}...${specNode.type == 'list' ? ']' : '}'}`
         }
+        let colorValues = Object.keys(specNode.colors);
         return <React.Fragment>
             {(level != 0) ?
                 //Item text with preview
@@ -268,6 +270,9 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                             whiteSpace: 'pre',
                             opacity: (specNode.tentative || specNode.deleteReady) ? 0.38 : 1
                         }} primaryTypographyProps={{fontSize: '11pt'}}/>
+                        {colorValues.map((key)=>{
+                            return <ColorPicker color={specNode.colors[key]}/>;
+                        })}
                         {expand ? <ExpandMoreIcon style={{opacity: (specNode.tentative) ? 0.38 : 1}}/>
                             : <ChevronRightIcon style={{opacity: (specNode.tentative) ? 0.38 : 1}}/>}
                         {itemOptions}

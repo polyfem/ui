@@ -13,6 +13,7 @@ export default class CrossReference extends Service{
         super(fileControl);
         this.target = target;
     }
+
     attach(spec: Spec, effectiveDepth: number, layer: string, referencer: string) {
         super.attach(spec, effectiveDepth, layer, referencer);
     }
@@ -39,9 +40,10 @@ export default class CrossReference extends Service{
             if(service instanceof Selector)//Exclude other services
                 service.dereference(this);
         }
-        for(let service of this.serviceEngine.getTargetServices(this.target, nId)){
-            if(service instanceof Selector)//Exclude other services
-                service.reference(this);
-        }
+        if(nId!='NaN')
+            for(let service of this.serviceEngine.getTargetServices(this.target, nId)){
+                if(service instanceof Selector)//Exclude other services
+                    service.reference(this);
+            }
     }
 }

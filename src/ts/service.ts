@@ -5,6 +5,7 @@ import {UFile} from "./server";
 import CrossReference from "./graphics/CrossReference";
 import GUI from "lil-gui";
 import Group from "./graphics/Group";
+import BoxSelector from "./graphics/BoxSelector";
 
 export const COLOR_DEFAULT:[number,number,number] = [0.6706,0.8039, 0.9373];
 abstract class Service{
@@ -37,6 +38,7 @@ abstract class Service{
     color:[number,number,number] = COLOR_DEFAULT;
     setColor(r: number, g: number, b: number): void {
         this.color = [r, g, b];
+        this.spec.colors[this.vid] = [r,g,b];
     }
 
     referencer: string;

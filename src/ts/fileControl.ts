@@ -66,6 +66,7 @@ interface Transformation{
 }
 
 
+
 const selectorMapping:{[key:string]: new (c:CanvasController,g:GeometryController)=>Selector} =
     {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector}
 
@@ -184,6 +185,7 @@ class GFileControl extends FileControl{
         let geometryControllers = this.canvasController.meshList[target.sid];
         if(geometryControllers==undefined)
             return;
+        console.log(geometryControllers);
         for(let geometryController of geometryControllers){
             let selector = new T(this.canvasController, geometryController);
             selector.attach(selectorSpec,template.effectiveDepth,template.layer,template.referencer);

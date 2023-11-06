@@ -57,7 +57,8 @@
     "jquery": "^3.6.0",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
-    "three": "^0.150.1",
+    "three": "^0.151.1",
+    "three-mesh-bvh": "^0.6.8",
     "tsify": "^5.0.4",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
