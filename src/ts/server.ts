@@ -150,7 +150,10 @@ class UFile{
         }, 'text');
     }
 
+    editCount = 0;
     saveFile(data: string){
+        this.onSaveFile(data);
+        this.editCount++;
         let req = $.ajax({
             url: 'http://localhost:8081/writeFile/'+encodeURIComponent(this.url),
             method: 'POST',
@@ -179,6 +182,9 @@ class UFile{
                 let name = encodeURIComponent(nameComponents.join('.'));
                 return `http://localhost:8081/mesh-convert/${encodeURIComponent(this.url)}/${name}`;
         }
+    }
+    onSaveFile(data:string){
+
     }
 }
 

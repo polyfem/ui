@@ -5,6 +5,7 @@ import GeometryController from "./GeometryController";
 import THREE, {MeshPhongMaterial, Vector3} from "three";
 import {reference} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
 import CrossReference from "./CrossReference";
+import FreeSelector from "./FreeSelector";
 
 export default abstract class Selector extends Service{
     canvasController: CanvasController;
@@ -38,7 +39,8 @@ export default abstract class Selector extends Service{
     setColor(r: number, g: number, b: number): void {
         super.setColor(r,g,b);
         this.selectionMaterial.color.setRGB(r,g,b);
-        this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
+        if(!(this instanceof FreeSelector))
+            this.meshController.selectorSettings[this.selectionIndex * 4 + 3] = new Vector3(r,g,b);
         console.log(this);
     }
 

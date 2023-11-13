@@ -13,7 +13,7 @@ import {
     Tooltip,
     TooltipProps,
     IconButton,
-    Divider,
+    Divider, Button,
 } from "@mui/material";
 import {ChangeEvent, Fragment, useEffect, useState} from "react";
 import List from "@mui/material/List";
@@ -28,6 +28,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import ColorPicker from "./ColorPicker";
+import {FileDialogue} from "./SelectFileDialogue";
 
 const HtmlTooltip = styled(({className, ...props}: TooltipProps) => (
     <Tooltip {...props} classes={{popper: className}}/>
@@ -178,6 +179,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
         specNode.deleteReady = false;
         ui.updateSpecPane();
     }
+    const [fileSelectOpen, setFileSelectOpen] = useState(false);
     const itemOptions = specNode.tentative ? <span style={{whiteSpace: "nowrap"}}>
                             <IconButton disabled={false} onClick={confirmAdd}>
                                 <CheckIcon color='success'/>
@@ -195,6 +197,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                             </IconButton></span> : undefined;
     if (specNode.isLeaf) { // Leaf text field rendering
         let [text, setText] = useState(specNode.value);
+        let [drawing, setDrawing] = useState(specNode.freeSelector.drawing);
         const onChange = (e: ChangeEvent) => {
             e.preventDefault();
             // @ts-ignore
@@ -225,13 +228,42 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     {specNode.name}:
                 </label>
             </HtmlTooltip>
-            <TextField
-                FormHelperTextProps={{style: {textAlign: 'right', color: '#037746'}}}
-                size="small"
-                variant="standard"
-                helperText={specNode.type}
-                disabled={specNode.tentative || specNode.deleteReady}
-                style={{verticalAlign: 'baseline'}} value={text} onChange={onChange}/>
+            {specNode.type=='file'?<Fragment>
+                {(specNode.drawable?<Box>
+                        <Button size={'small'} variant={'contained'}
+                                onClick={()=>{
+                                    setFileSelectOpen(!fileSelectOpen);
+                                }}>
+                            {specNode.value?specNode.value:`Face List`}
+                        </Button>
+                    <IconButton onClick={()=> {
+                        specNode.freeSelector.setDrawing(!drawing);
+                        setDrawing(!drawing);
+                    }
+                    }>
+                        {drawing?<CheckIcon/>:<EditIcon/>}
+                    </IconButton>
+                </Box>:<Button variant={'contained'} size={'small'}
+                              color={'success'} onClick={()=>{setFileSelectOpen(!fileSelectOpen)}}>
+                {text}
+            </Button>)}
+                <FileDialogue ui={ui} open={fileSelectOpen} setOpen={setFileSelectOpen}
+                              onFileSelect={(file)=>{
+                                  if(file.extension!='txt')
+                                      return;
+                                  specNode.setValue(file.urlFrom(ui.fs.fileRoot));
+                                  specNode.freeSelector.openFile(file);
+                                  setFileSelectOpen(false);
+                              }}/>
+            </Fragment>
+            :
+                <TextField
+                    FormHelperTextProps={{style: {textAlign: 'right', color: '#037746'}}}
+                    size="small"
+                    variant="standard"
+                    helperText={specNode.type}
+                    disabled={specNode.tentative || specNode.deleteReady}
+                    style={{verticalAlign: 'baseline'}} value={text} onChange={onChange}/>}
             {itemOptions}
         </ListItem>;
         // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>

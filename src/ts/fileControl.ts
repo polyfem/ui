@@ -14,6 +14,7 @@ import {temp} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
 import CrossReference from "./graphics/CrossReference";
 import {generateBrightMutedColor,generateHighContrastColor} from "./graphics/RandomColor";
 import Group from "./graphics/Group";
+import FreeSelector from "./graphics/FreeSelector";
 
 class FileControl{
     //Generated uniquely and incrementally
@@ -68,7 +69,7 @@ interface Transformation{
 
 
 const selectorMapping:{[key:string]: new (c:CanvasController,g:GeometryController)=>Selector} =
-    {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector}
+    {'box':BoxSelector, 'sphere':SphereSelector,'plane':PlaneSelector, 'axis':AxisSelector, 'wild': FreeSelector}
 
 /**
  * A file that is contains geometries being visualized
@@ -201,9 +202,12 @@ class GFileControl extends FileControl{
 
     saveSpec(){
         console.log("Saving spec");
+        if(this.specRoot == undefined)
+            return;
         let json = this.specRoot.compile();
         console.log(json);
-        this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
+        if(json!=undefined||'')
+            this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
     }
 }
 

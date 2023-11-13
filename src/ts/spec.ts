@@ -3,6 +3,7 @@
 //Recursive structure of a JSON Specification tree
 import {UI} from "./main";
 import {UFile} from "./server";
+import FreeSelector from "./graphics/FreeSelector";
 
 /**
  * Implements a simple event tree
@@ -52,7 +53,7 @@ class Spec{
     //Services can determine whether a spec node points to a file
     isFile: boolean;
     drawable: boolean;
-    setDrawing: (drawing: boolean)=>void;
+    freeSelector: FreeSelector;
 
     //Tentative specs are disabled before they are confirmed
     tentative: boolean = false;

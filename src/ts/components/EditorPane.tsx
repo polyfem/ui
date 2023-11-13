@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ThreePane from "./ThreePane";
 import {FileControl, GFileControl} from "../fileControl";
 import {Spec} from "../spec";
+import {CodeFileDisplay} from "./CodeFileDisplay";
 
 const Grid = styled(MuiGrid)(({ theme }) => ({
     width: '100%',
@@ -123,8 +124,10 @@ class TabPane extends React.Component<{ui:UI, rootId: string,
                         item.fileDisplay = <ThreePane
                             ui={this.props.ui} rootId={this.props.rootId}
                             fileControl={item}/>;
+                    }else{
+                        item.fileDisplay = <CodeFileDisplay ui={this.props.ui} rootId={this.props.rootId} fileControl={item}/>
                     }
-                    return <TabPanel value={value} key={item.fileReference.url} index={index}>
+                    return <TabPanel value={value} key={`${item.fileReference.url}-${item.fileReference.editCount}`} index={index}>
                         {item.fileDisplay}
                     </TabPanel>;
                 })}

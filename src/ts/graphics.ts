@@ -24,7 +24,7 @@ import {UI} from "./main";
 import {Spec, SpecEngine} from "./spec";
 import RaySelector from "./graphics/RaySelector";
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast, MeshBVHVisualizer } from 'three-mesh-bvh';
-import {BVHRaycaster} from "./graphics/WildSelector";
+import {BVHRaycaster} from "./graphics/FreeSelector";
 
 const selectionMaterial = new MeshPhongMaterial({color: 0xffaa55, visible:true,
     emissive:0xffff00, emissiveIntensity:0.1, side: THREE.DoubleSide});
@@ -165,15 +165,44 @@ class CanvasController{
         let htmlElement = this.canvas.renderer.domElement;
         this.bvhRaycaster = new BVHRaycaster(this.canvas.camera);
         const pointer = new Vector2();
-        const pointAndCast=(e: DragEvent)=>{
+        let moving = false;
+        const pointAndCast=(e:MouseEvent)=>{
             let rect = htmlElement.getBoundingClientRect();
             let X = e.clientX - rect.left; //x position within the element.
             let Y = e.clientY - rect.top;
             pointer.x = ( X / rect.width ) * 2 - 1;
             pointer.y = - ( Y / rect.height ) * 2 + 1;
-            this.bvhRaycaster.cast(pointer);
+            return this.bvhRaycaster.cast(pointer);
         }
-        htmlElement.addEventListener('drag', pointAndCast);
+        const pointAndTest=(e:MouseEvent)=>{
+            let rect = htmlElement.getBoundingClientRect();
+            let X = e.clientX - rect.left; //x position within the element.
+            let Y = e.clientY - rect.top;
+            pointer.x = ( X / rect.width ) * 2 - 1;
+            pointer.y = - ( Y / rect.height ) * 2 + 1;
+            return this.bvhRaycaster.test(pointer);
+        }
+        const downListener = (e:MouseEvent) => {
+            if(pointAndTest(e)){
+                moving = true;
+                this.bvhRaycaster.pathStart();
+                pointAndCast(e);
+                this.canvas.orbitControls.enabled = false;
+            }
+        };
+        htmlElement.addEventListener('mousedown', downListener);
+        const moveListener=(e: MouseEvent)=>{
+            if(moving){
+                pointAndCast(e)
+            }
+        }
+        htmlElement.addEventListener('mousemove', moveListener);
+        let upListener = (e:MouseEvent) => {
+            moving = false;
+            this.bvhRaycaster.pathEnd();
+            this.canvas.orbitControls.enabled = true;
+        };
+        htmlElement.addEventListener('mouseup', upListener);
     }
     configureTransformControl(){
         document.onkeydown = (e)=>{
@@ -553,6 +582,7 @@ class Canvas {
     public renderer: THREE.WebGLRenderer;
     public htmlElement: HTMLElement;
     public controlsGizmo: OrbitControlsGizmo;
+    public orbitControls: OrbitControls;
     public transformControl: TransformControls;
     public width: number;
     public height: number;
@@ -588,7 +618,9 @@ class Canvas {
         this.transformControl = new TransformControls(camera, renderer.domElement);
         this.transformControl.addEventListener( 'dragging-changed', function ( event ) {
             orbitControl.enabled = ! event.value;
-        } );
+        });
+        this.orbitControls = orbitControl;
+
         this.scene.add(this.transformControl);
         this.scene.background = new THREE.Color(0x333333);
 

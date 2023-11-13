@@ -41,6 +41,7 @@
   "dependencies": {
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
+    "@monaco-editor/react": "^4.6.0",
     "@mui/icons-material": "^5.2.5",
     "@mui/joy": "^5.0.0-alpha.71",
     "@mui/lab": "^5.0.0-alpha.123",

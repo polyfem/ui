@@ -136,6 +136,24 @@ function mountFileSystem(rootURL){
         const stream = fs.createWriteStream(fileName);
         stream.on('open', () => req.pipe(stream));
     });
+    /**
+     * Create an empty file
+     */
+    app.post('/createFile/:fileName', (req,res)=>{
+        try {
+            const fileName = path.join(rootURL, req.params.fileName);
+            // Ensure the directory exists
+            const dir = path.dirname(fileName);
+            if (!fs.existsSync(dir)){
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            // Create an empty file
+            fs.writeFileSync(fileName, '');
+            res.send(true);
+        } catch (err) {
+            res.send(false);
+        }
+    });
 }
 
 mountFileSystem("./");

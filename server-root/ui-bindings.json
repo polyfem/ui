@@ -27,6 +27,12 @@
     "service": "selector.axis",
     "extends": "$volume_selection"
   },
+  "/geometry/*/volume_selection::file": {
+    "service": "selector.wild",
+    "extends": "$volume_selection",
+    "target": "../",
+    "effectiveDepth": 1
+  },
   "$surface_selection": {
     "service": "selector",
     "target": "../../",
@@ -54,6 +60,12 @@
   "/geometry/*/surface_selection/*:axis": {
     "service": "selector.axis",
     "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection::file": {
+    "service": "selector.wild",
+    "extends": "$surface_selection",
+    "target": "../",
+    "effectiveDepth": 1
   },
   "$boundary_condition": {
     "service": "cross reference",

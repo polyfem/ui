@@ -13,6 +13,8 @@ import FileView from "./components/FileView";
 import {Spec} from "./spec";
 import {FileControl} from "./fileControl";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import {SyntheticEvent} from "react";
+import {UFile} from "./server";
 
 const darkTheme = createTheme({
     palette: {
@@ -63,6 +65,11 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
     setOpenedFiles(files: FileControl[]){
         this.setState({openedFiles: files});
     }
+    onFileSelect(file:UFile){
+        if(!file.isDir) {
+            this.ui.openFile(file);
+        }
+    }
     render(){
         return <ThemeProvider theme={darkTheme}>
             <Box sx={{ display: 'grid' }}
@@ -86,10 +93,14 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
                         gridRow: '2 / span 1'}}
                 >
                     <Toolbar />
-                    <Box sx={{height: '100%', overflow: 'hidden'}}>
-                        <ToolKit ui={this.ui} visual={this} open={this.state.activeSpec.name}/>
-                        <Divider />
-                        <FileView{...this.props}/>
+                    <Box sx={{height: '100%', overflow: 'hidden', display:'grid',gridTemplateRows:'fit-content(50%) 1px 50%'}}>
+                        <Box sx={{gridRow:'1 span 1'}}>
+                            <ToolKit ui={this.ui} visual={this} open={this.state.activeSpec.name}/>
+                        </Box>
+                        <Divider/>
+                        <Box sx={{gridRow:'3 span 1'}}>
+                            <FileView{...this.props} onFileSelect={this.onFileSelect.bind(this)}/>
+                        </Box>
                     </Box>
                 </Drawer>
                 <Box sx={{ flexGrow: 1, p: 3 }}
