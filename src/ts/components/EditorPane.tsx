@@ -124,6 +124,7 @@ class TabPane extends React.Component<{ui:UI, rootId: string,
                         item.fileDisplay = <ThreePane
                             ui={this.props.ui} rootId={this.props.rootId}
                             fileControl={item}/>;
+                        item.fileDisplay2 = <CodeFileDisplay ui={this.props.ui} rootId={this.props.rootId} fileControl={item}/>;
                     }else{
                         item.fileDisplay = <CodeFileDisplay ui={this.props.ui} rootId={this.props.rootId} fileControl={item}/>
                     }

@@ -13,7 +13,7 @@ import {
     Tooltip,
     TooltipProps,
     IconButton,
-    Divider, Button,
+    Divider, Button, Checkbox, FormControl
 } from "@mui/material";
 import {ChangeEvent, Fragment, useEffect, useState} from "react";
 import List from "@mui/material/List";
@@ -29,6 +29,7 @@ import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import ColorPicker from "./ColorPicker";
 import {FileDialogue} from "./SelectFileDialogue";
+import {SmartField} from "./SmartField";
 
 const HtmlTooltip = styled(({className, ...props}: TooltipProps) => (
     <Tooltip {...props} classes={{popper: className}}/>
@@ -196,33 +197,16 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                                 <CloseIcon color='error'/>
                             </IconButton></span> : undefined;
     if (specNode.isLeaf) { // Leaf text field rendering
-        let [text, setText] = useState(specNode.value);
-        let [drawing, setDrawing] = useState(specNode.freeSelector.drawing);
-        const onChange = (e: ChangeEvent) => {
-            e.preventDefault();
-            // @ts-ignore
-            if (specNode.type == 'float' && isNaN(e.target.value)) {
-                return;
-            }
-            // @ts-ignore
-            specNode.setValue(e.target.value);
-        }
-        useEffect(() => {
-            let valueService = () => {
-                setText(specNode.value);
-            };
-            specNode.subscribeValueService(valueService);
-            return () => { //Unsubscribe the service upon component shut down
-                specNode.unsubscribeValueService(valueService);
-            };
-        }, [setText]);
+        let [drawing, setDrawing] = useState(specNode.drawable&&specNode.freeSelector.drawing);
+
         // console.log(`${specNode.query} value service subscribed`);
         return <ListItem sx={{pl: 2 + level - 1, alignItems: 'baseline', pr: (specNode.deleting) ? 0 : undefined}}
         >
             <Divider orientation="vertical" sx={{mr: 1, borderColor: getColor(level)}} flexItem/>
             <HtmlTooltip title={specNode.doc} arrow>
                 <label style={{
-                    verticalAlign: 'baseline', marginRight: '6pt', fontSize: '11pt',
+                    verticalAlign: 'baseline', marginTop:(specNode.type=='bool')?'auto':undefined,
+                    marginBottom:(specNode.type=='bool')?'auto':undefined, marginRight: '6pt', fontSize: '11pt',
                     opacity: (specNode.tentative) ? 0.38 : 1
                 }}>
                     {specNode.name}:
@@ -237,6 +221,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                             {specNode.value?specNode.value:`Face List`}
                         </Button>
                     <IconButton onClick={()=> {
+
                         specNode.freeSelector.setDrawing(!drawing);
                         setDrawing(!drawing);
                     }
@@ -245,7 +230,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     </IconButton>
                 </Box>:<Button variant={'contained'} size={'small'}
                               color={'success'} onClick={()=>{setFileSelectOpen(!fileSelectOpen)}}>
-                {text}
+                    {specNode.value}
             </Button>)}
                 <FileDialogue ui={ui} open={fileSelectOpen} setOpen={setFileSelectOpen}
                               onFileSelect={(file)=>{
@@ -256,14 +241,11 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                                   setFileSelectOpen(false);
                               }}/>
             </Fragment>
-            :
-                <TextField
-                    FormHelperTextProps={{style: {textAlign: 'right', color: '#037746'}}}
-                    size="small"
-                    variant="standard"
-                    helperText={specNode.type}
-                    disabled={specNode.tentative || specNode.deleteReady}
-                    style={{verticalAlign: 'baseline'}} value={text} onChange={onChange}/>}
+            : (specNode.type=='bool')?
+                    <FormControl>
+                        <Checkbox onChange={(event)=>specNode.value=(Boolean(event.target.value))} defaultChecked={specNode.value==true} size="small" style={{verticalAlign:"baseline"}}/>
+                    </FormControl>
+                    : <SmartField specNode={specNode}/>}
             {itemOptions}
         </ListItem>;
         // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
@@ -302,6 +284,15 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                             whiteSpace: 'pre',
                             opacity: (specNode.tentative || specNode.deleteReady) ? 0.38 : 1
                         }} primaryTypographyProps={{fontSize: '11pt'}}/>
+                        {/**display the vector preview/editor here**/}
+                        {(specNode.isVector)&&<Box style={{whiteSpace:'nowrap', float:'left'}}>
+                            (
+                            {Object.keys(specNode.children).map(key=>{
+                                let child = specNode.children[key];
+                                return <SmartField specNode={child} compactEntry/>
+                            }
+                            )})
+                        </Box>}
                         {colorValues.map((key)=>{
                             return <ColorPicker color={specNode.colors[key]}/>;
                         })}

@@ -79,6 +79,7 @@ class GFileControl extends FileControl{
     autoSave: boolean = true;
     services: Service[] = [];
     serviceEngine: ServiceEngine;
+    fileDisplay2: ReactElement;
     constructor(ui: UI,fileName: string, fileReference: UFile){
         super(ui,fileName, fileReference);
         this.serviceEngine = new ServiceEngine(ui, this);
@@ -209,6 +210,13 @@ class GFileControl extends FileControl{
         if(json!=undefined||'')
             this.fileReference.saveFile(JSON.stringify(json,null,'\t'));
     }
+
+    drawService: FreeSelector;
+    setDrawService(drawService:FreeSelector){
+        this.drawService = drawService;
+    }
+    setDrawPlatte: (open:boolean)=>void;
+    setRid:(rid:string)=>void;
 }
 
 // class JSONFileControl extends FileControl{

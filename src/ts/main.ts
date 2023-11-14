@@ -53,8 +53,13 @@ class UI{
                 case 'gltf':
                 case 'glb':
                 case 'obj':
-                case 'json':
                     fileControl = new GFileControl(this,file.name, file);
+                    break;
+                case 'json':
+                    if(file.name!='ui-bindings.json'&&file.name!='input_rules.json')
+                        fileControl = new GFileControl(this,file.name, file);
+                    else
+                        fileControl = new FileControl(this,file.name,file);
                     break;
                 default:
                     fileControl = new FileControl(this,file.name, file);

@@ -76,7 +76,7 @@ export default class FreeSelector extends Selector{
                 this.assignColors(a,this.selfVertexColors);
                 this.assignColors(b,this.selfVertexColors);
                 this.assignColors(c,this.selfVertexColors);
-                this.selectedFaces.push([a,b,c,Number(this.rid)]);
+                this.selectedFaces.push([Number(this.rid),a,b,c]);
             }
         }
         this.vertexColors.needsUpdate = true;
@@ -94,7 +94,13 @@ export default class FreeSelector extends Selector{
             this.subscribeDraw();
         else
             this.unsubscribeDraw();
+        if(drawing)
+            this.fileControl.drawService = this;
+        else
+            this.fileControl.drawService = undefined;
         this.drawing = drawing;
+        this.fileControl.setDrawPlatte(drawing);
+        this.fileControl.setRid(this.rid);
     }
     subscribeDraw(){
         console.log("attaching element");
@@ -114,6 +120,10 @@ export default class FreeSelector extends Selector{
     pathEnd(){
         this.saveSelections();
     }
+    onRidChanged(oId: string, nId: string) {
+        super.onRidChanged(oId, nId);
+        this.rid = nId;
+    }
 
     /**
      * Use a timer to determine end of path
@@ -125,8 +135,11 @@ export default class FreeSelector extends Selector{
         this.assignMasks(normal);
     }
     saveSelections(){
-        console.log(this.selectedFaces.toString());
-        this.editedFile?.saveFile(this.selectedFaces.toString());
+        let total = '';
+        for(let selectedFace of this.selectedFaces){
+            total+=selectedFace+'\n';
+        }
+        this.editedFile?.saveFile(total);
     }
     setColor(r: number, g: number, b: number) {
         super.setColor(r, g, b);

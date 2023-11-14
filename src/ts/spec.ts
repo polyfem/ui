@@ -36,6 +36,7 @@ class Spec{
     pointer: string;
     name: string;
     isLeaf: boolean = false;
+    isVector = false;
     parent: Spec;
     //Automatically populated by required
     children: {[key: string]:Spec} = {};
@@ -612,6 +613,7 @@ class SpecEngine {
         //Load value from previous spec
         spec.value = original.value;
         spec.tentative = original.tentative;
+        spec.isVector = this.isVector(raw, loc);
         //Make a list to record which subNodes have been included
         let included:string[] = [];
         //Validate recursively,
@@ -653,6 +655,17 @@ class SpecEngine {
     getSpecRoot(): Spec{
         return this.query('',undefined,
             ['geometry','space','solver','boundary_conditions','materials','output']);
+    }
+
+    isVector(raw: RawSpec,node: RawSpecTree):boolean{
+        let keys = Object.keys(node.subTree);
+        if(raw.type=='list' && keys.length == 1){
+            let specOverloads = node.subTree[keys[0]].rawSpec;
+            if(specOverloads.length==1 && specOverloads[0].type=='float'){
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
