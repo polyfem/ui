@@ -139,19 +139,36 @@ function mountFileSystem(rootURL){
     /**
      * Create an empty file
      */
-    app.post('/createFile/:fileName', (req,res)=>{
+    app.get('/createFile/:fileName/:isDir', (req,res)=>{
         try {
-            const fileName = path.join(rootURL, req.params.fileName);
+            const url = path.join(rootURL, req.params.fileName);
+            const isDir = req.params.isDir;
             // Ensure the directory exists
-            const dir = path.dirname(fileName);
+            const dir = (isDir)?url:path.dirname(url);
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir, { recursive: true });
+                if(isDir){
+                    let stats = fs.lstatSync(dir);
+                    let fileInfo = {
+                        "url":dir,
+                        "name": path.basename(dir),
+                        "isDir": stats.isDirectory(),
+                        "isSymbolicLink": stats.isSymbolicLink()
+                    }
+                    res.send(fileInfo);
+                }
             }
             // Create an empty file
-            fs.writeFileSync(fileName, '');
-            res.send(true);
+            fs.writeFileSync(url, ''); let stats = fs.lstatSync(dir);
+            let fileInfo = {
+                "url":url,
+                "name": path.basename(url),
+                "isDir": stats.isDirectory(),
+                "isSymbolicLink": stats.isSymbolicLink()
+            }
+            res.send(fileInfo);
         } catch (err) {
-            res.send(false);
+            res.send(null);
         }
     });
 }

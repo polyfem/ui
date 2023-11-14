@@ -513,7 +513,6 @@ class SpecEngine {
             this.rawPointers.push(raw.pointer);
         }
         this.buildTree();
-        console.log(this);
     }
 
     /**
@@ -534,7 +533,10 @@ class SpecEngine {
     }
 
     /**
-     * Builds a minimal spec from the location given in the query
+     * Builds a minimal spec from the location given in the query. **Can be used to
+     * build blank minimal specs that satisfy the validation rules at any query location.**
+     * Loads in additional information such as documentation into the spec.
+     *
      * @param query a query matchable to a pointer, for example:
      *               /geometry/object1 -> /geometry/*
      * @param parent
@@ -562,6 +564,7 @@ class SpecEngine {
         //Load default value
         spec.value = raw.default;
         spec.optional = raw.optional;
+        spec.isVector = this.isVector(raw, loc);
         //Fill out the subNodes that have to be included
         for(let included of include){
             spec.pushChild(this.query(`${query}/${included}`, spec));

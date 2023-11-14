@@ -51,9 +51,9 @@
 			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					-1.22173771661644,
-					-0.1396079217383006,
-					-1.0454773206975378
+					-0.6638077561156369,
+					-1.992510998596305,
+					-1.0878984815922075
 				],
 				"scale": [
 					1.5916951278529867,
@@ -125,7 +125,17 @@
 				],
 				"rotation_mode": "quaternion"
 			},
-			"volume_selection": "sample.json"
+			"volume_selection": "selection.txt",
+			"surface_selection": [
+				{
+					"id": 1,
+					"box": [
+						[
+							1
+						]
+					]
+				}
+			]
 		},
 		{
 			"mesh": "creature.msh",
@@ -215,8 +225,8 @@
 			"transformation": {
 				"translation": [
 					0.5199145427809798,
-					-0.6948479798404645,
-					1.1267556025267385
+					-1.3663232785381463,
+					0.03569448547513843
 				]
 			},
 			"volume_selection": "beam.txt"

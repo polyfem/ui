@@ -30,6 +30,8 @@ class UI{
         // this.spec.subNodes['geometry'].pushChild(geometry1);
         // this.spec = this.specEngine.validate('',this.spec);
         this.loadVisual('root-div');
+        // @ts-ignore expose api for debugging
+        window.ui = this;
     }
     mountFileSystem(url: string){
         this.fs = new UFileSystem(url);

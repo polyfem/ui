@@ -1,13 +1,10 @@
 import Selector from "./Selector";
 import {Spec} from "../spec";
-import {UFile} from "../server";
+import {UFile, UFileSystem} from "../server";
 import THREE, {BufferAttribute, BufferGeometry, Camera, Matrix3, Mesh, Raycaster, Vector2, Vector3} from "three";
 import {CanvasController} from "../graphics";
 import GeometryController from "./GeometryController";
 import {spec} from "node:test/reporters";
-
-//In milliseconds
-const PATH_TIMEOUT = 100;
 
 export default class FreeSelector extends Selector{
     editedFile: UFile;
@@ -16,6 +13,7 @@ export default class FreeSelector extends Selector{
     startingIndex=0;
     vertexColors: BufferAttribute;
     normals: BufferAttribute;
+    fs: UFileSystem;
     /**
      * Masks of individual colors to be applied to each vertex
      */
@@ -42,12 +40,21 @@ export default class FreeSelector extends Selector{
         this.normals = <BufferAttribute>geometryController.mesh.geometry.getAttribute('normal');
         this.vertexColors = geometryController.vertexMasks;
         this.selfVertexColors = new Float32Array(this.vertexColors.count);
+        // Don't block remaining selection shaders:
+        geometryController.selectorSettings[this.selectionIndex * 4] = new Vector3(-2, 0, 0);
+        this.fs = this.canvasController.ui.fs;
+
     }
     attach(spec: Spec, effectiveDepth: number, layer: string, reference: string) {
         super.attach(spec, effectiveDepth, layer, reference);
         spec.freeSelector = this;
         spec.drawable = true;
         spec.isFile = true;
+        if(spec.value!=undefined){
+            let file = this.fs.getFile(this.fs.fileRoot,spec.value,true);
+            this.editedFile = file;
+            console.log(file);
+        }
     }
 
     onFocusChanged(spec: Spec, focused: boolean): void {
@@ -67,7 +74,6 @@ export default class FreeSelector extends Selector{
             this.mesh.getVertexPosition(c, vecc);
             let normal = veca.sub(vecb).cross(vecb.sub(vecc)).normalize();
             if(normal.dot(originNormal)>=Math.cos(this.phi)){
-                console.log("matched at: "+i);
                 //Assign color to all corresponding vertices
                 this.vertexColors.setXYZ(a,...this.color);
                 this.vertexColors.setXYZ(b,...this.color);
@@ -80,14 +86,29 @@ export default class FreeSelector extends Selector{
             }
         }
         this.vertexColors.needsUpdate = true;
-        console.log(this.vertexColors);
     }
     assignColors(index:number, bufferedArray:Float32Array){
         bufferedArray[index*3] = this.color[0];
         bufferedArray[index*3+1] = this.color[1];
         bufferedArray[index*3+2] = this.color[2];
     }
+    repaint(){
+        for(let i = 0; i<this.vertexColors.count/3; i++){
+            this.vertexColors.setXYZ(i,-1,-1,-1);
+        }
+        for(let i = 0; i<this.selectedFaces.length; i++){
+            let [id, a,b,c] = this.selectedFaces[i];
+            this.vertexColors.setXYZ(a,...this.color);
+            this.vertexColors.setXYZ(b,...this.color);
+            this.vertexColors.setXYZ(c,...this.color);
+        }
+        this.vertexColors.needsUpdate = true;
+    }
     surfaceSelectionListener(query: string, target: Spec, event: string): void {
+        if(event=='v'){
+            let file = this.fs.getFile(this.fs.fileRoot,target.value,true);
+            this.openFile(file);
+        }
     }
     setDrawing(drawing:boolean){
         if(drawing)
@@ -111,7 +132,18 @@ export default class FreeSelector extends Selector{
         this.canvasController.bvhRaycaster.detach(this.mesh);
     }
     openFile(file:UFile){
+        if(file==undefined)
+            return;
         this.editedFile = file;
+        this.selectedFaces = [];
+        file.syncRead((data)=>{
+           let lines = data.split('\n');
+           for(let line of lines){
+               this.selectedFaces.push(<[number,number,number,number]>
+                   line.split(',').map(value => Number(value)))
+           }
+        });
+        this.repaint();
     }
     pathTimestamp = 0;
     pathStart(){
@@ -144,6 +176,7 @@ export default class FreeSelector extends Selector{
     setColor(r: number, g: number, b: number) {
         super.setColor(r, g, b);
         this.meshController.uniforms.pathColor.value = new Vector3(...this.color);
+        this.repaint();
     }
 }
 

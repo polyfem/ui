@@ -2,97 +2,224 @@
 	"common": "../../common.json",
 	"geometry": [
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					-0.7727684378623962,
-					0.3726631999015808,
-					0
+					1,
+					-0.828472788972217,
+					-0.9468662923053563
 				],
 				"scale": [
-					0.34129828214645386,
-					0.34129828214645386,
-					0.34129828214645386
+					1.23,
+					3,
+					0.533
+				],
+				"rotation": [
+					0.6169019936375922,
+					-0.06514111039049068,
+					2.7979649316680804
 				]
 			},
-			"volume_selection": 1
+			"volume_selection": [
+				{
+					"id": 0,
+					"box": [
+						[
+							0,
+							0,
+							0.5
+						],
+						[
+							1,
+							1,
+							1
+						]
+					]
+				},
+				{
+					"id": 1,
+					"radius": 1,
+					"center": [
+						0,
+						0,
+						1
+					]
+				}
+			]
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					-0.3465953469276428,
-					0.4580695331096649,
-					-0.6076781153678894
+					-0.6638077561156369,
+					-1.992510998596305,
+					-1.0878984815922075
 				],
 				"scale": [
-					0.5667778253555298,
-					0.5667778253555298,
-					55750.2890625
+					1.5916951278529867,
+					0.4140489339828491,
+					1.2571494579315186
+				],
+				"rotation": [
+					-1.2814273866284491,
+					1.4380996825748593,
+					-2.385
 				]
 			},
-			"volume_selection": 1
+			"surface_selection": [
+				{
+					"box": [
+						[
+							0,
+							0,
+							0
+						],
+						[
+							1,
+							1,
+							1
+						]
+					],
+					"id": 2
+				},
+				{
+					"center": [
+						null
+					],
+					"box": [],
+					"id": 0
+				},
+				{
+					"id": 1,
+					"point": [
+						0,
+						0,
+						0
+					],
+					"normal": [
+						1,
+						2,
+						1
+					]
+				}
+			]
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "sol.vtu",
 			"transformation": {
 				"translation": [
-					0,
-					0.41,
-					0
-				],
-				"scale": []
-			},
-			"volume_selection": 1
-		},
-		{
-			"mesh": "data/cube.msh",
-			"transformation": {
-				"translation": [
-					0,
-					0.6150000095367432,
-					-0.273118793964386
+					3.7188166395294253,
+					-0.29450452503307445,
+					0.4558607591040853
 				],
 				"scale": [
-					0.20000000298023224,
-					1.3684089183807373,
-					0.20000000298023224
+					20.516349019058975,
+					27.32101585141942,
+					24.316228984854828
+				],
+				"rotation": [
+					0.12849843320244497,
+					0.1865973912518689,
+					0.9465755962124214,
+					-0.22948683382192758
+				],
+				"rotation_mode": "quaternion"
+			},
+			"volume_selection": "beam.txt"
+		},
+		{
+			"mesh": "creature.msh",
+			"transformation": {
+				"translation": [
+					1.9909982910580006,
+					-1.8714696898649317,
+					-1.7096699633490542
+				],
+				"scale": [
+					0.9439964832355412,
+					0.5888575117208815,
+					0.9796098906706366
+				],
+				"rotation": [
+					-0.011558363932042496,
+					-0.035736744855995185,
+					1.6700491883408177
 				]
 			},
-			"volume_selection": 1
+			"volume_selection": [
+				{
+					"id": 1,
+					"box": [
+						[
+							0,
+							0,
+							0
+						],
+						[
+							1,
+							1,
+							1
+						]
+					]
+				},
+				{
+					"id": 2,
+					"radius": 1,
+					"center": [
+						0,
+						0,
+						1.5
+					]
+				}
+			],
+			"point_selection": [],
+			"surface_selection": [
+				{
+					"id": 3,
+					"radius": 0.75,
+					"center": [
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"id": 0,
+					"box": [
+						[
+							0,
+							0,
+							0
+						],
+						[
+							1,
+							1,
+							0.1
+						]
+					]
+				}
+			]
 		},
 		{
-			"mesh": "data/cube.msh",
+			"mesh": "plane.obj",
 			"transformation": {
 				"translation": [
-					0,
-					0.82,
-					0
-				],
-				"scale": []
-			},
-			"volume_selection": 1
-		},
-		{
-			"mesh": "data/plane.obj",
-			"is_obstacle": true,
-			"transformation": {
-				"translation": [
-					0,
-					-0.5369725227355957,
-					0
-				],
-				"dimensions": [
-					2,
-					0,
-					2
-				],
-				"scale": [
-					0.2600127160549164,
-					0.2600127160549164,
-					0.2600127160549164
+					1.528477716518668,
+					-1.5193634425584195,
+					-2.452822554507925
 				]
 			}
+		},
+		{
+			"mesh": "creature.msh",
+			"transformation": {
+				"translation": [
+					0.5199145427809798,
+					-1.3663232785381463,
+					0.03569448547513843
+				]
+			},
+			"volume_selection": "beam.txt"
 		}
 	],
 	"time": {
@@ -103,9 +230,51 @@
 		"rhs": [
 			0,
 			9.81,
-			0
+			0,
+			21
+		],
+		"pressure_boundary": [
+			{
+				"id": 1,
+				"interpolation": {
+					"points": [
+						null,
+						null,
+						null
+					],
+					"values": [
+						null,
+						null,
+						null
+					]
+				}
+			},
+			{
+				"id": 2
+			},
+			{
+				"id": null
+			},
+			{
+				"id": 3
+			}
 		],
 		"dirichlet_boundary": [
+			{
+				"id": 5,
+				"value": [
+					null,
+					null
+				]
+			},
+			{
+				"id": 1,
+				"value": []
+			},
+			{
+				"id": null,
+				"value": []
+			},
 			{
 				"id": null,
 				"value": []
@@ -114,11 +283,18 @@
 	},
 	"materials": [
 		{
-			"id": 1,
-			"E": 100000,
-			"nu": 0.4,
-			"rho": 1000,
-			"type": "NeoHookean"
+			"c1": null,
+			"c2": null,
+			"k": null,
+			"E": {
+				"value": null
+			}
+		},
+		{
+			"viscosity": null,
+			"E": {
+				"value": null
+			}
 		}
 	],
 	"output": {
@@ -129,5 +305,16 @@
 				"acceleration": true
 			}
 		}
-	}
+	},
+	"solver": {
+		"max_threads": 2,
+		"augmented_lagrangian": {
+			"initial_weight": null,
+			"scaling": null,
+			"max_weight": null,
+			"eta": null,
+			"max_solver_iters": null
+		}
+	},
+	"space": {}
 }

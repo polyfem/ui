@@ -179,9 +179,10 @@ export default class GeometryController{
          }
         }
         
-        if(showPath&&maskColor[0]>=0.0)
+        if(showPath&&maskColor[0]>=0.0){
             maskMaterial(maskColor*0.55);
-
+        }    
+        
         vec3 diffuse = mat.Kd * abs(dot(s, n));
         vec3 specular = Ks * pow(abs(dot(r, v)), 200.0);
         

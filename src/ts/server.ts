@@ -9,8 +9,52 @@ class UFileSystem{
             rootURL.substring(rootURL.lastIndexOf('/')+1), true);
         this.fileRoot.ls();
     }
-    getFile(dir:UFile, filename: string):UFile{
-        return undefined;
+
+    /**
+     * Forcefully obtains a file from the path given
+     * @param dir
+     * @param path
+     * @param force
+     */
+    getFile(dir:UFile, path: string, force=false):UFile{
+        let paths = path.split('/');
+        let pass = dir;
+        while(paths.length>0){
+            let name = paths.pop();
+            let match: UFile;
+            for(let child of pass.children)
+                if(child.name===name){
+                    match = child;
+                    break;
+                }
+            if(match==undefined) {
+                if (!force) {
+                    return undefined;
+                } else {
+                    let isDir = paths.length!=0;
+                    let fullPath = `${pass.url}/name`;
+                    //@ts-ignore
+                    $.getJSON({
+                        type: "GET",
+                        url: `http://localhost:8081/createFile/${encodeURIComponent(fullPath)}/${isDir}`,
+                        async: false
+                    }, (data: UInf) => {
+                        if(data==null)
+                            match = undefined
+                        else{
+                            let dirList: UInf = data;
+                            match = new UFile(dirList.url,dirList.name,dirList.isDir);
+                            match.parent = pass;
+                            pass.children.push(match);
+                        }
+                    });
+                    if(match==undefined)
+                        return undefined;
+                }
+            }
+            pass = match;
+        }
+        return pass;
     }
     getRoot(): UFile{
         return this.fileRoot;
