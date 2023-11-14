@@ -30,6 +30,7 @@ import RedoIcon from '@mui/icons-material/Redo';
 import ColorPicker from "./ColorPicker";
 import {FileDialogue} from "./SelectFileDialogue";
 import {SmartField} from "./SmartField";
+import {VectorView} from "./VectorView";
 
 const HtmlTooltip = styled(({className, ...props}: TooltipProps) => (
     <Tooltip {...props} classes={{popper: className}}/>
@@ -245,7 +246,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     <FormControl>
                         <Checkbox onChange={(event)=>specNode.value=(Boolean(event.target.value))} defaultChecked={specNode.value==true} size="small" style={{verticalAlign:"baseline"}}/>
                     </FormControl>
-                    : <SmartField specNode={specNode}/>}
+                    : <SmartField specNode={specNode} ui={ui}/>}
             {itemOptions}
         </ListItem>;
         // <span style={{display:'flex', flexDirection:'row', alignItems:'baseline'}}>
@@ -280,19 +281,12 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                                         background: (specNode.editing || specNode.secondarySelected) ? 'aliceblue' : ((specNode.selected) ? '#ffd400' : undefined)
                                     }}>
                         <Divider orientation="vertical" sx={{mr: 1, borderColor: getColor(level)}} flexItem/>
-                        <ListItemText primary={primary} style={{
+                        <ListItemText primary={primary} secondary={(specNode.isVector)&&<VectorView specNode={specNode} ui={ui}/>} style={{
                             whiteSpace: 'pre',
                             opacity: (specNode.tentative || specNode.deleteReady) ? 0.38 : 1
                         }} primaryTypographyProps={{fontSize: '11pt'}}/>
                         {/**display the vector preview/editor here**/}
-                        {(specNode.isVector)&&<Box style={{whiteSpace:'nowrap', float:'left'}}>
-                            (
-                            {Object.keys(specNode.children).map(key=>{
-                                let child = specNode.children[key];
-                                return <SmartField specNode={child} compactEntry/>
-                            }
-                            )})
-                        </Box>}
+
                         {colorValues.map((key)=>{
                             return <ColorPicker color={specNode.colors[key]}/>;
                         })}

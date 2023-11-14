@@ -25,6 +25,7 @@ const SpecCreator = function({ui, specNode, level, color}:
     let childTypeSpecs = ui.specEngine.getChildTypes(specNode);
     let childTypes: string[] = Object.keys(childTypeSpecs);
     const addTentativeChild = function(childName: string, typeOverride=-1){
+        console.log(childName);
         let childSpec = new Spec(childName, specNode);
         let query = specNode.query+'/'+childName;
         childSpec = ui.specEngine.validate(query,childSpec, specNode, typeOverride);

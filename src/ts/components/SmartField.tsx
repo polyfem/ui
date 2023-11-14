@@ -2,8 +2,16 @@ import {Input, InputAdornment, TextField} from "@mui/material";
 import * as React from "react";
 import {Spec} from "../spec";
 import {ChangeEvent, useEffect, useState} from "react";
+import {UI} from "../main";
 
-export const SmartField = ({specNode, compactEntry=false}:{specNode:Spec, compactEntry?:boolean})=>{
+/**
+ *
+ * @param specNode
+ * @param compactEntry if compact entry, self is an element in a vector display
+ * @param isLast if compact entry, isLast indicates if self is the last element in a vector display
+ * @constructor
+ */
+export const SmartField = ({specNode, ui, compactEntry=false, isFirst=false}:{specNode:Spec, ui:UI, compactEntry?:boolean, isFirst?:boolean})=>{
     let initialValue = (compactEntry&&specNode.type=='float')?processNumber(specNode.value):specNode.value;
     let [text, setText] = useState(initialValue);
     const onChange = (e: any) => {
@@ -36,12 +44,21 @@ export const SmartField = ({specNode, compactEntry=false}:{specNode:Spec, compac
         <Input
             size="small"
             onClick={(e)=>{
-                if(compactEntry)
+                if(compactEntry){
+                    e.preventDefault();
                     e.stopPropagation();
+                }
             }}
-            endAdornment={<InputAdornment position="end">,</InputAdornment>}
+            onKeyDown={(e)=>{
+                if (e.key === 'Backspace' && text === '') {
+                    console.log('Backspace was pressed on an empty field');
+                    specNode.parent.removeChild(specNode);
+                    ui.updateSpecPane();
+                }
+            }}
+            startAdornment={<InputAdornment position="end">{isFirst?'':',&nbsp;'}</InputAdornment>}
             disabled={specNode.tentative || specNode.deleteReady}
-            style={{verticalAlign: 'baseline', maxWidth:'39pt', paddingLeft:'3pt'}} value={text} onChange={onChange}/>
+            style={{verticalAlign: 'baseline', maxWidth:'45pt'}} value={text} onChange={onChange}/>
 }
 
 function processNumber(numberInput: string){

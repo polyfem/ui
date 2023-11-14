@@ -5,9 +5,7 @@
 			"mesh": "cube.msh",
 			"transformation": {
 				"translation": [
-					1,
-					-0.828472788972217,
-					-0.9468662923053563
+					2.1
 				],
 				"scale": [
 					1.23,
