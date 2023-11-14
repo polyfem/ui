@@ -276,6 +276,9 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     arrow title={specNode.doc}>
                     <ListItemButton onClick={handleClick}
                                     sx={{
+                                        '&.Mui-focusVisible': {// Prevent focus color change
+                                            backgroundColor: '#ffffff',
+                                        },
                                         pl: 2 + level - 1,
                                         pr: (specNode.deleting) ? 0 : undefined,
                                         background: (specNode.editing || specNode.secondarySelected) ? 'aliceblue' : ((specNode.selected) ? '#ffd400' : undefined)

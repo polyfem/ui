@@ -56,7 +56,8 @@ export const SmartField = ({specNode, ui, compactEntry=false, isFirst=false}:{sp
                     ui.updateSpecPane();
                 }
             }}
-            startAdornment={<InputAdornment position="end">{isFirst?'':',&nbsp;'}</InputAdornment>}
+            startAdornment={<InputAdornment position="end">{isFirst?'':','}</InputAdornment>}
+            inputProps={{style:{paddingLeft:'2pt'}}}
             disabled={specNode.tentative || specNode.deleteReady}
             style={{verticalAlign: 'baseline', maxWidth:'45pt'}} value={text} onChange={onChange}/>
 }
