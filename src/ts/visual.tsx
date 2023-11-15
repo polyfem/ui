@@ -15,6 +15,8 @@ import {FileControl} from "./fileControl";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {SyntheticEvent} from "react";
 import {UFile} from "./server";
+import {FileCreator} from "./components/FileCreator";
+import {Terminal} from "./components/Terminal";
 
 const darkTheme = createTheme({
     palette: {
@@ -25,13 +27,15 @@ const darkTheme = createTheme({
 const drawerWidth = 300;
 
 class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, activeSpec: Spec,
-    activeFile: number, openedFiles: FileControl[]}>{
+    activeFile: number, openedFiles: FileControl[],fileRoot:UFile, fileCreatorOpen:boolean, terminalOpen:boolean,
+    terminalOutput:string}>{
     ui: UI;
     constructor(props:{ui: UI, rootId: string}){
         super(props);
         this.ui = props.ui;
         this.state = {open:true, activeSpec: props.ui.activeSpec,
-            activeFile:undefined, openedFiles:[]};
+            activeFile:undefined, openedFiles:[], fileRoot: this.ui.fs.fileRoot,
+            fileCreatorOpen:false, terminalOpen:false, terminalOutput: ''};
         this.ui.vs = this;
     }
     openSpec(target: string){
@@ -70,17 +74,29 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
             this.ui.openFile(file);
         }
     }
+    openFileCreator(file:UFile){
+        this.setState({fileRoot:file,fileCreatorOpen:true});
+    }
+    streamTerminal(output:string){
+        this.setState({terminalOutput:this.state.terminalOutput+output});
+    }
+    openTerminal(){
+        this.setState({terminalOpen: true});
+    }
     render(){
         return <ThemeProvider theme={darkTheme}>
             <Box sx={{ display: 'grid' }}
                  style={{gridTemplateColumns: `${drawerWidth}px 1fr`,
-                     gridTemplateRows: `64px minmax(0,1fr)`,
+                     gridTemplateRows: `64px minmax(0,1fr) 20pt`,
                      height: '100%'}}>
                 <CssBaseline/>
+                <FileCreator onFileCreate={()=>{this.ui.updateSpecPane()}}
+                             open={this.state.fileCreatorOpen} parentDir={this.state.fileRoot}
+                             setOpen={(open)=>this.setState({fileCreatorOpen:open})} ui={this.ui}/>
                 <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1}}
                         style={{gridColumn: '1 / span 2',
                             gridRow: '1 / span 1', boxShadow: 'none'}}>
-                    <NavBar/>
+                    <NavBar ui={this.ui}/>
                 </AppBar>
                 <Drawer
                     variant="permanent"
@@ -110,6 +126,33 @@ class Visual extends React.Component<{ui: UI, rootId: string}, {open:boolean, ac
                                 openedFiles={this.state.openedFiles}
                                 activeFile ={this.state.activeFile}
                     />
+                </Box>
+
+                <Terminal code={this.state.terminalOutput} visible={this.state.terminalOpen}/>
+                <Box style={{ position: 'relative', zIndex:3000, width: '100%',
+                    background:'#ff9436', gridColumn:'1 / span 2',gridRow:'3 / span 1'}}>
+
+                    <Box
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            bottom: 0,
+                            width: '50px',
+                            height: '100%',
+                            textAlign:'center',
+                            paddingBottom:'3pt',
+                            color:'white'
+                        }}
+                        sx={{
+                            '&:hover': {
+                                bgcolor: 'orange',
+                                cursor: 'pointer',
+                            },
+                        }}
+                        onClick={() => this.setState({terminalOpen:!this.state.terminalOpen})}
+                    >
+                        {'>_'}
+                    </Box>
                 </Box>
             </Box>
         </ThemeProvider>;

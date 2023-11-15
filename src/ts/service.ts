@@ -137,6 +137,16 @@ interface ServiceTemplate{
     colorSet: [number,number,number][];
 }
 
+interface ConfigurationTemplate{
+    bin: string;
+    library: string;
+    parameters:ExecutionParameter[];
+}
+interface ExecutionParameter{
+    "param": string,
+    "description": string,
+    "default": boolean;
+}
 /**
  * Services are applied in the order that they appear
  */
@@ -150,6 +160,10 @@ class ServiceEngine {
     fileControl: GFileControl;
     gui:GUI;
     groups: {[key:string]:Group[]}={};
+
+    binary:string;
+    library: string;
+    executionParameters:ExecutionParameter[];
     //Preliminary load, generates the service templates based on the service configs
     constructor(ui: UI, fileControl: GFileControl) {
         this.ui = ui;
@@ -174,6 +188,28 @@ class ServiceEngine {
                 }
             }
         }
+        this.loadConfiguration();
+    }
+
+    loadConfiguration(){
+        if(this.serviceTemplates['$config']==undefined)
+            return;
+        //@ts-ignore
+        let configuration = <ConfigurationTemplate>this.serviceTemplates['$config'];
+        this.binary = configuration.bin;
+        this.library = configuration.library;
+        this.executionParameters = configuration.parameters;
+    }
+
+    executeBinary(){
+        let parameters = [];
+        for(let parameter of this.executionParameters){
+            parameters.push(parameter.param);
+        }
+        this.ui.vs.openTerminal();
+        this.ui.fs.execute(this.binary,this.fileControl.fileReference.url, parameters,(newResponse,resposne)=>{
+           this.ui.vs.streamTerminal(newResponse);
+        });
     }
 
     refreshServices(){

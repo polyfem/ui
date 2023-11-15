@@ -17,7 +17,8 @@ class UFileSystem{
      * @param force
      */
     getFile(dir:UFile, path: string, force=false):UFile{
-        let paths = path.split('/');
+        let paths = path.split('/').reverse();
+        console.log(paths);
         let pass = dir;
         while(paths.length>0){
             let name = paths.pop();
@@ -32,17 +33,20 @@ class UFileSystem{
                     return undefined;
                 } else {
                     let isDir = paths.length!=0;
-                    let fullPath = `${pass.url}/name`;
+                    console.log(isDir);
+                    let fullPath = `${pass.url}/${name}`;
+                    console.log(fullPath)
                     //@ts-ignore
                     $.getJSON({
                         type: "GET",
-                        url: `http://localhost:8081/createFile/${encodeURIComponent(fullPath)}/${isDir}`,
+                        url: `http://localhost:8081/createFile/${encodeURIComponent(fullPath)}/${encodeURIComponent(isDir?'true':'false')}`,
                         async: false
                     }, (data: UInf) => {
                         if(data==null)
                             match = undefined
                         else{
                             let dirList: UInf = data;
+                            console.log(dirList);
                             match = new UFile(dirList.url,dirList.name,dirList.isDir);
                             match.parent = pass;
                             pass.children.push(match);
@@ -59,20 +63,17 @@ class UFileSystem{
     getRoot(): UFile{
         return this.fileRoot;
     }
-}
-
-class PolyFEM{
 
     /**
      * Executes the command by passing the server the json,
      * opens a stream for service updates
      */
-    execute(bin: string, command: string, params: string[], callback:(newResponse: string, response: string)=>void): void{
+    execute(bin: string, target: string, params: string[], callback:(newResponse: string, response: string)=>void): void{
         let last_response_len = -1;
         //@ts-ignore
         $.ajax({
-            url: 'http://localhost:8081/execute/'+encodeURIComponent(bin)+'/'+encodeURIComponent(command)+
-            '/'+encodeURIComponent(JSON.stringify(params)),
+            url: 'http://localhost:8081/execute/'+encodeURIComponent(bin)+'/'+encodeURIComponent(target)+
+                '/'+encodeURIComponent(JSON.stringify(params)),
             type: 'PUT',
             xhrFields:{
                 onprogress: function(e:any)
@@ -236,4 +237,4 @@ class Operator{
 
 }
 
-export {UFile, UFileSystem, PolyFEM, Operator}
+export {UFile, UFileSystem, Operator}

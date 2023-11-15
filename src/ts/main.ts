@@ -132,11 +132,24 @@ class UI{
         });
         return true;
     }
+    openFileCreator(rootFile:UFile){
+        this.vs.openFileCreator(rootFile);
+    }
     /**
      * Highlights the corresponding geometry spec being highlighted
      */
     updateSpecPane(){
         this.vs.updateSpec();
+    }
+
+    /**
+     * Executes the binary bound to the active file
+     */
+    executeActiveFile(){
+        let activeFile = this.openedFiles[this.activeFile];
+        if(activeFile instanceof GFileControl){
+            activeFile.serviceEngine.executeBinary();
+        }
     }
 }
 

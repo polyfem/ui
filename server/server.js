@@ -117,8 +117,19 @@ function mountFileSystem(rootURL){
         let bin = req.params['bin'];
         // let command = path.join(rootURL, 'bin', 'polyfem.exe');
         params.push(decodeURI(target));
-        let child = spawn(bin, params);
-        child.stdout.pipe(res);
+        try{
+            let child = spawn(bin, params);
+            child.stdout.pipe(res);
+            child.on('error', function(err) {
+                res.write('process failed\n');
+                res.write(err.message+'\n');
+                res.end();
+            });
+        }catch(e){
+            res.write('process failed\n');
+            res.write(e.message+'\n');
+            res.end();
+        }
         // Equivalently for pipe():
         // child.stdout.on('data', function(data) {
         //         res.write(data);
@@ -141,32 +152,35 @@ function mountFileSystem(rootURL){
      */
     app.get('/createFile/:fileName/:isDir', (req,res)=>{
         try {
-            const url = path.join(rootURL, req.params.fileName);
-            const isDir = req.params.isDir;
+            const url = path.join(rootURL,req.params.fileName);
+            const isDir = req.params.isDir==='true';
             // Ensure the directory exists
             const dir = (isDir)?url:path.dirname(url);
+            console.log(isDir);
             if (!fs.existsSync(dir)){
                 fs.mkdirSync(dir, { recursive: true });
-                if(isDir){
-                    let stats = fs.lstatSync(dir);
-                    let fileInfo = {
-                        "url":dir,
-                        "name": path.basename(dir),
-                        "isDir": stats.isDirectory(),
-                        "isSymbolicLink": stats.isSymbolicLink()
-                    }
-                    res.send(fileInfo);
+            }
+            if(isDir){
+                let stats = fs.lstatSync(dir);
+                let fileInfo = {
+                    "url":dir,
+                    "name": path.basename(dir),
+                    "isDir": stats.isDirectory(),
+                    "isSymbolicLink": stats.isSymbolicLink()
                 }
+                res.send(fileInfo);
+            }else{
+                // Create an empty file
+                fs.writeFileSync(url, '');
+                let stats = fs.lstatSync(url);
+                let fileInfo = {
+                    "url":url,
+                    "name": path.basename(url),
+                    "isDir": stats.isDirectory(),
+                    "isSymbolicLink": stats.isSymbolicLink()
+                }
+                res.send(fileInfo);
             }
-            // Create an empty file
-            fs.writeFileSync(url, ''); let stats = fs.lstatSync(dir);
-            let fileInfo = {
-                "url":url,
-                "name": path.basename(url),
-                "isDir": stats.isDirectory(),
-                "isSymbolicLink": stats.isSymbolicLink()
-            }
-            res.send(fileInfo);
         } catch (err) {
             res.send(null);
         }

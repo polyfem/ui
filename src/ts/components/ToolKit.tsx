@@ -17,6 +17,7 @@ import WebhookTwoToneIcon from "@mui/icons-material/WebhookTwoTone";
 import OutputIcon from "@mui/icons-material/Output";
 import {Visual} from "../visual";
 import {SvgIcon} from "@mui/material";
+import {GFileControl} from "../fileControl";
 
 class ToolKit extends React.Component<{ui: UI, visual: Visual, open: string}>{
     visual: Visual;
@@ -42,7 +43,7 @@ class ToolKit extends React.Component<{ui: UI, visual: Visual, open: string}>{
             aria-labelledby="nested-list-subheader"
             subheader={
                 <ListSubheader component="div" id="nested-list-subheader">
-                    [Computation Library] Options
+                    {(this.ui.openedFiles[this.ui.activeFile] as GFileControl)?.serviceEngine.library} Options
                 </ListSubheader>
             }
 

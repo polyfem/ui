@@ -37,7 +37,9 @@ function FolderView({ui, file, onFileSelect}: {ui: UI, file: UFile, onFileSelect
                 {(file.isDir&&file.ls())?
                     file.children.map((ch)=>(<FolderView ui={ui} key={ch.url} file={ch} onFileSelect={onFileSelect}/>))
                     :undefined}
-                <Box style={{justifyContent:'center', display:"flex"}}>
+                <Box style={{justifyContent:'center', display:"flex"}}  onClick={()=>{
+                    ui.openFileCreator(file);
+                }}>
                     <IconButton size={'small'}>
                         <AddIcon fontSize={'small'}/>
                     </IconButton>
@@ -92,7 +94,7 @@ function FolderView({ui, file, onFileSelect}: {ui: UI, file: UFile, onFileSelect
 export default function FileView({ui, onFileSelect}: {ui: UI, onFileSelect:(file:UFile)=>void}) {
     return (
         <Box style={{marginLeft: '5pt', marginTop:'5pt', marginBottom:'0', height: '100%', overflowY: 'auto' }}>
-            <TreeView expanded={[ui.fs.fileRoot.url]}
+            <TreeView defaultExpanded={[ui.fs.fileRoot.url]}
                 aria-label="file system navigator"
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}

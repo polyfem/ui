@@ -181,7 +181,6 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
         specNode.deleteReady = false;
         ui.updateSpecPane();
     }
-    const [fileSelectOpen, setFileSelectOpen] = useState(false);
     const itemOptions = specNode.tentative ? <span style={{whiteSpace: "nowrap"}}>
                             <IconButton disabled={false} onClick={confirmAdd}>
                                 <CheckIcon color='success'/>
@@ -199,6 +198,8 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                             </IconButton></span> : undefined;
     if (specNode.isLeaf) { // Leaf text field rendering
         let [drawing, setDrawing] = useState(specNode.drawable&&specNode.freeSelector.drawing);
+        const [drawingFileSelect, setDrawingFileSelectOpen] = useState(false);
+        const [fileSelectOpen, setFileSelectOpen] = useState(false);
 
         // console.log(`${specNode.query} value service subscribed`);
         return <ListItem sx={{pl: 2 + level - 1, alignItems: 'baseline', pr: (specNode.deleting) ? 0 : undefined}}
@@ -217,7 +218,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                 {(specNode.drawable?<Box>
                         <Button size={'small'} variant={'contained'}
                                 onClick={()=>{
-                                    setFileSelectOpen(!fileSelectOpen);
+                                    setDrawingFileSelectOpen(!fileSelectOpen);
                                 }}>
                             {specNode.value?specNode.value:`Face List`}
                         </Button>
@@ -231,16 +232,21 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     </IconButton>
                 </Box>:<Button variant={'contained'} size={'small'}
                               color={'success'} onClick={()=>{setFileSelectOpen(!fileSelectOpen)}}>
-                    {specNode.value}
+                    {specNode.value?specNode.value:`Geometry File`}
             </Button>)}
-                <FileDialogue ui={ui} open={fileSelectOpen} setOpen={setFileSelectOpen}
+                <FileDialogue ui={ui} open={drawingFileSelect} setOpen={setFileSelectOpen}
                               onFileSelect={(file)=>{
                                   if(file.extension!='txt')
                                       return;
                                   specNode.setValue(file.urlFrom(ui.fs.fileRoot));
                                   specNode.freeSelector.openFile(file);
-                                  setFileSelectOpen(false);
+                                  setDrawingFileSelectOpen(false);
                               }}/>
+                    <FileDialogue ui={ui} open={fileSelectOpen} setOpen={setFileSelectOpen}
+                                  onFileSelect={(file)=>{
+                                      specNode.setValue(file.urlFrom(ui.fs.fileRoot));
+                                      setFileSelectOpen(false);
+                                  }}/>
             </Fragment>
             : (specNode.type=='bool')?
                     <FormControl>
@@ -277,7 +283,7 @@ const SpecFieldV = function ({ui, index, specNode, level, selected, select}:
                     <ListItemButton onClick={handleClick}
                                     sx={{
                                         '&.Mui-focusVisible': {// Prevent focus color change
-                                            backgroundColor: '#ffffff',
+                                            backgroundColor: 'aliceblue',
                                         },
                                         pl: 2 + level - 1,
                                         pr: (specNode.deleting) ? 0 : undefined,

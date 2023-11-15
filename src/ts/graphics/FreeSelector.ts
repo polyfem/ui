@@ -62,7 +62,7 @@ export default class FreeSelector extends Selector{
         //@ts-ignore
         this.meshController.uniforms.showPath.needsUpdate = true;
     }
-    assignMasks(originNormal:Vector3){
+    assignMasks(originNormal:Vector3,originLocation:Vector3){
         let indices = this.mesh.geometry.getIndex();
         let veca = new Vector3(), vecb = new Vector3(), vecc = new Vector3();
         for(let i = 0; i<indices.count/3; i++){
@@ -74,6 +74,8 @@ export default class FreeSelector extends Selector{
             this.mesh.getVertexPosition(c, vecc);
             let normal = veca.sub(vecb).cross(vecb.sub(vecc)).normalize();
             if(normal.dot(originNormal)>=Math.cos(this.phi)){
+            // if(veca.sub(originLocation).length()<this.phi // Use distance selection, for now.
+            //     &&vecb.sub(originLocation).length()<this.phi&&vecc.sub(originLocation).length()<this.phi){
                 //Assign color to all corresponding vertices
                 this.vertexColors.setXYZ(a,...this.color);
                 this.vertexColors.setXYZ(b,...this.color);
@@ -87,6 +89,7 @@ export default class FreeSelector extends Selector{
         }
         this.vertexColors.needsUpdate = true;
     }
+
     assignColors(index:number, bufferedArray:Float32Array){
         bufferedArray[index*3] = this.color[0];
         bufferedArray[index*3+1] = this.color[1];
@@ -164,7 +167,7 @@ export default class FreeSelector extends Selector{
      * @param faceIndex
      */
     drawPath(point:Vector3, normal:Vector3,faceIndex:number){
-        this.assignMasks(normal);
+        this.assignMasks(normal,point);
     }
     saveSelections(){
         let total = '';

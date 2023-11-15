@@ -1,4 +1,19 @@
 {
+  "$config": {
+    "library": "PolyFEM",
+    "bin":"./bin/POLYFEM.exe",
+    "parameters":[
+      {
+        "param": "--cmd",
+        "description": "show outputs",
+        "default": true
+      },
+      {
+        "param": "--json",
+        "description": "use json as input",
+        "default": true
+      }]
+  },
   "$volume_selection": {
     "service": "selector",
     "target": "../../",

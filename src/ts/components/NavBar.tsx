@@ -16,6 +16,7 @@ import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import {UI} from "../main";
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -57,7 +58,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
 }));
 
-export default function PrimarySearchAppBar() {
+export default function PrimarySearchAppBar({ui}:{ui:UI}) {
 
     const menuId = 'primary-search-account-menu';
     const mobileMenuId = 'primary-search-account-menu-mobile';
@@ -95,6 +96,7 @@ export default function PrimarySearchAppBar() {
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <IconButton size="large" onClick={() => {
+                            ui.executeActiveFile();
                         }}>
                             <PlayArrowIcon sx={{
                                 color: '#4CAF50', // green color
