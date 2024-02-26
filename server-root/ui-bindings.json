@@ -1,0 +1,118 @@
+{
+  "$config": {
+    "library": "PolyFEM",
+    "bin":"./bin/POLYFEM.exe",
+    "parameters":[
+      {
+        "param": "--cmd",
+        "description": "show outputs",
+        "default": true
+      },
+      {
+        "param": "--json",
+        "description": "use json as input",
+        "default": true
+      }]
+  },
+  "$volume_selection": {
+    "service": "selector",
+    "target": "../../",
+    "referencer": "id",
+    "color":[0.98,0.84,0.42],
+    "effectiveDepth": 2,
+    "layer": "specification"
+  },
+  "/geometry/*/volume_selection/*:box": {
+      "service": "selector.box",
+      "extends": "$volume_selection"
+  },
+  "/geometry/*/volume_selection/*:sphere": {
+    "service": "selector.sphere",
+    "extends": "$volume_selection"
+  },
+  "/geometry/*/volume_selection/*:cylinder": {
+    "service": "selector.cylinder",
+    "extends": "$volume_selection"
+  },
+  "/geometry/*/volume_selection/*:plane": {
+    "service": "selector.plane",
+    "extends": "$volume_selection"
+  },
+  "/geometry/*/volume_selection/*:axis": {
+    "service": "selector.axis",
+    "extends": "$volume_selection"
+  },
+  "/geometry/*/volume_selection::file": {
+    "service": "selector.wild",
+    "extends": "$volume_selection",
+    "target": "../",
+    "effectiveDepth": 1
+  },
+  "$surface_selection": {
+    "service": "selector",
+    "target": "../../",
+    "referencer": "id",
+    "color":  [0.30, 0.34, 0.66],
+    "effectiveDepth": 2,
+    "layer": "specification"
+  },
+  "/geometry/*/surface_selection/*:box": {
+    "service": "selector.box",
+    "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection/*:sphere": {
+    "service": "selector.sphere",
+    "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection/*:cylinder": {
+    "service": "selector.cylinder",
+    "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection/*:plane": {
+    "service": "selector.plane",
+    "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection/*:axis": {
+    "service": "selector.axis",
+    "extends": "$surface_selection"
+  },
+  "/geometry/*/surface_selection::file": {
+    "service": "selector.wild",
+    "extends": "$surface_selection",
+    "target": "../",
+    "effectiveDepth": 1
+  },
+  "$boundary_condition": {
+    "service": "cross reference",
+    "referencer": "id",
+    "target": ["/geometry/*/surface_selection/*","/geometry/*/volume_selection/*"],
+    "effectiveDepth": 1,
+    "layer": "specification"
+  },
+  "/boundary_conditions/pressure_boundary/*": {
+    "extends": "$boundary_condition"
+  },
+  "/boundary_conditions/obstacle_displacements/*": {
+    "extends": "$boundary_condition"
+  },
+  "/boundary_conditions/dirichlet_boundary/*": {
+    "extends": "$boundary_condition"
+  },
+  "/boundary_conditions/neumann_boundary/*": {
+    "extends": "$boundary_condition"
+  },
+  "$groups": {
+    "service": "group",
+    "referencer": "id",
+    "colorSet": "auto",
+    "layer": "id",
+    "target": ["/geometry/*/volume_selection/*","/geometry/*/surface_selection/*"],
+    "effectiveDepth": 0
+  },
+  "/geometry/*/volume_selection/*": {
+    "extends": "$groups"
+  },
+  "/geometry/*/surface_selection/*": {
+    "extends": "$groups"
+  }
+}

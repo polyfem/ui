@@ -1,0 +1,32 @@
+[{
+  "section": "PolyFEM",
+  "bin":"./bin/polyfem.exe",
+  "execOptions":[
+    {
+      "param": "--cmd",
+      "description": "show outputs",
+      "default": true
+    },
+    {
+      "param": "--json",
+      "description": "use json as input",
+      "default": true
+    }
+  ]
+},
+  {
+    "section": "WildMeshing",
+    "bin":"./bin/polyfem.exe",
+    "execOptions":[
+      {
+        "param": "--cmd",
+        "description": "show outputs",
+        "default": true
+      },
+      {
+        "param": "--abc",
+        "description": "bac",
+        "default": false
+      }
+    ]
+  }]

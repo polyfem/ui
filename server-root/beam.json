@@ -1,0 +1,62 @@
+{
+    "problem": "GenericTensor",
+    "tensor_formulation": "NeoHookean",
+    "solver_type": "Hypre",
+    "n_refs": 0,
+    "discr_order": 1,
+    "iso_parametric": false,
+    "vismesh_rel_area": 1,
+    "export": {
+		"paraview": "sol.vtu",
+        "volume": true
+    },
+    "has_collision": true,
+    "problem_params": {
+        "dirichlet_boundary": 
+        [
+            {
+                "id": 10,
+                "value": [0, 0, 0]
+            }
+        ],
+        "neumann_boundary":
+        [
+            {
+                "id": 11,
+                "value": [0, 0, -2000]
+            },
+            {
+                "id": 12,
+                "value": [0, 0, -2000]
+            }
+        ],
+        "rhs": [0, 0, 0]
+    },
+    "params": {
+        "E": 3.5e9,
+        "nu": 0.36,
+        "rho": 1240
+    },
+    "boundary_sidesets": [{
+        "id": 10,
+        "axis": "-z",
+        "position": -0.009
+    }, {
+        "id": 11,
+        "axis": "-y",
+        "position": -0.11 
+    }, {
+        "id": 12,
+        "axis": "y",
+        "position": 0.11 
+    }],
+    "line_search": "bisection",
+    "meshes": [
+        {
+            "mesh": "./beam.msh",
+            "scale": 0.01,
+            "body_id": 1
+        } 
+    ],
+    "normalize_mesh": false
+}
